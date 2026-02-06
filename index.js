@@ -18,10 +18,17 @@ app.use(cors());
 app.use(compression());
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(express.json());
+
+app.use(cors({
+    origin: '*', // Allow all origins (easiest for development)
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
 // MongoDB 설정
 const MONGODB_URI = process.env.MONGODB_URI;
-const DB_NAME = "OFF_ORDER"; // ★ 요청하신 DB명
+const DB_NAME = "OFFLINE_ORDER"; // ★ 요청하신 DB명
 const COLLECTION_ORDERS = "ordersOffData";
 const COLLECTION_TOKENS = "tokens";
 
@@ -33,8 +40,8 @@ const CAFE24_API_VERSION = process.env.CAFE24_API_VERSION || '2025-12-01';
 
 // ★ 전역 변수 (DB 및 토큰)
 let db;
-let accessToken = process.env.ACCESS_TOKEN || 'h0W9GEOhK1Vr1bQ4EqTXFC';
-let refreshToken = process.env.REFRESH_TOKEN || 'Tb4KpyUaG5vhrkKTpZmfvE';
+let accessToken = process.env.ACCESS_TOKEN ;
+let refreshToken = process.env.REFRESH_TOKEN ;
 
 // ==========================================
 // [2] MongoDB 연결 및 서버 시작
@@ -388,4 +395,7 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
 app.get('/api/test/expire-token', (req, res) => {
     accessToken = "INVALID_TOKEN_TEST"; 
     res.json({ message: 'Token corrupted for testing' });
+});
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
 });
