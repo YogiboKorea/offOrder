@@ -73,6 +73,38 @@ async function startServer() {
 // 서버 시작
 startServer();
 
+// 3-4. 공통 API 요청 함수 (무한 루프 방지 적용)
+async function apiRequest(method, url, data = {}, params = {}, retryCount = 0) {
+    try {
+        const response = await axios({
+            method, url, data, params,
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+                'Content-Type': 'application/json',
+                'X-Cafe24-Api-Version': CAFE24_API_VERSION
+            },
+        });
+        return response.data;
+    } catch (error) {
+        // 401 에러이고, 재시도 횟수가 0일 때만 갱신 시도
+        if (error.response && error.response.status === 401 && retryCount < 1) {
+            console.log(`⚠️ [401 Error] Access Token 만료됨. 갱신 시도... (1회차)`);
+            try {
+                await refreshAccessToken(); 
+                // 갱신 후 재요청 (retryCount를 1로 증가시켜 전달)
+                return await apiRequest(method, url, data, params, retryCount + 1); 
+            } catch (refreshError) {
+                console.error("❌ 토큰 갱신 실패. 더 이상 재시도하지 않습니다.");
+                throw refreshError;
+            }
+        } else {
+            // 그 외 에러거나 이미 재시도한 경우 에러 그대로 반환
+            console.error(`❌ API 요청 최종 실패: ${error.message}`);
+            throw error;
+        }
+    }
+}
+apiRequest()
 
 // --- API: 상품 검색 ---
 app.get('/api/cafe24/products', async (req, res) => {
