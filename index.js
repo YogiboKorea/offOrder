@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 8080;
 // CORS 설정 (모든 도메인 허용)
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'DELETE', 'OPTIONS','PUT'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
