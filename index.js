@@ -355,3 +355,138 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
+
+// =============================================
+// server.js에 추가할 코드 (기존 라우트 아래에 붙여넣기)
+// =============================================
+
+// 5-6. 주문 수정 (PUT)
+app.put('/api/ordersOffData/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: 'Invalid ID' });
+        }
+
+        const updateData = req.body;
+        const allowedFields = {};
+
+        if (updateData.customer_name !== undefined) allowedFields.customer_name = updateData.customer_name;
+        if (updateData.customer_phone !== undefined) allowedFields.customer_phone = updateData.customer_phone;
+        if (updateData.manager_name !== undefined) allowedFields.manager_name = updateData.manager_name;
+        if (updateData.shipping_cost !== undefined) allowedFields.shipping_cost = Number(updateData.shipping_cost);
+        if (updateData.total_amount !== undefined) allowedFields.total_amount = Number(updateData.total_amount);
+        if (updateData.product_name !== undefined) allowedFields.product_name = updateData.product_name;
+
+        if (updateData.items && Array.isArray(updateData.items)) {
+            allowedFields.items = updateData.items.map(item => ({
+                product_no: item.product_no || null,
+                product_name: item.product_name || '',
+                option_name: item.option_name || '',
+                price: Number(item.price) || 0,
+                quantity: Number(item.quantity) || 1
+            }));
+        }
+
+        allowedFields.updated_at = new Date();
+
+        const result = await db.collection(COLLECTION_ORDERS).updateOne(
+            { _id: new ObjectId(id) },
+            { $set: allowedFields }
+        );
+
+        if (result.matchedCount === 0) {
+            return res.status(404).json({ success: false, message: 'Order not found' });
+        }
+
+        console.log(`✏️ Order Updated: ${id}`);
+        res.json({ success: true, message: 'Order Updated' });
+
+    } catch (error) {
+        console.error('Order Update Error:', error);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+
+
+// 5-7. 단일 상품 옵션 조회 (product_no로 Cafe24에서 컬러 옵션 가져오기)
+app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
+    try {
+        const { productNo } = req.params;
+        console.log(`🎨 Fetching options for product_no: ${productNo}`);
+
+        const fetchFromCafe24 = async (retry = false) => {
+            try {
+                return await axios.get(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products/${productNo}`,
+                    {
+                        params: {
+                            shop_no: 1,
+                            embed: 'options'
+                        },
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Cafe24-Api-Version': CAFE24_API_VERSION
+                        }
+                    }
+                );
+            } catch (err) {
+                if (err.response && err.response.status === 401 && !retry) {
+                    console.log("⚠️ Token expired. Refreshing...");
+                    await refreshAccessToken();
+                    return await fetchFromCafe24(true);
+                }
+                throw err;
+            }
+        };
+
+        const response = await fetchFromCafe24();
+        const product = response.data.product;
+
+        if (!product) {
+            return res.status(404).json({ success: false, message: 'Product not found' });
+        }
+
+        // 옵션 추출 (색상/컬러 우선)
+        let myOptions = [];
+        let rawOptionList = [];
+
+        if (product.options) {
+            if (Array.isArray(product.options)) {
+                rawOptionList = product.options;
+            } else if (product.options.options && Array.isArray(product.options.options)) {
+                rawOptionList = product.options.options;
+            }
+        }
+
+        if (rawOptionList.length > 0) {
+            let targetOption = rawOptionList.find(opt => {
+                const name = (opt.option_name || opt.name || "").toLowerCase();
+                return name.includes('색상') || name.includes('color') || name.includes('컬러');
+            });
+
+            if (!targetOption) targetOption = rawOptionList[0];
+
+            if (targetOption && targetOption.option_value) {
+                myOptions = targetOption.option_value.map(val => ({
+                    option_code: val.value_no || val.value_code || val.value,
+                    option_name: val.value_name || val.option_text || val.name
+                }));
+            }
+        }
+
+        console.log(`[Cafe24] 옵션 조회 완료: ${product.product_name} → ${myOptions.length}개 옵션`);
+
+        res.json({
+            success: true,
+            product_no: product.product_no,
+            product_name: product.product_name,
+            options: myOptions
+        });
+
+    } catch (error) {
+        console.error("[Cafe24 Option API Error]:", error.response ? error.response.data : error.message);
+        res.status(500).json({ success: false, message: "Cafe24 API Error" });
+    }
+});
