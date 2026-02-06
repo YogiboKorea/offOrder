@@ -132,6 +132,108 @@ app.get('/api/cafe24/products', async (req, res) => {
     }
 });
 
+
+
+// 5-1. Cafe24 상품 검색 (옵션 추출 로직 수정됨)
+app.get('/api/cafe24/products', async (req, res) => {
+    try {
+        const { keyword } = req.query;
+        if (!keyword) return res.json({ success: true, count: 0, data: [] });
+
+        if (!CAFE24_MALLID) {
+            return res.status(500).json({ success: false, message: "Server Config Error: Missing Mall ID" });
+        }
+
+        console.log(`🔍 Searching Product: "${keyword}"`);
+
+        // API 호출 함수
+        const fetchFromCafe24 = async (retry = false) => {
+            try {
+                return await axios.get(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
+                    {
+                        params: {
+                            shop_no: 1,
+                            product_name: keyword,
+                            display: 'T',
+                            selling: 'T',
+                            embed: 'options,images',
+                            limit: 50
+                        },
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Cafe24-Api-Version': '2025-12-01'
+                        }
+                    }
+                );
+            } catch (err) {
+                if (err.response && err.response.status === 401 && !retry) {
+                    console.log("⚠️ Token expired. Refreshing...");
+                    await refreshAccessToken();
+                    return await fetchFromCafe24(true);
+                }
+                throw err;
+            }
+        };
+
+        const response = await fetchFromCafe24();
+        const products = response.data.products || [];
+
+        // ★★★ [핵심 수정] 옵션 데이터 정제 로직 강화 ★★★
+        const cleanData = products.map(p => {
+            let myOptions = [];
+            
+            // 카페24 응답 구조가 상황에 따라 다를 수 있어 안전하게 추출
+            // 보통 p.options.options 배열 안에 { name: "색상", option_value: [...] } 형태로 들어있음
+            let optionList = [];
+            if (p.options) {
+                if (Array.isArray(p.options)) optionList = p.options;
+                else if (p.options.options && Array.isArray(p.options.options)) optionList = p.options.options;
+            }
+
+            if (optionList.length > 0) {
+                // 옵션 목록 중 '색상'이나 '컬러'가 포함된 옵션을 우선 찾음
+                let targetOption = optionList.find(opt => {
+                    const name = (opt.option_name || opt.name || "").toLowerCase();
+                    return name.includes('색상') || name.includes('color') || name.includes('컬러');
+                });
+
+                // 없으면 첫 번째 옵션 사용 (예: 사이즈 등)
+                if (!targetOption) {
+                    targetOption = optionList[0];
+                }
+
+                // 해당 옵션의 세부 값들(Red, Blue 등)을 추출
+                if (targetOption && targetOption.option_value) {
+                    myOptions = targetOption.option_value.map(val => ({
+                        option_code: val.value_no || val.value_code,
+                        option_name: val.value_name || val.option_text || val.name
+                    }));
+                }
+            }
+
+            return {
+                product_no: p.product_no,
+                product_name: p.product_name,
+                price: Math.floor(Number(p.price)),
+                // 이미지 추출
+                detail_image: (p.images && p.images[0] && p.images[0].big) || p.detail_image || '',
+                list_image: (p.images && p.images[0] && p.images[0].medium) || p.list_image || '',
+                small_image: (p.images && p.images[0] && p.images[0].small) || p.small_image || '',
+                // 추출된 옵션 리스트 할당
+                options: myOptions 
+            };
+        });
+
+        res.json({ success: true, count: cleanData.length, data: cleanData });
+
+    } catch (error) {
+        console.error("[Cafe24 API Error]:", error.response ? error.response.data : error.message);
+        res.status(500).json({ success: false, message: "Cafe24 API Error" });
+    }
+});
+
 // --- API: 주문 저장 ---
 app.post('/api/ordersOffData', async (req, res) => {
     try {
