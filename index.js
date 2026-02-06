@@ -13,18 +13,18 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// 미들웨어 설정
-app.use(cors());
-app.use(compression());
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname, "public")));
-app.use(express.json());
-
+// CORS 설정 (하나로 통합)
 app.use(cors({
-    origin: '*', // Allow all origins (easiest for development)
+    origin: '*', // 모든 도메인 허용 (개발용)
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
+// 미들웨어 설정
+app.use(compression());
+app.use(express.json()); // bodyParser.json() 대신 사용 가능
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
 
 // MongoDB 설정
 const MONGODB_URI = process.env.MONGODB_URI;
@@ -40,25 +40,29 @@ const CAFE24_API_VERSION = process.env.CAFE24_API_VERSION || '2025-12-01';
 
 // ★ 전역 변수 (DB 및 토큰)
 let db;
-let accessToken = process.env.ACCESS_TOKEN ;
-let refreshToken = process.env.REFRESH_TOKEN ;
+let accessToken = process.env.ACCESS_TOKEN;
+let refreshToken = process.env.REFRESH_TOKEN;
 
 // ==========================================
 // [2] MongoDB 연결 및 서버 시작
 // ==========================================
+// 주의: app.listen은 DB 연결이 성공한 후에 한 번만 실행해야 합니다.
 MongoClient.connect(MONGODB_URI)
     .then(client => {
         console.log(`✅ MongoDB Connected to [${DB_NAME}]`);
         db = client.db(DB_NAME); // 전역 db 변수에 할당
 
-        // 서버 시작 전 토큰 로드
+        // 서버 시작 전 DB에 저장된 토큰이 있는지 확인하고 로드
         getTokensFromDB().then(() => {
             app.listen(PORT, () => {
                 console.log(`🚀 Server running on port ${PORT}`);
             });
         });
     })
-    .catch(err => console.error("❌ MongoDB Connection Error:", err));
+    .catch(err => {
+        console.error("❌ MongoDB Connection Error:", err);
+        process.exit(1); // 치명적 에러 시 프로세스 종료
+    });
 
 
 // ==========================================
@@ -77,6 +81,7 @@ async function getTokensFromDB() {
             console.log('🔑 Token Loaded from DB');
         } else {
             console.log('⚠️ No tokens in DB. Using env vars if available.');
+            // 환경변수에 토큰이 있다면 DB에 초기값 저장
             if (accessToken && refreshToken) {
                 await saveTokensToDB(accessToken, refreshToken);
             }
@@ -91,7 +96,7 @@ async function saveTokensToDB(newAccessToken, newRefreshToken) {
     try {
         const collection = db.collection(COLLECTION_TOKENS);
         await collection.updateOne(
-            {},
+            {}, // 첫 번째 문서를 타겟 (싱글톤처럼 사용)
             {
                 $set: {
                     accessToken: newAccessToken,
@@ -99,7 +104,7 @@ async function saveTokensToDB(newAccessToken, newRefreshToken) {
                     updatedAt: new Date(),
                 },
             },
-            { upsert: true }
+            { upsert: true } // 없으면 생성
         );
         console.log('💾 Tokens Saved to DB');
     } catch (error) {
@@ -256,7 +261,7 @@ app.get('/api/cafe24/products', async (req, res) => {
 
 
 // ==========================================
-// [5] API: 오프라인 주문 관리 (OFF_ORDER DB)
+// [5] API: 오프라인 주문 관리 (OFFLINE_ORDER DB)
 // ==========================================
 
 // 5-1. [POST] 주문 생성 (작성)
@@ -268,9 +273,18 @@ app.post('/api/ordersOffData', async (req, res) => {
             store_name, manager_name,
             customer_name, customer_phone, address,
             product_name, option_name,
-            quantity, price, total_amount, shipping_cost,
+            total_amount, shipping_cost,
+            items, // 여러 상품 배열 (프론트에서 items로 보냄)
             is_synced
         } = req.body;
+
+        // items 배열이 있으면 그대로 저장, 없으면 단일 상품 정보로 저장 (호환성)
+        const orderItems = items && Array.isArray(items) ? items : [{
+            product_name: product_name,
+            option_name: option_name,
+            price: 0, // 단일 품목일 때 가격 계산 필요시 로직 추가
+            quantity: 1
+        }];
 
         const newOrder = {
             store_name: store_name || '미지정',
@@ -278,12 +292,17 @@ app.post('/api/ordersOffData', async (req, res) => {
             customer_name,
             customer_phone,
             address: address || '',
-            product_name,
+            
+            // 대표 정보 (리스트용)
+            product_name, 
             option_name,
-            quantity: Number(quantity) || 1,
-            price: Number(price) || 0,
-            shipping_cost: Number(shipping_cost) || 0,
+            
             total_amount: Number(total_amount) || 0,
+            shipping_cost: Number(shipping_cost) || 0,
+            
+            // 상세 품목 리스트
+            items: orderItems,
+
             is_synced: is_synced || false,
             created_at: new Date(),
             synced_at: null
@@ -395,7 +414,4 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
 app.get('/api/test/expire-token', (req, res) => {
     accessToken = "INVALID_TOKEN_TEST"; 
     res.json({ message: 'Token corrupted for testing' });
-});
-app.listen(PORT, () => {
-    console.log(`Server is running on port ${PORT}`);
 });
