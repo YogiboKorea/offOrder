@@ -10,10 +10,10 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
-// CORS 설정 (모든 도메인 허용)
+// ★★★ CORS 설정 (PUT 추가됨) ★★★
 app.use(cors({
     origin: '*',
-    methods: ['GET', 'POST', 'DELETE', 'OPTIONS','PUT'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
@@ -50,12 +50,10 @@ async function startServer() {
         if (!MONGODB_URI) throw new Error("MONGODB_URI is missing in .env");
         if (!CAFE24_MALLID) throw new Error("CAFE24_MALLID is missing in .env");
 
-        // DB 연결
         const client = await MongoClient.connect(MONGODB_URI);
         console.log(`✅ MongoDB Connected to [${DB_NAME}]`);
         db = client.db(DB_NAME);
 
-        // 토큰 로드
         try {
             const tokenDoc = await db.collection(COLLECTION_TOKENS).findOne({});
             if (tokenDoc) {
@@ -69,7 +67,6 @@ async function startServer() {
             console.error("⚠️ Token Load Warning:", e.message);
         }
 
-        // 서버 실행
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
         });
@@ -84,7 +81,7 @@ startServer();
 
 
 // ==========================================
-// [4] 토큰 갱신 함수 (API 요청 실패 시 자동 호출)
+// [4] 토큰 갱신 함수
 // ==========================================
 async function refreshAccessToken() {
     console.log(`🚨 Refreshing Access Token...`);
@@ -105,7 +102,6 @@ async function refreshAccessToken() {
         const newAccessToken = response.data.access_token;
         const newRefreshToken = response.data.refresh_token;
 
-        // 변수 및 DB 갱신
         accessToken = newAccessToken;
         refreshToken = newRefreshToken;
 
@@ -131,7 +127,7 @@ async function refreshAccessToken() {
 // [5] API 라우트
 // ==========================================
 
-// 5-1. Cafe24 상품 검색 (이미지, 옵션 상세 로직 적용됨)
+// 5-1. Cafe24 상품 검색
 app.get('/api/cafe24/products', async (req, res) => {
     try {
         const { keyword } = req.query;
@@ -139,7 +135,6 @@ app.get('/api/cafe24/products', async (req, res) => {
 
         console.log(`🔍 Searching Product: "${keyword}"`);
 
-        // 재시도 로직이 포함된 API 호출 내부 함수
         const fetchFromCafe24 = async (retry = false) => {
             try {
                 return await axios.get(
@@ -150,7 +145,6 @@ app.get('/api/cafe24/products', async (req, res) => {
                             product_name: keyword,
                             display: 'T',
                             selling: 'T',
-                            // ★★★ 요청하신 핵심 부분: options와 images를 embed로 가져옴
                             embed: 'options,images',
                             limit: 50
                         },
@@ -162,7 +156,6 @@ app.get('/api/cafe24/products', async (req, res) => {
                     }
                 );
             } catch (err) {
-                // 토큰 만료(401) 시 1회 재시도
                 if (err.response && err.response.status === 401 && !retry) {
                     console.log("⚠️ Token expired. Refreshing...");
                     await refreshAccessToken();
@@ -175,9 +168,7 @@ app.get('/api/cafe24/products', async (req, res) => {
         const response = await fetchFromCafe24();
         const products = response.data.products || [];
 
-        // ★★★ [데이터 정제] 요청하신 로직 적용 (이미지, 옵션 추출)
         const cleanData = products.map(item => {
-            // 1. 옵션 처리 (색상/컬러 우선 추출)
             let myOptions = [];
             let rawOptionList = [];
 
@@ -190,18 +181,15 @@ app.get('/api/cafe24/products', async (req, res) => {
             }
 
             if (rawOptionList.length > 0) {
-                // '색상', 'color', '컬러'가 포함된 옵션을 우선 찾음
                 let targetOption = rawOptionList.find(opt => {
                     const name = (opt.option_name || opt.name || "").toLowerCase();
                     return name.includes('색상') || name.includes('color') || name.includes('컬러');
                 });
 
-                // 없으면 첫 번째 옵션을 사용
                 if (!targetOption && rawOptionList.length > 0) {
                     targetOption = rawOptionList[0];
                 }
 
-                // 옵션 값 추출 (Code, Name 매핑)
                 if (targetOption && targetOption.option_value) {
                     myOptions = targetOption.option_value.map(val => ({
                         option_code: val.value_no || val.value_code || val.value, 
@@ -210,17 +198,14 @@ app.get('/api/cafe24/products', async (req, res) => {
                 }
             }
 
-            // 2. 이미지 URL 추출 (embed='images' 결과 활용)
             let detailImage = '';
             let listImage = '';
             let smallImage = '';
 
-            // 2-1. 기본 필드 체크
             if (item.detail_image) detailImage = item.detail_image;
             if (item.list_image) listImage = item.list_image;
             if (item.small_image) smallImage = item.small_image;
 
-            // 2-2. images 배열(embed 결과)에서 고화질 이미지 우선 확보
             if (item.images && Array.isArray(item.images) && item.images.length > 0) {
                 const firstImage = item.images[0];
                 if (!detailImage && firstImage.big) detailImage = firstImage.big;
@@ -228,7 +213,6 @@ app.get('/api/cafe24/products', async (req, res) => {
                 if (!smallImage && firstImage.small) smallImage = firstImage.small;
             }
 
-            // 2-3. 대체 이미지 필드 체크
             if (!detailImage && item.product_image) detailImage = item.product_image;
             if (!detailImage && item.image_url) detailImage = item.image_url;
 
@@ -236,9 +220,7 @@ app.get('/api/cafe24/products', async (req, res) => {
                 product_no: item.product_no,
                 product_name: item.product_name,
                 price: Math.floor(Number(item.price)),
-                options: myOptions, // 정제된 옵션 리스트
-                
-                // 정제된 이미지 URL
+                options: myOptions,
                 detail_image: detailImage,
                 list_image: listImage,
                 small_image: smallImage
@@ -255,12 +237,11 @@ app.get('/api/cafe24/products', async (req, res) => {
 });
 
 
-// 5-2. 주문 저장 (오프라인 주문 DB)
+// 5-2. 주문 저장
 app.post('/api/ordersOffData', async (req, res) => {
     try {
         const orderData = req.body;
         
-        // items 배열 데이터 보정
         const items = orderData.items || [{
             product_name: orderData.product_name,
             option_name: orderData.option_name,
@@ -278,7 +259,7 @@ app.post('/api/ordersOffData', async (req, res) => {
             synced_at: null
         };
         
-        delete newOrder._id; // 자동생성 ID 충돌 방지
+        delete newOrder._id;
 
         const result = await db.collection(COLLECTION_ORDERS).insertOne(newOrder);
         res.json({ success: true, message: "Order Saved", orderId: result.insertedId });
@@ -356,11 +337,12 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
     }
 });
 
-// =============================================
-// server.js에 추가할 코드 (기존 라우트 아래에 붙여넣기)
-// =============================================
 
-// 5-6. 주문 수정 (PUT)
+// ==========================================
+// [6] 신규 추가 라우트
+// ==========================================
+
+// 6-1. 주문 수정 (PUT)
 app.put('/api/ordersOffData/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -408,8 +390,7 @@ app.put('/api/ordersOffData/:id', async (req, res) => {
     }
 });
 
-
-// 5-7. 단일 상품 옵션 조회 (product_no로 Cafe24에서 컬러 옵션 가져오기)
+// 6-2. 단일 상품 옵션 조회 (컬러 변경용)
 app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
     try {
         const { productNo } = req.params;
@@ -448,7 +429,6 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Product not found' });
         }
 
-        // 옵션 추출 (색상/컬러 우선)
         let myOptions = [];
         let rawOptionList = [];
 
@@ -465,7 +445,6 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
                 const name = (opt.option_name || opt.name || "").toLowerCase();
                 return name.includes('색상') || name.includes('color') || name.includes('컬러');
             });
-
             if (!targetOption) targetOption = rawOptionList[0];
 
             if (targetOption && targetOption.option_value) {
@@ -477,13 +456,7 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
         }
 
         console.log(`[Cafe24] 옵션 조회 완료: ${product.product_name} → ${myOptions.length}개 옵션`);
-
-        res.json({
-            success: true,
-            product_no: product.product_no,
-            product_name: product.product_name,
-            options: myOptions
-        });
+        res.json({ success: true, product_no: product.product_no, product_name: product.product_name, options: myOptions });
 
     } catch (error) {
         console.error("[Cafe24 Option API Error]:", error.response ? error.response.data : error.message);
