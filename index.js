@@ -550,3 +550,76 @@ app.post('/api/mappings/bulk', async (req, res) => {
         res.status(500).json({ success: false, message: 'Bulk Import Error' });
     }
 });
+
+// ==========================================
+// [8] ★★★ 정적 JSON 데이터 서빙 ★★★
+// ==========================================
+// 메모리 캐시 (서버 시작 시 1회 로드)
+let cachedItemCodes = null;
+let cachedEcountStores = null;
+let cachedStaticManagers = null;
+
+function loadJsonFile(filename) {
+    const filePath = path.join(__dirname, filename);
+    if (!fs.existsSync(filePath)) return null;
+    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
+// 8-1. 품목코드 (ITEM_CODES.json)
+app.get('/api/item-codes', (req, res) => {
+    try {
+        if (!cachedItemCodes) {
+            cachedItemCodes = loadJsonFile('ITEM_CODES.json');
+            if (cachedItemCodes) console.log(`📦 ITEM_CODES 로드: ${cachedItemCodes.length}건`);
+        }
+        if (!cachedItemCodes) return res.status(404).json({ success: false, message: 'ITEM_CODES.json 없음' });
+        res.json({ success: true, count: cachedItemCodes.length, data: cachedItemCodes });
+    } catch (e) {
+        console.error('Item Codes Error:', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 8-2. 거래처코드 (ECOUNT_STORES.json)
+app.get('/api/ecount-stores', (req, res) => {
+    try {
+        if (!cachedEcountStores) {
+            cachedEcountStores = loadJsonFile('ECOUNT_STORES.json');
+            if (cachedEcountStores) console.log(`📦 ECOUNT_STORES 로드: ${cachedEcountStores.length}건`);
+        }
+        if (!cachedEcountStores) return res.status(404).json({ success: false, message: 'ECOUNT_STORES.json 없음' });
+        res.json({ success: true, count: cachedEcountStores.length, data: cachedEcountStores });
+    } catch (e) {
+        console.error('Ecount Stores Error:', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 8-3. 담당자 정적리스트 (STATIC_MANAGER_LIST.json)
+app.get('/api/static-managers', (req, res) => {
+    try {
+        if (!cachedStaticManagers) {
+            cachedStaticManagers = loadJsonFile('STATIC_MANAGER_LIST.json');
+            if (cachedStaticManagers) console.log(`📦 STATIC_MANAGERS 로드: ${cachedStaticManagers.length}건`);
+        }
+        if (!cachedStaticManagers) return res.status(404).json({ success: false, message: 'STATIC_MANAGER_LIST.json 없음' });
+        res.json({ success: true, count: cachedStaticManagers.length, data: cachedStaticManagers });
+    } catch (e) {
+        console.error('Static Managers Error:', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 8-4. 캐시 리프레시 (JSON 파일 수정 후 재로드)
+app.post('/api/reload-json', (req, res) => {
+    cachedItemCodes = loadJsonFile('ITEM_CODES.json');
+    cachedEcountStores = loadJsonFile('ECOUNT_STORES.json');
+    cachedStaticManagers = loadJsonFile('STATIC_MANAGER_LIST.json');
+    console.log('🔄 JSON 캐시 리프레시 완료');
+    res.json({
+        success: true,
+        itemCodes: cachedItemCodes ? cachedItemCodes.length : 0,
+        ecountStores: cachedEcountStores ? cachedEcountStores.length : 0,
+        staticManagers: cachedStaticManagers ? cachedStaticManagers.length : 0
+    });
+});
