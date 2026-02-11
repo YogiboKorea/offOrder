@@ -331,17 +331,25 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// 6-5. ★ 주문 복구 (Restore)
+// 6-5. ★ 주문 복구 (Restore & Reset Sync)
 app.put('/api/ordersOffData/restore/:id', async (req, res) => {
     try {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
 
+        // 수정됨: 삭제 취소(is_deleted: false) + 전송 상태 초기화(is_synced: false)
         await db.collection(COLLECTION_ORDERS).updateOne(
             { _id: new ObjectId(id) },
-            { $set: { is_deleted: false, deleted_at: null } }
+            { 
+                $set: { 
+                    is_deleted: false, 
+                    deleted_at: null,
+                    is_synced: false,  // ★ 전송 완료 상태 해제
+                    synced_at: null    // ★ 전송 시간 초기화
+                } 
+            }
         );
-        res.json({ success: true, message: '복구 완료' });
+        res.json({ success: true, message: '상태가 초기화되었습니다.' });
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
