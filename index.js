@@ -26,9 +26,14 @@ app.use(express.urlencoded({ extended: true }));
 // ==========================================
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = "OFFLINE_ORDER"; 
+
+// ★ 컬렉션 정의 (모든 관리 항목 DB화)
 const COLLECTION_ORDERS = "ordersOffData";
 const COLLECTION_TOKENS = "tokens";
-const COLLECTION_MAPPINGS = "managerMappings";  // ★ 담당자-매장 매핑
+const COLLECTION_MAPPINGS = "managerMappings";      // 매니저-매장 매핑
+const COLLECTION_STORES = "ecountStores";           // 거래처 목록
+const COLLECTION_STATIC_MANAGERS = "staticManagers";// 직원 목록
+const COLLECTION_WAREHOUSES = "ecountWarehouses";   // ★ 추가: 창고 목록
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
 const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
@@ -54,6 +59,7 @@ async function startServer() {
         console.log(`✅ MongoDB Connected to [${DB_NAME}]`);
         db = client.db(DB_NAME);
 
+        // 토큰 로드
         try {
             const tokenDoc = await db.collection(COLLECTION_TOKENS).findOne({});
             if (tokenDoc) {
@@ -67,8 +73,11 @@ async function startServer() {
             console.error("⚠️ Token Load Warning:", e.message);
         }
 
-        // ★ 매핑 시딩: DB가 비어있으면 managers.json에서 초기 데이터 로드
-        await seedMappingsFromJSON();
+        // ★ [DB 마이그레이션] JSON -> MongoDB 자동 시딩 (창고 포함)
+        await seedCollectionFromJSON('managers.json', COLLECTION_MAPPINGS);
+        await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
+        await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
+        await seedCollectionFromJSON('ECOUNT_WAREHOUSE.json', COLLECTION_WAREHOUSES); // ★ 창고 자동 시딩 추가
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
@@ -83,56 +92,45 @@ async function startServer() {
 startServer();
 
 // ==========================================
-// [3-1] ★ managers.json → MongoDB 시딩
+// [3-1] ★ JSON -> MongoDB 시딩 유틸리티
 // ==========================================
-async function seedMappingsFromJSON(force = false) {
+async function seedCollectionFromJSON(filename, collectionName) {
     try {
-        const jsonPath = path.join(__dirname, 'managers.json');
-        if (!fs.existsSync(jsonPath)) {
-            console.log("📋 managers.json 없음 → 시딩 스킵");
-            return { seeded: false, reason: 'no_file' };
+        const count = await db.collection(collectionName).countDocuments();
+        if (count > 0) {
+            console.log(`📋 [${collectionName}] 데이터 ${count}건 존재 → 시딩 스킵`);
+            return;
         }
 
-        const count = await db.collection(COLLECTION_MAPPINGS).countDocuments();
-        if (count > 0 && !force) {
-            console.log(`📋 매핑 데이터 ${count}건 존재 → 시딩 스킵`);
-            return { seeded: false, reason: 'data_exists', count };
+        const jsonPath = path.join(__dirname, filename);
+        if (!fs.existsSync(jsonPath)) {
+            console.log(`📋 [${collectionName}] 초기화용 ${filename} 없음 → 시딩 스킵`);
+            return;
         }
 
         const raw = fs.readFileSync(jsonPath, 'utf-8');
-        const managers = JSON.parse(raw);
-        if (!Array.isArray(managers) || managers.length === 0) {
-            console.log("📋 managers.json 비어있음 → 시딩 스킵");
-            return { seeded: false, reason: 'empty_file' };
+        const data = JSON.parse(raw);
+
+        if (!Array.isArray(data) || data.length === 0) {
+            console.log(`📋 [${collectionName}] JSON 파일 비어있음 → 시딩 스킵`);
+            return;
         }
 
-        if (force) {
-            await db.collection(COLLECTION_MAPPINGS).deleteMany({});
-            console.log("🗑️ 기존 매핑 데이터 삭제");
-        }
+        // DB 삽입 시 _id 충돌 방지를 위해 기존 데이터 정제
+        const docs = data.map(item => {
+            const { _id, ...rest } = item; 
+            return { ...rest, created_at: new Date(), source: 'json_seed' };
+        });
 
-        const docs = managers.map(m => ({
-            manager_code: m.manager_code || '',
-            manager_name: m.manager_name || '',
-            store_name: m.store_name || '',
-            store_code: m.store_code || '',
-            warehouse: m.warehouse || 'Y000',
-            trade_type: m.trade_type || '부가세율 적용',
-            created_at: new Date(),
-            source: 'json_seed'
-        }));
-
-        const result = await db.collection(COLLECTION_MAPPINGS).insertMany(docs);
-        console.log(`✅ managers.json → MongoDB 시딩 완료: ${result.insertedCount}건`);
-        return { seeded: true, count: result.insertedCount };
+        const result = await db.collection(collectionName).insertMany(docs);
+        console.log(`✅ [${collectionName}] 초기 데이터 시딩 완료: ${result.insertedCount}건`);
     } catch (e) {
-        console.error("⚠️ 매핑 시딩 오류:", e.message);
-        return { seeded: false, reason: 'error', error: e.message };
+        console.error(`⚠️ [${collectionName}] 시딩 오류:`, e.message);
     }
 }
 
 // ==========================================
-// [4] 토큰 갱신 함수
+// [4] 토큰 갱신 함수 (Cafe24)
 // ==========================================
 async function refreshAccessToken() {
     console.log(`🚨 Refreshing Access Token...`);
@@ -171,10 +169,9 @@ async function refreshAccessToken() {
 }
 
 // ==========================================
-// [5] API 라우트 - Cafe24
+// [5] API 라우트 - Cafe24 (상품/옵션 검색)
 // ==========================================
-
-// 5-1. Cafe24 상품 검색
+// (기존 코드와 동일 - 생략 없이 포함되어야 함)
 app.get('/api/cafe24/products', async (req, res) => {
     try {
         const { keyword } = req.query;
@@ -244,7 +241,6 @@ app.get('/api/cafe24/products', async (req, res) => {
             };
         });
 
-        console.log(`[Cafe24] 검색 완료: ${cleanData.length}건 반환`);
         res.json({ success: true, count: cleanData.length, data: cleanData });
 
     } catch (error) {
@@ -253,12 +249,9 @@ app.get('/api/cafe24/products', async (req, res) => {
     }
 });
 
-// 5-2. 단일 상품 옵션 조회
 app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
     try {
         const { productNo } = req.params;
-        console.log(`🎨 Fetching options for product_no: ${productNo}`);
-
         const fetchFromCafe24 = async (retry = false) => {
             try {
                 return await axios.get(
@@ -300,7 +293,6 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
             }
         }
 
-        console.log(`[Cafe24] 옵션 조회: ${product.product_name} → ${myOptions.length}개`);
         res.json({ success: true, product_no: product.product_no, product_name: product.product_name, options: myOptions });
 
     } catch (error) {
@@ -309,11 +301,10 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
     }
 });
 
+
 // ==========================================
 // [6] API 라우트 - 주문 CRUD
 // ==========================================
-
-// 6-1. 주문 저장
 app.post('/api/ordersOffData', async (req, res) => {
     try {
         const d = req.body;
@@ -333,7 +324,6 @@ app.post('/api/ordersOffData', async (req, res) => {
     }
 });
 
-// 6-2. 주문 조회
 app.get('/api/ordersOffData', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword } = req.query;
@@ -357,20 +347,18 @@ app.get('/api/ordersOffData', async (req, res) => {
     }
 });
 
-// 6-3. 주문 수정 (PUT)
 app.put('/api/ordersOffData/:id', async (req, res) => {
     try {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: 'Invalid ID' });
-
+        
         const u = req.body;
         const f = {};
-
-        // 허용 필드 목록
+        // 허용 필드
         ['store_name','customer_name','customer_phone','customer_address',
          'manager_name','manager_code','payment_method','promotion1','promotion2',
          'warehouse','marketing_consent','set_purchase','cover_purchase',
-         'shipping_memo','product_name'
+         'shipping_memo','product_name','sales_type'
         ].forEach(k => { if (u[k] !== undefined) f[k] = u[k]; });
 
         if (u.shipping_cost !== undefined) f.shipping_cost = Number(u.shipping_cost);
@@ -387,23 +375,17 @@ app.put('/api/ordersOffData/:id', async (req, res) => {
         }
 
         f.updated_at = new Date();
-
         const result = await db.collection(COLLECTION_ORDERS).updateOne(
             { _id: new ObjectId(id) }, { $set: f }
         );
-
         if (result.matchedCount === 0) return res.status(404).json({ success: false, message: 'Not found' });
-
-        console.log(`✏️ Order Updated: ${id}`);
         res.json({ success: true, message: 'Order Updated' });
-
     } catch (error) {
         console.error('Order Update Error:', error);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 6-4. 주문 삭제
 app.delete('/api/ordersOffData/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -417,13 +399,10 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
     }
 });
 
-// 6-5. ERP 동기화
 app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
         const { orderIds } = req.body;
-        if (!orderIds || !Array.isArray(orderIds) || orderIds.length === 0) {
-            return res.status(400).json({ success: false, message: 'No IDs' });
-        }
+        if (!orderIds || !Array.isArray(orderIds)) return res.status(400).json({ success: false, message: 'No IDs' });
         const objectIds = orderIds.map(id => new ObjectId(id));
         const result = await db.collection(COLLECTION_ORDERS).updateMany(
             { _id: { $in: objectIds } },
@@ -436,22 +415,19 @@ app.post('/api/ordersOffData/sync', async (req, res) => {
     }
 });
 
-// ==========================================
-// [7] ★★★ 담당자·매장 매핑 CRUD ★★★
-// ==========================================
 
-// 7-1. 매핑 목록 조회
+// ==========================================
+// [7] 매니저 매핑 (Mapping) CRUD
+// ==========================================
 app.get('/api/mappings', async (req, res) => {
     try {
         const mappings = await db.collection(COLLECTION_MAPPINGS).find({}).sort({ manager_name: 1 }).toArray();
         res.json({ success: true, count: mappings.length, data: mappings });
     } catch (error) {
-        console.error('Mapping List Error:', error);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 7-2. 매핑 생성
 app.post('/api/mappings', async (req, res) => {
     try {
         const { manager_code, manager_name, store_name, store_code, warehouse, trade_type } = req.body;
@@ -465,15 +441,12 @@ app.post('/api/mappings', async (req, res) => {
             created_at: new Date()
         };
         const result = await db.collection(COLLECTION_MAPPINGS).insertOne(doc);
-        console.log(`📎 Mapping Created: ${manager_name} (${manager_code}) → ${store_name}`);
         res.json({ success: true, id: result.insertedId });
     } catch (error) {
-        console.error('Mapping Create Error:', error);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 7-3. 매핑 수정
 app.put('/api/mappings/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -485,171 +458,113 @@ app.put('/api/mappings/:id', async (req, res) => {
         await db.collection(COLLECTION_MAPPINGS).updateOne({ _id: new ObjectId(id) }, { $set: f });
         res.json({ success: true });
     } catch (error) {
-        console.error('Mapping Update Error:', error);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 7-4. 매핑 삭제
 app.delete('/api/mappings/:id', async (req, res) => {
     try {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
         await db.collection(COLLECTION_MAPPINGS).deleteOne({ _id: new ObjectId(id) });
-        console.log(`🗑️ Mapping Deleted: ${id}`);
         res.json({ success: true });
     } catch (error) {
-        console.error('Mapping Delete Error:', error);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 7-5. ★ JSON 재시딩 (managers.json → MongoDB 강제 덮어쓰기)
-app.post('/api/mappings/seed', async (req, res) => {
-    try {
-        const result = await seedMappingsFromJSON(true);
-        const mappings = await db.collection(COLLECTION_MAPPINGS).find({}).sort({ manager_name: 1 }).toArray();
-        res.json({ success: true, message: `시딩 완료: ${mappings.length}건`, ...result, data: mappings });
-    } catch (error) {
-        console.error('Seed Error:', error);
-        res.status(500).json({ success: false, message: 'Seed Error' });
-    }
-});
 
-// 7-6. ★ 벌크 임포트 (어드민에서 JSON 배열로 일괄 등록)
-app.post('/api/mappings/bulk', async (req, res) => {
-    try {
-        const { managers, replace } = req.body;
-        if (!Array.isArray(managers) || managers.length === 0) {
-            return res.status(400).json({ success: false, message: '데이터 없음' });
-        }
-
-        if (replace) {
-            await db.collection(COLLECTION_MAPPINGS).deleteMany({});
-            console.log("🗑️ 벌크 임포트: 기존 데이터 삭제");
-        }
-
-        const docs = managers.map(m => ({
-            manager_code: String(m.manager_code || '').trim(),
-            manager_name: String(m.manager_name || '').trim(),
-            store_name: String(m.store_name || '').trim(),
-            store_code: String(m.store_code || '').trim(),
-            warehouse: String(m.warehouse || 'Y000').trim(),
-            trade_type: String(m.trade_type || '부가세율 적용').trim(),
-            created_at: new Date(),
-            source: 'bulk_import'
-        }));
-
-        const result = await db.collection(COLLECTION_MAPPINGS).insertMany(docs);
-        console.log(`📦 벌크 임포트 완료: ${result.insertedCount}건 (replace: ${!!replace})`);
-        
-        const all = await db.collection(COLLECTION_MAPPINGS).find({}).sort({ manager_name: 1 }).toArray();
-        res.json({ success: true, insertedCount: result.insertedCount, total: all.length, data: all });
-    } catch (error) {
-        console.error('Bulk Import Error:', error);
-        res.status(500).json({ success: false, message: 'Bulk Import Error' });
-    }
-});
-
-// ==========================================
-// [8] ★★★ 정적 JSON 데이터 서빙 ★★★
-// ==========================================
-let cachedItemCodes = null;
-let cachedEcountStores = null;
-let cachedStaticManagers = null;
-let cachedEcountWarehouses = null;
+// =================================================================
+// [8] ★★★ DB 기반 정적 데이터 관리 (Store, Manager, Warehouse) ★★★
+// =================================================================
 
 function loadJsonFile(filename) {
     const filePath = path.join(__dirname, filename);
-    if (!fs.existsSync(filePath)) return null;
+    if (!fs.existsSync(filePath)) return [];
     try {
-        const data = fs.readFileSync(filePath, 'utf-8');
-        return JSON.parse(data);
-    } catch (e) {
-        console.error(`❌ ${filename} 파싱 에러:`, e.message);
-        return [];
-    }
+        return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    } catch { return []; }
 }
 
-function saveJsonFile(filename, data) {
-    const filePath = path.join(__dirname, filename);
-    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
-    console.log(`💾 ${filename} 저장 완료: ${data.length}건`);
-}
-
-// 8-1. 품목코드 (ITEM_CODES.json)
+// 8-1. 품목코드 (ITEM_CODES.json) - 읽기 전용 (JSON 유지)
+let cachedItemCodes = null;
 app.get('/api/item-codes', (req, res) => {
     if (!cachedItemCodes) cachedItemCodes = loadJsonFile('ITEM_CODES.json');
-    res.json({ success: true, count: cachedItemCodes ? cachedItemCodes.length : 0, data: cachedItemCodes || [] });
+    res.json({ success: true, count: cachedItemCodes.length, data: cachedItemCodes });
 });
 
-// 8-2. 거래처코드 (ECOUNT_STORES.json) - 조회
-app.get('/api/ecount-stores', (req, res) => {
-    if (!cachedEcountStores) cachedEcountStores = loadJsonFile('ECOUNT_STORES.json');
-    res.json({ success: true, count: cachedEcountStores ? cachedEcountStores.length : 0, data: cachedEcountStores || [] });
+// 8-2. ★ 거래처 목록 (ECOUNT_STORES) - DB 사용
+app.get('/api/ecount-stores', async (req, res) => {
+    try {
+        const stores = await db.collection(COLLECTION_STORES).find({}).toArray();
+        res.json({ success: true, count: stores.length, data: stores });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
 });
-
-// 8-2-1. ★ 거래처코드 (ECOUNT_STORES.json) - 전체 저장
-app.put('/api/ecount-stores', (req, res) => {
+app.put('/api/ecount-stores', async (req, res) => {
     try {
         const { data } = req.body;
-        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data format' });
-        saveJsonFile('ECOUNT_STORES.json', data);
-        cachedEcountStores = data;
-        res.json({ success: true, count: data.length });
+        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data' });
+        await db.collection(COLLECTION_STORES).deleteMany({});
+        const cleanData = data.map(item => { const { _id, ...rest } = item; return { ...rest, updated_at: new Date() }; });
+        if (cleanData.length > 0) await db.collection(COLLECTION_STORES).insertMany(cleanData);
+        res.json({ success: true, count: cleanData.length });
     } catch (e) {
-        console.error('ECOUNT_STORES Save Error:', e.message);
-        res.status(500).json({ success: false, message: e.message });
+        res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 8-3. 담당자 정적리스트 (STATIC_MANAGER_LIST.json) - 조회
-app.get('/api/static-managers', (req, res) => {
-    if (!cachedStaticManagers) cachedStaticManagers = loadJsonFile('STATIC_MANAGER_LIST.json');
-    res.json({ success: true, count: cachedStaticManagers ? cachedStaticManagers.length : 0, data: cachedStaticManagers || [] });
+// 8-3. ★ 담당자 목록 (STATIC_MANAGERS) - DB 사용
+app.get('/api/static-managers', async (req, res) => {
+    try {
+        const managers = await db.collection(COLLECTION_STATIC_MANAGERS).find({}).toArray();
+        res.json({ success: true, count: managers.length, data: managers });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
 });
-
-// 8-3-1. ★ 담당자 정적리스트 (STATIC_MANAGER_LIST.json) - 전체 저장
-app.put('/api/static-managers', (req, res) => {
+app.put('/api/static-managers', async (req, res) => {
     try {
         const { data } = req.body;
-        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data format' });
-        saveJsonFile('STATIC_MANAGER_LIST.json', data);
-        cachedStaticManagers = data;
-        res.json({ success: true, count: data.length });
+        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data' });
+        await db.collection(COLLECTION_STATIC_MANAGERS).deleteMany({});
+        const cleanData = data.map(item => { const { _id, ...rest } = item; return { ...rest, updated_at: new Date() }; });
+        if (cleanData.length > 0) await db.collection(COLLECTION_STATIC_MANAGERS).insertMany(cleanData);
+        res.json({ success: true, count: cleanData.length });
     } catch (e) {
-        console.error('STATIC_MANAGER_LIST Save Error:', e.message);
-        res.status(500).json({ success: false, message: e.message });
+        res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 8-4. 창고 리스트 (ECOUNT_WAREHOUSE.json)
-app.get('/api/ecount-warehouses', (req, res) => {
+// 8-4. ★ 창고 목록 (ECOUNT_WAREHOUSES) - ★ DB 사용으로 변경!
+app.get('/api/ecount-warehouses', async (req, res) => {
     try {
-        if (!cachedEcountWarehouses) {
-            cachedEcountWarehouses = loadJsonFile('ECOUNT_WAREHOUSE.json');
-            if (cachedEcountWarehouses) console.log(`📦 ECOUNT_WAREHOUSE 로드: ${cachedEcountWarehouses.length}건`);
-        }
-        if (!cachedEcountWarehouses) return res.json({ success: true, count: 0, data: [] });
-        res.json({ success: true, count: cachedEcountWarehouses.length, data: cachedEcountWarehouses });
+        const warehouses = await db.collection(COLLECTION_WAREHOUSES).find({}).toArray();
+        res.json({ success: true, count: warehouses.length, data: warehouses });
     } catch (e) {
-        console.error('Warehouse Error:', e.message);
-        res.status(500).json({ success: false, message: e.message });
+        res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
+// 창고 목록 저장 (프론트엔드 편집 대비)
+app.put('/api/ecount-warehouses', async (req, res) => {
+    try {
+        const { data } = req.body;
+        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data' });
+        
+        await db.collection(COLLECTION_WAREHOUSES).deleteMany({}); // 기존 데이터 삭제
+        
+        const cleanData = data.map(item => { 
+            const { _id, ...rest } = item; 
+            return { ...rest, updated_at: new Date() }; 
+        });
 
-// 8-5. 캐시 리프레시
-app.post('/api/reload-json', (req, res) => {
-    cachedItemCodes = loadJsonFile('ITEM_CODES.json');
-    cachedEcountStores = loadJsonFile('ECOUNT_STORES.json');
-    cachedStaticManagers = loadJsonFile('STATIC_MANAGER_LIST.json');
-    cachedEcountWarehouses = loadJsonFile('ECOUNT_WAREHOUSE.json');
-    console.log('🔄 JSON 캐시 리프레시 완료');
-    res.json({
-        success: true,
-        itemCodes: cachedItemCodes ? cachedItemCodes.length : 0,
-        ecountStores: cachedEcountStores ? cachedEcountStores.length : 0,
-        staticManagers: cachedStaticManagers ? cachedStaticManagers.length : 0,
-        ecountWarehouses: cachedEcountWarehouses ? cachedEcountWarehouses.length : 0
-    });
+        if (cleanData.length > 0) await db.collection(COLLECTION_WAREHOUSES).insertMany(cleanData);
+        
+        console.log(`💾 DB: ECOUNT_WAREHOUSES 갱신 완료 (${cleanData.length}건)`);
+        res.json({ success: true, count: cleanData.length });
+    } catch (e) {
+        console.error('ECOUNT_WAREHOUSES Save Error:', e);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
 });
