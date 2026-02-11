@@ -153,7 +153,7 @@ app.get('/api/cafe24/products', async (req, res) => {
                 return await axios.get(
                     `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
                     {
-                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 50 },
+                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100 },
                         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-Cafe24-Api-Version': CAFE24_API_VERSION }
                     }
                 );
@@ -235,18 +235,24 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
 // ==========================================
 // [6] ★★★ API 라우트 - 주문 CRUD (휴지통 기능 포함)
 // ==========================================
-
-// 6-1. 주문 조회 (필터링 + 휴지통 뷰)
+// 6-1. 주문 조회 (필터링 + 휴지통 + 전송완료 뷰 구분)
 app.get('/api/ordersOffData', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword, view } = req.query;
         let query = {};
 
-        // ★ [핵심] 휴지통 뷰 로직
+        // ★ [핵심 수정] 뷰 모드에 따른 필터링
         if (view === 'trash') {
-            query.is_deleted = true; // 삭제된 것만
+            // 1. 휴지통: 삭제된 데이터만
+            query.is_deleted = true;
+        } else if (view === 'completed') {
+            // 2. 전송완료: 삭제 안 되고 + 동기화 된(is_synced: true) 데이터
+            query.is_deleted = { $ne: true };
+            query.is_synced = true;
         } else {
-            query.is_deleted = { $ne: true }; // 삭제되지 않은 것만 (null or false)
+            // 3. 기본(Active): 삭제 안 되고 + 아직 동기화 안 된(is_synced: false or null) 데이터
+            query.is_deleted = { $ne: true };
+            query.is_synced = { $ne: true }; 
         }
 
         if (store_name && store_name !== '전체' && store_name !== 'null') query.store_name = store_name;
