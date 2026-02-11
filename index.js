@@ -550,14 +550,14 @@ app.post('/api/mappings/bulk', async (req, res) => {
         res.status(500).json({ success: false, message: 'Bulk Import Error' });
     }
 });
+
 // ==========================================
 // [8] ★★★ 정적 JSON 데이터 서빙 ★★★
 // ==========================================
-// 메모리 캐시 (서버 시작 시 1회 로드)
 let cachedItemCodes = null;
 let cachedEcountStores = null;
 let cachedStaticManagers = null;
-let cachedEcountWarehouses = null; // [추가] 창고 캐시 변수
+let cachedEcountWarehouses = null;
 
 function loadJsonFile(filename) {
     const filePath = path.join(__dirname, filename);
@@ -571,36 +571,66 @@ function loadJsonFile(filename) {
     }
 }
 
+function saveJsonFile(filename, data) {
+    const filePath = path.join(__dirname, filename);
+    fs.writeFileSync(filePath, JSON.stringify(data, null, 2), 'utf-8');
+    console.log(`💾 ${filename} 저장 완료: ${data.length}건`);
+}
+
 // 8-1. 품목코드 (ITEM_CODES.json)
 app.get('/api/item-codes', (req, res) => {
     if (!cachedItemCodes) cachedItemCodes = loadJsonFile('ITEM_CODES.json');
     res.json({ success: true, count: cachedItemCodes ? cachedItemCodes.length : 0, data: cachedItemCodes || [] });
 });
 
-// 8-2. 거래처코드 (ECOUNT_STORES.json)
+// 8-2. 거래처코드 (ECOUNT_STORES.json) - 조회
 app.get('/api/ecount-stores', (req, res) => {
     if (!cachedEcountStores) cachedEcountStores = loadJsonFile('ECOUNT_STORES.json');
     res.json({ success: true, count: cachedEcountStores ? cachedEcountStores.length : 0, data: cachedEcountStores || [] });
 });
 
-// 8-3. 담당자 정적리스트 (STATIC_MANAGER_LIST.json)
+// 8-2-1. ★ 거래처코드 (ECOUNT_STORES.json) - 전체 저장
+app.put('/api/ecount-stores', (req, res) => {
+    try {
+        const { data } = req.body;
+        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data format' });
+        saveJsonFile('ECOUNT_STORES.json', data);
+        cachedEcountStores = data;
+        res.json({ success: true, count: data.length });
+    } catch (e) {
+        console.error('ECOUNT_STORES Save Error:', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 8-3. 담당자 정적리스트 (STATIC_MANAGER_LIST.json) - 조회
 app.get('/api/static-managers', (req, res) => {
     if (!cachedStaticManagers) cachedStaticManagers = loadJsonFile('STATIC_MANAGER_LIST.json');
     res.json({ success: true, count: cachedStaticManagers ? cachedStaticManagers.length : 0, data: cachedStaticManagers || [] });
 });
 
-// 8-4. [추가] 창고 리스트 (ECOUNT_WAREHOUSE.json)
+// 8-3-1. ★ 담당자 정적리스트 (STATIC_MANAGER_LIST.json) - 전체 저장
+app.put('/api/static-managers', (req, res) => {
+    try {
+        const { data } = req.body;
+        if (!Array.isArray(data)) return res.status(400).json({ success: false, message: 'Invalid data format' });
+        saveJsonFile('STATIC_MANAGER_LIST.json', data);
+        cachedStaticManagers = data;
+        res.json({ success: true, count: data.length });
+    } catch (e) {
+        console.error('STATIC_MANAGER_LIST Save Error:', e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 8-4. 창고 리스트 (ECOUNT_WAREHOUSE.json)
 app.get('/api/ecount-warehouses', (req, res) => {
     try {
         if (!cachedEcountWarehouses) {
             cachedEcountWarehouses = loadJsonFile('ECOUNT_WAREHOUSE.json');
             if (cachedEcountWarehouses) console.log(`📦 ECOUNT_WAREHOUSE 로드: ${cachedEcountWarehouses.length}건`);
         }
-        
-        if (!cachedEcountWarehouses) {
-            // 파일이 없을 경우 빈 배열 반환 (에러 방지)
-            return res.json({ success: true, count: 0, data: [] });
-        }
+        if (!cachedEcountWarehouses) return res.json({ success: true, count: 0, data: [] });
         res.json({ success: true, count: cachedEcountWarehouses.length, data: cachedEcountWarehouses });
     } catch (e) {
         console.error('Warehouse Error:', e.message);
@@ -608,19 +638,18 @@ app.get('/api/ecount-warehouses', (req, res) => {
     }
 });
 
-// 8-5. 캐시 리프레시 (JSON 파일 수정 후 재로드) - 수정됨
+// 8-5. 캐시 리프레시
 app.post('/api/reload-json', (req, res) => {
     cachedItemCodes = loadJsonFile('ITEM_CODES.json');
     cachedEcountStores = loadJsonFile('ECOUNT_STORES.json');
     cachedStaticManagers = loadJsonFile('STATIC_MANAGER_LIST.json');
-    cachedEcountWarehouses = loadJsonFile('ECOUNT_WAREHOUSE.json'); // [추가]
-    
+    cachedEcountWarehouses = loadJsonFile('ECOUNT_WAREHOUSE.json');
     console.log('🔄 JSON 캐시 리프레시 완료');
     res.json({
         success: true,
         itemCodes: cachedItemCodes ? cachedItemCodes.length : 0,
         ecountStores: cachedEcountStores ? cachedEcountStores.length : 0,
         staticManagers: cachedStaticManagers ? cachedStaticManagers.length : 0,
-        ecountWarehouses: cachedEcountWarehouses ? cachedEcountWarehouses.length : 0 // [추가]
+        ecountWarehouses: cachedEcountWarehouses ? cachedEcountWarehouses.length : 0
     });
 });
