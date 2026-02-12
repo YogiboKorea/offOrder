@@ -377,18 +377,54 @@ app.put('/api/ordersOffData/restore/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// 6-6. ERP 동기화 처리
+// ==========================================
+// [수정] 6-6. ERP 동기화 처리 (성공/실패 결과 반영)
+// ==========================================
 app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
-        const { orderIds } = req.body;
-        const objectIds = orderIds.map(id => new ObjectId(id));
-        const result = await db.collection(COLLECTION_ORDERS).updateMany(
-            { _id: { $in: objectIds } },
-            { $set: { is_synced: true, synced_at: new Date() } }
-        );
-        res.json({ success: true, updatedCount: result.modifiedCount });
-    } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
+        // 클라이언트에서 { results: [ { id: "...", status: "SUCCESS" }, { id: "...", status: "FAIL", message: "..." } ] } 형태로 보낸다고 가정
+        const { results } = req.body; 
+
+        if (!results || !Array.isArray(results)) {
+            return res.status(400).json({ success: false, message: "데이터 형식이 올바르지 않습니다." });
+        }
+
+        let successCount = 0;
+        let failCount = 0;
+
+        // 대량 업데이트를 위한 BulkWrite 사용
+        const bulkOps = results.map(item => {
+            const updateData = {
+                is_synced: true,           // 전송 완료 탭으로 이동
+                synced_at: new Date(),     // 전송 시간
+                ecount_status: item.status, // 'SUCCESS' 또는 'FAIL'
+                ecount_message: item.message || '' // 실패 사유 (성공이면 빈값)
+            };
+
+            if (item.status === 'SUCCESS') successCount++;
+            else failCount++;
+
+            return {
+                updateOne: {
+                    filter: { _id: new ObjectId(item.id) },
+                    update: { $set: updateData }
+                }
+            };
+        });
+
+        if (bulkOps.length > 0) {
+            await db.collection(COLLECTION_ORDERS).bulkWrite(bulkOps);
+        }
+
+        res.json({ success: true, updatedCount: results.length, successCount, failCount });
+
+    } catch (error) { 
+        console.error(error);
+        res.status(500).json({ success: false, message: 'DB Error' }); 
+    }
 });
+
+
 
 
 // =================================================================
