@@ -361,22 +361,22 @@ app.put('/api/ordersOffData/restore/:id', async (req, res) => {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
 
-        // 수정됨: 삭제 취소(is_deleted: false) + 전송 상태 초기화(is_synced: false)
         await db.collection(COLLECTION_ORDERS).updateOne(
             { _id: new ObjectId(id) },
             { 
                 $set: { 
                     is_deleted: false, 
                     deleted_at: null,
-                    is_synced: false,  // ★ 전송 완료 상태 해제
-                    synced_at: null    // ★ 전송 시간 초기화
+                    is_synced: false,  // 미전송 상태로 복구
+                    synced_at: null,
+                    ecount_status: null, // ★ [추가] 상태 초기화
+                    ecount_message: null // ★ [추가] 메시지 초기화
                 } 
             }
         );
         res.json({ success: true, message: '상태가 초기화되었습니다.' });
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
-
 // ==========================================
 // [수정] 6-6. ERP 동기화 처리 (성공/실패 결과 반영)
 // ==========================================
