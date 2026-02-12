@@ -42,7 +42,6 @@ const CAFE24_API_VERSION = '2025-12-01';
 let db;
 let accessToken = process.env.ACCESS_TOKEN;
 let refreshToken = process.env.REFRESH_TOKEN;
-
 // ==========================================
 // [3] 서버 시작 (DB 연결 → 시딩 → 리슨)
 // ==========================================
@@ -68,19 +67,20 @@ async function startServer() {
             }
         } catch (e) { console.error("⚠️ Token Load Warning:", e.message); }
 
-        // ★ [DB 마이그레이션] JSON -> MongoDB 자동 시딩
-        // DB 컬렉션이 비어있을 때만 JSON 파일 내용을 DB로 옮깁니다.
+        // ★★★ [수정됨] JSON 파일 로드 삭제 -> 코드 내 데이터로 강제 초기화 ★★★
+        // 기존: await seedCollectionFromJSON('ECOUNT_WAREHOUSE.json', COLLECTION_WAREHOUSES); (삭제)
+        await initializeWarehouseDB(); // <--- 이걸로 교체!
+
+        // (매장, 직원은 파일에서 로드 유지)
         await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
         await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
-        await seedCollectionFromJSON('ECOUNT_WAREHOUSE.json', COLLECTION_WAREHOUSES);
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
         });
 
     } catch (err) {
-        console.error("🔥 Critical Error - Server Failed to Start:");
-        console.error(err);
+        console.error("🔥 Server Error:", err);
     }
 }
 
