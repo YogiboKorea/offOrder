@@ -472,8 +472,8 @@ app.get('/api/test-connection', async (req, res) => {
     console.log("🚀 비즈엠 연결 테스트 시작...");
 
     // ★ 1. 내 정보 입력 (정확해야 함)
-    const userId = "";      // 본인 아이디
-    const profileKey = "";  // 40자 키
+    const userId = "yogibo";      // 본인 아이디
+    const profileKey = "7f0718f622e9570e112cfed6fc37ee69af402469";  // 40자 키
     const myPhone = "01031030321";     // 수신받을 내 휴대폰 번호 (하이픈 없이)
 
     // ★ 2. 일부러 없는 템플릿 코드로 요청 보냄
