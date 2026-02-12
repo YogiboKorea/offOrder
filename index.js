@@ -555,6 +555,61 @@ app.put('/api/ecount-warehouses', async (req, res) => {
 });
 
 
+// ==========================================
+// [8] ★ CS 메모 관리 (New)
+// ==========================================
+const COLLECTION_CS_MEMOS = "csMemos"; // DB 컬렉션 명
+
+// 8-1. 특정 주문의 메모 불러오기
+app.get('/api/cs-memos/:orderId', async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const memos = await db.collection(COLLECTION_CS_MEMOS)
+            .find({ order_id: orderId })
+            .sort({ created_at: -1 }) // 최신순 정렬
+            .toArray();
+        res.json({ success: true, data: memos });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+
+// 8-2. 메모 저장하기
+app.post('/api/cs-memos', async (req, res) => {
+    try {
+        const { orderId, content, writer } = req.body;
+        if (!orderId || !content) return res.status(400).json({ success: false });
+
+        const newMemo = {
+            order_id: orderId,
+            content: content,
+            writer: writer || '관리자', // 작성자 (로그인 기능 없으면 기본값)
+            created_at: new Date()
+        };
+
+        await db.collection(COLLECTION_CS_MEMOS).insertOne(newMemo);
+        res.json({ success: true, message: '저장되었습니다.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+
+// 8-3. 메모 삭제하기
+app.delete('/api/cs-memos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
+
+        await db.collection(COLLECTION_CS_MEMOS).deleteOne({ _id: new ObjectId(id) });
+        res.json({ success: true, message: '삭제되었습니다.' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+
+
+
+///비즈앱
 const BIZM_USER_ID = process.env.BIZM_USER_ID;
 const BIZM_PROFILE_KEY = process.env.BIZM_PROFILE_KEY;
 const BIZM_SENDER_PHONE = process.env.BIZM_SENDER_PHONE;
