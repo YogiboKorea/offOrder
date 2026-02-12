@@ -439,3 +439,56 @@ app.put('/api/ecount-warehouses', async (req, res) => {
         res.json({ success: true, count: cleanData.length });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
+
+// ==========================================
+// [테스트] 비즈엠 API 연결 확인용 (즉시 실행)
+// ==========================================
+app.get('/api/test-connection', async (req, res) => {
+    console.log("🚀 비즈엠 연결 테스트 시작...");
+
+    // ★ 1. 내 정보 입력 (정확해야 함)
+    const userId = "yogibo";      // 본인 아이디
+    const profileKey = "7f0718f622e9570e112cfed6fc37ee69af402469";  // 40자 키
+    const myPhone = "01031030321";     // 수신받을 내 휴대폰 번호 (하이픈 없이)
+
+    // ★ 2. 일부러 없는 템플릿 코드로 요청 보냄
+    const payload = [{
+        "message_type": "at",
+        "phn": myPhone,
+        "profile": profileKey,
+        "tmplId": "TEST_TEMPLATE_999", // ❌ 일부러 넣은 가짜 코드
+        "msg": "이것은 연결 테스트입니다.",
+        "reserveDt": "00000000000000"
+    }];
+
+    try {
+        const response = await axios.post(
+            'https://alimtalk-api.bizmsg.kr/v2/sender/send', 
+            payload,
+            {
+                headers: {
+                    'userid': userId,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log("📡 비즈엠 응답:", response.data);
+        
+        // 결과 분석해서 보여주기
+        res.json({
+            status: "통신 성공 (서버가 응답함)",
+            bizm_response: response.data
+        });
+
+    } catch (error) {
+        console.error("❌ 통신 실패:", error.message);
+        // 비즈엠 서버 자체가 응답을 안 하거나(IP차단 등), 주소가 틀렸을 때
+        if (error.response) {
+            res.json({ status: "비즈엠 서버 에러", detail: error.response.data });
+        } else {
+            res.json({ status: "네트워크/코드 에러", detail: error.message });
+        }
+    }
+});
