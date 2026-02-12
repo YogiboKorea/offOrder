@@ -122,6 +122,30 @@ async function seedCollectionFromJSON(filename, collectionName) {
 }
 
 // ==========================================
+// [추가] 창고 데이터 초기화 함수
+// ==========================================
+async function initializeWarehouseDB() {
+    try {
+        const collection = db.collection(COLLECTION_WAREHOUSES);
+        const count = await collection.countDocuments();
+
+        if (count === 0) {
+            console.log("📋 [ECOUNT_WAREHOUSES] 데이터 없음 -> 기본 데이터 삽입 중...");
+            const defaultWarehouses = [
+                { warehouse_code: 'C0001', warehouse_name: '판매입력(물류센터) (기본)', created_at: new Date() },
+                // 필요하신 다른 기본 창고가 있다면 여기에 추가하세요.
+            ];
+            await collection.insertMany(defaultWarehouses);
+            console.log("✅ 기본 창고 데이터 초기화 완료");
+        } else {
+            console.log(`📋 [ECOUNT_WAREHOUSES] 기존 데이터 ${count}건 존재`);
+        }
+    } catch (e) {
+        console.error("⚠️ 창고 DB 초기화 오류:", e.message);
+    }
+}
+
+// ==========================================
 // [4] 토큰 갱신 함수
 // ==========================================
 async function refreshAccessToken() {
@@ -448,8 +472,8 @@ app.get('/api/test-connection', async (req, res) => {
     console.log("🚀 비즈엠 연결 테스트 시작...");
 
     // ★ 1. 내 정보 입력 (정확해야 함)
-    const userId = "yogibo";      // 본인 아이디
-    const profileKey = "7f0718f622e9570e112cfed6fc37ee69af402469";  // 40자 키
+    const userId = "";      // 본인 아이디
+    const profileKey = "";  // 40자 키
     const myPhone = "01031030321";     // 수신받을 내 휴대폰 번호 (하이픈 없이)
 
     // ★ 2. 일부러 없는 템플릿 코드로 요청 보냄
