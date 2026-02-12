@@ -153,7 +153,7 @@ app.get('/api/cafe24/products', async (req, res) => {
                 return await axios.get(
                     `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
                     {
-                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100 },
+                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100 ,sort:'created_date',order:'asc'},
                         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-Cafe24-Api-Version': CAFE24_API_VERSION }
                     }
                 );
