@@ -424,7 +424,61 @@ app.post('/api/ordersOffData/sync', async (req, res) => {
     }
 });
 
+// [추가] 6-7. ★ 내용 기반 동기화 (ID 없을 때 사용)
+app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
+    try {
+        const { results } = req.body; // 매크로가 보낸 데이터
+        if (!results || !Array.isArray(results)) return res.status(400).json({ success: false });
 
+        let successCount = 0;
+        let failCount = 0;
+
+        // 하나씩 순회하며 업데이트 (BulkWrite는 조건이 복잡해서 for loop가 안전)
+        for (const item of results) {
+            const { matchKey, status, message } = item;
+            
+            // 금액 포맷 제거 (15,000 -> 15000)
+            const amount = typeof matchKey.total_amount === 'string' 
+                ? Number(matchKey.total_amount.replace(/,/g, '')) 
+                : matchKey.total_amount;
+
+            // ★ DB에서 찾을 조건 (가장 유니크한 조합)
+            // 1. 미전송 상태인 것 (is_synced: false)
+            // 2. 이름, 연락처, 금액이 일치하는 것
+            const query = {
+                is_synced: { $ne: true }, // 아직 전송 안 된 것 중에서 찾기
+                customer_name: matchKey.customer_name,
+                // 연락처는 하이픈 유무 등으로 다를 수 있어 정규식이나 부분일치 권장하지만 일단 정확 일치 시도
+                // customer_phone: matchKey.customer_phone, 
+                total_amount: amount
+            };
+
+            // 업데이트 내용
+            const update = {
+                $set: {
+                    is_synced: true, // 전송 완료 탭으로 이동
+                    synced_at: new Date(),
+                    ecount_status: status, // 'SUCCESS' or 'FAIL'
+                    ecount_message: message || ''
+                }
+            };
+
+            // 업데이트 실행 (가장 최근 것 하나만)
+            const result = await db.collection(COLLECTION_ORDERS).updateOne(query, update);
+            
+            if (result.modifiedCount > 0) {
+                if (status === 'SUCCESS') successCount++;
+                else failCount++;
+            }
+        }
+
+        res.json({ success: true, processed: results.length, successCount, failCount });
+
+    } catch (error) {
+        console.error("Sync Error:", error);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
 
 
 // =================================================================
