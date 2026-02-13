@@ -15,33 +15,41 @@ const PORT = process.env.PORT || 8080;
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization', 'userid'] // userid 허용 (비즈엠용)
 }));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ==========================================
-// [2] 환경변수 및 DB 설정
+// [2] 환경변수 및 DB 컬렉션 설정
 // ==========================================
 const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = "OFFLINE_ORDER"; 
 
-// 컬렉션 정의
-const COLLECTION_ORDERS = "ordersOffData";          // 주문 데이터 (휴지통 기능 포함)
+const COLLECTION_ORDERS = "ordersOffData";          // 주문 데이터
 const COLLECTION_TOKENS = "tokens";                 // 토큰 관리
-const COLLECTION_STORES = "ecountStores";           // 매장 목록 (DB 관리)
-const COLLECTION_STATIC_MANAGERS = "staticManagers";// 직원 목록 (DB 관리)
-const COLLECTION_WAREHOUSES = "ecountWarehouses";   // ★ 창고 목록 (DB 관리)
+const COLLECTION_STORES = "ecountStores";           // 매장 목록
+const COLLECTION_STATIC_MANAGERS = "staticManagers";// 직원 목록
+const COLLECTION_WAREHOUSES = "ecountWarehouses";   // 창고 목록
+const COLLECTION_CS_MEMOS = "csMemos";              // CS 메모
+const COLLECTION_CREDENTIALS = "storeCredentials";  // 매장 비밀번호 관리
 
+// API 및 외부 연동 설정
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
 const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
 const CAFE24_CLIENT_SECRET = process.env.CAFE24_CLIENT_SECRET;
 const CAFE24_API_VERSION = '2025-12-01';
 
+const BIZM_USER_ID = process.env.BIZM_USER_ID;
+const BIZM_PROFILE_KEY = process.env.BIZM_PROFILE_KEY;
+const BIZM_SENDER_PHONE = process.env.BIZM_SENDER_PHONE;
+const MY_DOMAIN = process.env.MY_DOMAIN || "https://yogibo.kr"; // 영수증 URL용 도메인
+
 let db;
 let accessToken = process.env.ACCESS_TOKEN;
 let refreshToken = process.env.REFRESH_TOKEN;
+
 // ==========================================
 // [3] 서버 시작 (DB 연결 → 시딩 → 리슨)
 // ==========================================
@@ -67,11 +75,7 @@ async function startServer() {
             }
         } catch (e) { console.error("⚠️ Token Load Warning:", e.message); }
 
-        // ★★★ [수정됨] JSON 파일 로드 삭제 -> 코드 내 데이터로 강제 초기화 ★★★
-        // 기존: await seedCollectionFromJSON('ECOUNT_WAREHOUSE.json', COLLECTION_WAREHOUSES); (삭제)
-        await initializeWarehouseDB(); // <--- 이걸로 교체!
-
-        // (매장, 직원은 파일에서 로드 유지)
+        await initializeWarehouseDB(); 
         await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
         await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
 
@@ -83,71 +87,49 @@ async function startServer() {
         console.error("🔥 Server Error:", err);
     }
 }
-
 startServer();
 
-// ==========================================
-// [3-1] ★ JSON -> MongoDB 시딩 유틸리티
-// ==========================================
+// JSON 시딩 유틸리티
 async function seedCollectionFromJSON(filename, collectionName) {
     try {
         const count = await db.collection(collectionName).countDocuments();
-        if (count > 0) {
-            console.log(`📋 [${collectionName}] 데이터 ${count}건 존재 → 시딩 스킵`);
-            return;
-        }
+        if (count > 0) { console.log(`📋 [${collectionName}] 데이터 존재 → 시딩 스킵`); return; }
 
         const jsonPath = path.join(__dirname, filename);
-        if (!fs.existsSync(jsonPath)) {
-            console.log(`📋 [${collectionName}] 초기화용 ${filename} 없음 → 시딩 스킵`);
-            return;
-        }
+        if (!fs.existsSync(jsonPath)) { console.log(`📋 [${collectionName}] 초기화 파일 없음 → 시딩 스킵`); return; }
 
         const raw = fs.readFileSync(jsonPath, 'utf-8');
         const data = JSON.parse(raw);
 
         if (!Array.isArray(data) || data.length === 0) return;
 
-        // DB 삽입 시 _id 충돌 방지를 위해 기존 데이터 정제
         const docs = data.map(item => {
             const { _id, ...rest } = item; 
             return { ...rest, created_at: new Date(), source: 'json_seed' };
         });
 
-        const result = await db.collection(collectionName).insertMany(docs);
-        console.log(`✅ [${collectionName}] JSON 데이터 시딩 완료: ${result.insertedCount}건`);
-    } catch (e) {
-        console.error(`⚠️ [${collectionName}] 시딩 오류:`, e.message);
-    }
+        await db.collection(collectionName).insertMany(docs);
+        console.log(`✅ [${collectionName}] JSON 시딩 완료: ${docs.length}건`);
+    } catch (e) { console.error(`⚠️ [${collectionName}] 시딩 오류:`, e.message); }
 }
 
-// ==========================================
-// [추가] 창고 데이터 초기화 함수
-// ==========================================
+// 창고 데이터 초기화
 async function initializeWarehouseDB() {
     try {
         const collection = db.collection(COLLECTION_WAREHOUSES);
         const count = await collection.countDocuments();
-
         if (count === 0) {
-            console.log("📋 [ECOUNT_WAREHOUSES] 데이터 없음 -> 기본 데이터 삽입 중...");
+            console.log("📋 [ECOUNT_WAREHOUSES] 기본 창고 데이터 삽입 중...");
             const defaultWarehouses = [
-                { warehouse_code: 'C0001', warehouse_name: '판매입력(물류센터) (기본)', created_at: new Date() },
-                // 필요하신 다른 기본 창고가 있다면 여기에 추가하세요.
+                { warehouse_code: 'C0001', warehouse_name: '판매입력(물류센터) (기본)', created_at: new Date() }
             ];
             await collection.insertMany(defaultWarehouses);
             console.log("✅ 기본 창고 데이터 초기화 완료");
-        } else {
-            console.log(`📋 [ECOUNT_WAREHOUSES] 기존 데이터 ${count}건 존재`);
         }
-    } catch (e) {
-        console.error("⚠️ 창고 DB 초기화 오류:", e.message);
-    }
+    } catch (e) { console.error("⚠️ 창고 DB 초기화 오류:", e.message); }
 }
 
-// ==========================================
-// [4] 토큰 갱신 함수
-// ==========================================
+// 토큰 갱신
 async function refreshAccessToken() {
     console.log(`🚨 Refreshing Access Token...`);
     try {
@@ -165,7 +147,48 @@ async function refreshAccessToken() {
 }
 
 // ==========================================
-// [5] API 라우트 - Cafe24 (상품 조회)
+// [4] 매장 접속 권한 관리 (비밀번호)
+// ==========================================
+
+// 4-1. 매장 비밀번호 설정/저장 (Admin용)
+app.post('/api/auth/store/password', async (req, res) => {
+    try {
+        const { storeName, password } = req.body;
+        if (!storeName || !password) return res.status(400).json({ success: false, message: '값 누락' });
+
+        await db.collection(COLLECTION_CREDENTIALS).updateOne(
+            { storeName: storeName }, 
+            { $set: { password: password, updatedAt: new Date() } }, 
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false, message: 'DB Error' }); }
+});
+
+// 4-2. 매장 로그인 검증 (Manager용)
+app.post('/api/auth/store/login', async (req, res) => {
+    try {
+        const { storeName, password } = req.body;
+        const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ storeName: storeName });
+        
+        if (cred && cred.password === password) {
+            res.json({ success: true });
+        } else {
+            res.json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
+        }
+    } catch (e) { res.status(500).json({ success: false, message: 'DB Error' }); }
+});
+
+// 4-3. 전체 매장 비밀번호 조회 (Admin용)
+app.get('/api/auth/store/credentials', async (req, res) => {
+    try {
+        const credentials = await db.collection(COLLECTION_CREDENTIALS).find({}).toArray();
+        res.json({ success: true, data: credentials });
+    } catch (e) { res.status(500).json({ success: false, message: 'DB Error' }); }
+});
+
+// ==========================================
+// [5] Cafe24 API (상품 & 옵션 조회)
 // ==========================================
 app.get('/api/cafe24/products', async (req, res) => {
     try {
@@ -177,7 +200,7 @@ app.get('/api/cafe24/products', async (req, res) => {
                 return await axios.get(
                     `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
                     {
-                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100 ,sort:'created_date',order:'asc'},
+                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100, sort: 'created_date', order: 'asc' },
                         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-Cafe24-Api-Version': CAFE24_API_VERSION }
                     }
                 );
@@ -194,11 +217,8 @@ app.get('/api/cafe24/products', async (req, res) => {
         const products = response.data.products || [];
         const cleanData = products.map(item => {
             let myOptions = [];
-            let rawOptionList = [];
-            if (item.options) {
-                if (Array.isArray(item.options)) rawOptionList = item.options;
-                else if (item.options.options) rawOptionList = item.options.options;
-            }
+            let rawOptionList = item.options ? (Array.isArray(item.options) ? item.options : item.options.options) : [];
+            
             if (rawOptionList.length > 0) {
                 let targetOption = rawOptionList.find(opt => {
                     const name = (opt.option_name || opt.name || "").toLowerCase();
@@ -240,6 +260,7 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
         const product = response.data.product;
         let myOptions = [];
         let rawOptionList = Array.isArray(product.options) ? product.options : (product.options && product.options.options ? product.options.options : []);
+        
         if (rawOptionList.length > 0) {
             let targetOption = rawOptionList.find(opt => {
                 const name = (opt.option_name || opt.name || "").toLowerCase();
@@ -257,24 +278,19 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
 });
 
 // ==========================================
-// [6] ★★★ API 라우트 - 주문 CRUD (휴지통 기능 포함)
+// [6] 주문 데이터 CRUD (미전송/완료/휴지통)
 // ==========================================
-// 6-1. 주문 조회 (필터링 + 휴지통 + 전송완료 뷰 구분)
 app.get('/api/ordersOffData', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword, view } = req.query;
         let query = {};
 
-        // ★ [핵심 수정] 뷰 모드에 따른 필터링
         if (view === 'trash') {
-            // 1. 휴지통: 삭제된 데이터만
             query.is_deleted = true;
         } else if (view === 'completed') {
-            // 2. 전송완료: 삭제 안 되고 + 동기화 된(is_synced: true) 데이터
             query.is_deleted = { $ne: true };
             query.is_synced = true;
         } else {
-            // 3. 기본(Active): 삭제 안 되고 + 아직 동기화 안 된(is_synced: false or null) 데이터
             query.is_deleted = { $ne: true };
             query.is_synced = { $ne: true }; 
         }
@@ -295,7 +311,6 @@ app.get('/api/ordersOffData', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// 6-2. 주문 저장
 app.post('/api/ordersOffData', async (req, res) => {
     try {
         const d = req.body;
@@ -305,9 +320,10 @@ app.post('/api/ordersOffData', async (req, res) => {
             total_amount: Number(d.total_amount) || 0,
             shipping_cost: Number(d.shipping_cost) || 0,
             is_synced: false, 
-            is_deleted: false, // 기본값: 삭제 안됨
+            is_deleted: false,
             created_at: new Date(), 
-            synced_at: null
+            synced_at: null,
+            ecount_success: null
         };
         delete newOrder._id;
         const result = await db.collection(COLLECTION_ORDERS).insertOne(newOrder);
@@ -315,16 +331,13 @@ app.post('/api/ordersOffData', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// 6-3. 주문 수정
 app.put('/api/ordersOffData/:id', async (req, res) => {
     try {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
         
         const f = { ...req.body, updated_at: new Date() };
-        delete f._id; // ID 수정 방지
-
-        // 금액 등 숫자 변환
+        delete f._id;
         if (f.shipping_cost !== undefined) f.shipping_cost = Number(f.shipping_cost);
         if (f.total_amount !== undefined) f.total_amount = Number(f.total_amount);
 
@@ -333,29 +346,21 @@ app.put('/api/ordersOffData/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// 6-4. ★ 주문 삭제 (Soft Delete & Hard Delete)
 app.delete('/api/ordersOffData/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { type } = req.query; // ?type=hard 면 완전 삭제
+        const { type } = req.query;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
 
         if (type === 'hard') {
-            // 영구 삭제
-            const result = await db.collection(COLLECTION_ORDERS).deleteOne({ _id: new ObjectId(id) });
-            res.json({ success: true, message: '영구 삭제됨' });
+            await db.collection(COLLECTION_ORDERS).deleteOne({ _id: new ObjectId(id) });
         } else {
-            // 휴지통 이동 (Soft Delete)
-            await db.collection(COLLECTION_ORDERS).updateOne(
-                { _id: new ObjectId(id) },
-                { $set: { is_deleted: true, deleted_at: new Date() } }
-            );
-            res.json({ success: true, message: '휴지통으로 이동됨' });
+            await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(id) }, { $set: { is_deleted: true, deleted_at: new Date() } });
         }
+        res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// 6-5. ★ 주문 복구 (Restore & Reset Sync)
 app.put('/api/ordersOffData/restore/:id', async (req, res) => {
     try {
         const { id } = req.params;
@@ -363,384 +368,137 @@ app.put('/api/ordersOffData/restore/:id', async (req, res) => {
 
         await db.collection(COLLECTION_ORDERS).updateOne(
             { _id: new ObjectId(id) },
-            { 
-                $set: { 
-                    is_deleted: false, 
-                    deleted_at: null,
-                    is_synced: false,  // 미전송 상태로 복구
-                    synced_at: null,
-                    ecount_status: null, // ★ [추가] 상태 초기화
-                    ecount_message: null // ★ [추가] 메시지 초기화
-                } 
-            }
+            { $set: { is_deleted: false, deleted_at: null, is_synced: false, synced_at: null, ecount_status: null, ecount_message: null } }
         );
-        res.json({ success: true, message: '상태가 초기화되었습니다.' });
+        res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
-// ==========================================
-// [수정] 6-6. ERP 동기화 처리 (성공/실패 결과 반영)
-// ==========================================
+
+// ERP 동기화 처리 (성공/실패)
 app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
-        // 클라이언트에서 { results: [ { id: "...", status: "SUCCESS" }, { id: "...", status: "FAIL", message: "..." } ] } 형태로 보낸다고 가정
         const { results } = req.body; 
-
-        if (!results || !Array.isArray(results)) {
-            return res.status(400).json({ success: false, message: "데이터 형식이 올바르지 않습니다." });
-        }
-
-        let successCount = 0;
-        let failCount = 0;
-
-        // 대량 업데이트를 위한 BulkWrite 사용
-        const bulkOps = results.map(item => {
-            const updateData = {
-                is_synced: true,           // 전송 완료 탭으로 이동
-                synced_at: new Date(),     // 전송 시간
-                ecount_status: item.status, // 'SUCCESS' 또는 'FAIL'
-                ecount_message: item.message || '' // 실패 사유 (성공이면 빈값)
-            };
-
-            if (item.status === 'SUCCESS') successCount++;
-            else failCount++;
-
-            return {
-                updateOne: {
-                    filter: { _id: new ObjectId(item.id) },
-                    update: { $set: updateData }
-                }
-            };
-        });
-
-        if (bulkOps.length > 0) {
-            await db.collection(COLLECTION_ORDERS).bulkWrite(bulkOps);
-        }
-
-        res.json({ success: true, updatedCount: results.length, successCount, failCount });
-
-    } catch (error) { 
-        console.error(error);
-        res.status(500).json({ success: false, message: 'DB Error' }); 
-    }
-});
-
-// [추가] 6-7. ★ 내용 기반 동기화 (ID 없을 때 사용)
-app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
-    try {
-        const { results } = req.body; // 매크로가 보낸 데이터
         if (!results || !Array.isArray(results)) return res.status(400).json({ success: false });
 
-        let successCount = 0;
-        let failCount = 0;
-
-        // 하나씩 순회하며 업데이트 (BulkWrite는 조건이 복잡해서 for loop가 안전)
-        for (const item of results) {
-            const { matchKey, status, message } = item;
-            
-            // 금액 포맷 제거 (15,000 -> 15000)
-            const amount = typeof matchKey.total_amount === 'string' 
-                ? Number(matchKey.total_amount.replace(/,/g, '')) 
-                : matchKey.total_amount;
-
-            // ★ DB에서 찾을 조건 (가장 유니크한 조합)
-            // 1. 미전송 상태인 것 (is_synced: false)
-            // 2. 이름, 연락처, 금액이 일치하는 것
-            const query = {
-                is_synced: { $ne: true }, // 아직 전송 안 된 것 중에서 찾기
-                customer_name: matchKey.customer_name,
-                // 연락처는 하이픈 유무 등으로 다를 수 있어 정규식이나 부분일치 권장하지만 일단 정확 일치 시도
-                // customer_phone: matchKey.customer_phone, 
-                total_amount: amount
-            };
-
-            // 업데이트 내용
-            const update = {
-                $set: {
-                    is_synced: true, // 전송 완료 탭으로 이동
-                    synced_at: new Date(),
-                    ecount_status: status, // 'SUCCESS' or 'FAIL'
-                    ecount_message: message || ''
-                }
-            };
-
-            // 업데이트 실행 (가장 최근 것 하나만)
-            const result = await db.collection(COLLECTION_ORDERS).updateOne(query, update);
-            
-            if (result.modifiedCount > 0) {
-                if (status === 'SUCCESS') successCount++;
-                else failCount++;
+        const bulkOps = results.map(item => ({
+            updateOne: {
+                filter: { _id: new ObjectId(item.id) },
+                update: { $set: { 
+                    is_synced: true, synced_at: new Date(), 
+                    ecount_success: item.status === 'SUCCESS', 
+                    ecount_message: item.message || '' 
+                }}
             }
-        }
+        }));
 
-        res.json({ success: true, processed: results.length, successCount, failCount });
-
-    } catch (error) {
-        console.error("Sync Error:", error);
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
+        if (bulkOps.length > 0) await db.collection(COLLECTION_ORDERS).bulkWrite(bulkOps);
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
+app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
+    try {
+        const { results } = req.body;
+        if (!results || !Array.isArray(results)) return res.status(400).json({ success: false });
 
-// =================================================================
-// [7] ★★★ 정적 데이터 관리 (DB 사용) ★★★
-// =================================================================
+        for (const item of results) {
+            const amount = typeof item.matchKey.total_amount === 'string' ? Number(item.matchKey.total_amount.replace(/,/g, '')) : item.matchKey.total_amount;
+            await db.collection(COLLECTION_ORDERS).updateOne(
+                { is_synced: { $ne: true }, customer_name: item.matchKey.customer_name, total_amount: amount },
+                { $set: { is_synced: true, synced_at: new Date(), ecount_success: item.status === 'SUCCESS', ecount_message: item.message || '' } }
+            );
+        }
+        res.json({ success: true });
+    } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
+});
 
-// 7-1. 품목코드 (ITEM_CODES.json) - 파일 유지 (읽기 전용)
+// ==========================================
+// [7] 정적 데이터 관리 (DB 연동)
+// ==========================================
 app.get('/api/item-codes', (req, res) => {
     const filePath = path.join(__dirname, 'ITEM_CODES.json');
     if (!fs.existsSync(filePath)) return res.json({ success: true, count: 0, data: [] });
-    try {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-        res.json({ success: true, count: data.length, data: data });
-    } catch {
-        res.json({ success: true, count: 0, data: [] });
-    }
+    try { res.json({ success: true, count: JSON.parse(fs.readFileSync(filePath, 'utf-8')).length, data: JSON.parse(fs.readFileSync(filePath, 'utf-8')) }); }
+    catch { res.json({ success: true, count: 0, data: [] }); }
 });
 
-// 7-2. 매장 목록 (ECOUNT_STORES) - DB 사용
 app.get('/api/ecount-stores', async (req, res) => {
-    try {
-        const stores = await db.collection(COLLECTION_STORES).find({}).toArray();
-        res.json({ success: true, count: stores.length, data: stores });
-    } catch (e) { res.status(500).json({ success: false }); }
+    const stores = await db.collection(COLLECTION_STORES).find({}).toArray();
+    res.json({ success: true, data: stores });
 });
 app.put('/api/ecount-stores', async (req, res) => {
-    try {
-        const { data } = req.body;
-        await db.collection(COLLECTION_STORES).deleteMany({});
-        const cleanData = data.map(item => { const { _id, ...rest } = item; return { ...rest, updated_at: new Date() }; });
-        if (cleanData.length > 0) await db.collection(COLLECTION_STORES).insertMany(cleanData);
-        res.json({ success: true, count: cleanData.length });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-
-// 7-3. 직원 목록 (STATIC_MANAGERS) - DB 사용
-app.get('/api/static-managers', async (req, res) => {
-    try {
-        const managers = await db.collection(COLLECTION_STATIC_MANAGERS).find({}).toArray();
-        res.json({ success: true, count: managers.length, data: managers });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-app.put('/api/static-managers', async (req, res) => {
-    try {
-        const { data } = req.body;
-        await db.collection(COLLECTION_STATIC_MANAGERS).deleteMany({});
-        const cleanData = data.map(item => { const { _id, ...rest } = item; return { ...rest, updated_at: new Date() }; });
-        if (cleanData.length > 0) await db.collection(COLLECTION_STATIC_MANAGERS).insertMany(cleanData);
-        res.json({ success: true, count: cleanData.length });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-
-// 7-4. ★ 창고 목록 (ECOUNT_WAREHOUSES) - DB 사용
-app.get('/api/ecount-warehouses', async (req, res) => {
-    try {
-        const warehouses = await db.collection(COLLECTION_WAREHOUSES).find({}).toArray();
-        res.json({ success: true, count: warehouses.length, data: warehouses });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-app.put('/api/ecount-warehouses', async (req, res) => {
-    try {
-        const { data } = req.body;
-        // 기존 데이터 삭제 후 일괄 삽입 (편집된 리스트로 갱신)
-        await db.collection(COLLECTION_WAREHOUSES).deleteMany({});
-        
-        const cleanData = data.map(item => { 
-            const { _id, ...rest } = item; 
-            return { ...rest, updated_at: new Date() }; 
-        });
-
-        if (cleanData.length > 0) await db.collection(COLLECTION_WAREHOUSES).insertMany(cleanData);
-        res.json({ success: true, count: cleanData.length });
-    } catch (e) { res.status(500).json({ success: false }); }
-});
-
-
-// ==========================================
-// [8] ★ CS 메모 관리 (New)
-// ==========================================
-const COLLECTION_CS_MEMOS = "csMemos"; // DB 컬렉션 명
-
-// 8-1. 특정 주문의 메모 불러오기
-app.get('/api/cs-memos/:orderId', async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const memos = await db.collection(COLLECTION_CS_MEMOS)
-            .find({ order_id: orderId })
-            .sort({ created_at: -1 }) // 최신순 정렬
-            .toArray();
-        res.json({ success: true, data: memos });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
-});
-
-// 8-2. 메모 저장하기
-app.post('/api/cs-memos', async (req, res) => {
-    try {
-        const { orderId, content, writer } = req.body;
-        if (!orderId || !content) return res.status(400).json({ success: false });
-
-        const newMemo = {
-            order_id: orderId,
-            content: content,
-            writer: writer || '관리자', // 작성자 (로그인 기능 없으면 기본값)
-            created_at: new Date()
-        };
-
-        await db.collection(COLLECTION_CS_MEMOS).insertOne(newMemo);
-        res.json({ success: true, message: '저장되었습니다.' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
-});
-
-// 8-3. 메모 삭제하기
-app.delete('/api/cs-memos/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
-
-        await db.collection(COLLECTION_CS_MEMOS).deleteOne({ _id: new ObjectId(id) });
-        res.json({ success: true, message: '삭제되었습니다.' });
-    } catch (error) {
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
-});
-
-
-//매장 URL 관리및 비밀번호 설정관리
-// 1. 관리자: 비밀번호 설정
-app.post('/api/jwasu/admin/store-auth/update', async (req, res) => {
-    const { storeName, password } = req.body;
-    await db.collection('storeCredentials').updateOne(
-        { storeName }, 
-        { $set: { password, updatedAt: new Date() } }, 
-        { upsert: true }
-    );
+    await db.collection(COLLECTION_STORES).deleteMany({});
+    if(req.body.data.length > 0) await db.collection(COLLECTION_STORES).insertMany(req.body.data.map(i => ({...i, updated_at: new Date()})));
     res.json({ success: true });
 });
 
-// 2. 매니저: 로그인 검증
-app.post('/api/store-auth', async (req, res) => {
-    const { storeName, password } = req.body;
-    const cred = await db.collection('storeCredentials').findOne({ storeName });
-    
-    if (cred && cred.password === password) {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false, message: 'Invalid password' });
-    }
+app.get('/api/static-managers', async (req, res) => {
+    const managers = await db.collection(COLLECTION_STATIC_MANAGERS).find({}).toArray();
+    res.json({ success: true, data: managers });
+});
+app.put('/api/static-managers', async (req, res) => {
+    await db.collection(COLLECTION_STATIC_MANAGERS).deleteMany({});
+    if(req.body.data.length > 0) await db.collection(COLLECTION_STATIC_MANAGERS).insertMany(req.body.data.map(i => ({...i, updated_at: new Date()})));
+    res.json({ success: true });
+});
+
+app.get('/api/ecount-warehouses', async (req, res) => {
+    const warehouses = await db.collection(COLLECTION_WAREHOUSES).find({}).toArray();
+    res.json({ success: true, data: warehouses });
+});
+app.put('/api/ecount-warehouses', async (req, res) => {
+    await db.collection(COLLECTION_WAREHOUSES).deleteMany({});
+    if(req.body.data.length > 0) await db.collection(COLLECTION_WAREHOUSES).insertMany(req.body.data.map(i => ({...i, updated_at: new Date()})));
+    res.json({ success: true });
 });
 
 // ==========================================
-// [8] 매장 접속 권한 관리 (비밀번호)
+// [8] CS 메모 관리
 // ==========================================
-const COLLECTION_CREDENTIALS = "storeCredentials"; // 비밀번호 저장용 DB 컬렉션 이름
-
-// 8-1. 매장 비밀번호 설정 (Admin 페이지에서 호출)
-app.post('/api/auth/store/password', async (req, res) => {
+app.get('/api/cs-memos/:orderId', async (req, res) => {
     try {
-        const { storeName, password } = req.body;
-        
-        console.log(`🔐 비밀번호 설정 요청: ${storeName}`); // 로그 확인용
+        const memos = await db.collection(COLLECTION_CS_MEMOS).find({ order_id: req.params.orderId }).sort({ created_at: -1 }).toArray();
+        res.json({ success: true, data: memos });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
 
-        if (!storeName || !password) {
-            return res.status(400).json({ success: false, message: '값 누락' });
-        }
-
-        // 기존에 비밀번호가 있으면 수정(update), 없으면 생성(insert) -> upsert: true
-        const result = await db.collection(COLLECTION_CREDENTIALS).updateOne(
-            { storeName: storeName }, 
-            { 
-                $set: { 
-                    password: password, 
-                    updatedAt: new Date() 
-                } 
-            }, 
-            { upsert: true }
-        );
-
-        console.log(`✅ 비밀번호 저장 완료: ${result.matchedCount}개 일치, ${result.modifiedCount}개 수정, ${result.upsertedCount}개 생성`);
+app.post('/api/cs-memos', async (req, res) => {
+    try {
+        const { orderId, content, writer } = req.body;
+        await db.collection(COLLECTION_CS_MEMOS).insertOne({ order_id: orderId, content, writer: writer || '관리자', created_at: new Date() });
         res.json({ success: true });
-
-    } catch (e) {
-        console.error("❌ 비밀번호 저장 에러:", e);
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 8-2. 매장 로그인 검증 (Manager 페이지에서 호출)
-app.post('/api/auth/store/login', async (req, res) => {
+app.delete('/api/cs-memos/:id', async (req, res) => {
     try {
-        const { storeName, password } = req.body;
-        
-        // DB에서 해당 매장의 비밀번호 정보를 찾음
-        const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ storeName: storeName });
-        
-        // 데이터가 있고, 비밀번호가 일치하면 성공
-        if (cred && cred.password === password) {
-            console.log(`🔓 로그인 성공: ${storeName}`);
-            res.json({ success: true });
-        } else {
-            console.log(`🔒 로그인 실패: ${storeName} (비번 불일치 또는 정보 없음)`);
-            res.json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
-        }
-    } catch (e) {
-        console.error("❌ 로그인 에러:", e);
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
-});
-// 8-3. 저장된 모든 매장 비밀번호 가져오기 (Admin용)
-app.get('/api/auth/store/credentials', async (req, res) => {
-    try {
-        // 모든 매장의 인증 정보를 가져옴
-        const credentials = await db.collection(COLLECTION_CREDENTIALS).find({}).toArray();
-        res.json({ success: true, data: credentials });
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({ success: false, message: 'DB Error' });
-    }
+        await db.collection(COLLECTION_CS_MEMOS).deleteOne({ _id: new ObjectId(req.params.id) });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
-///비즈앱
-const BIZM_USER_ID = process.env.BIZM_USER_ID;
-const BIZM_PROFILE_KEY = process.env.BIZM_PROFILE_KEY;
-const BIZM_SENDER_PHONE = process.env.BIZM_SENDER_PHONE;
+// ==========================================
+// [9] 비즈앱 알림톡
+// ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
-        const { orderId, receiver, custName, totalPrice } = req.body;
+        const { orderId, receiver } = req.body;
         const receiptUrl = `${MY_DOMAIN}/receipt/${orderId}`;
-
         const payload = [{
             "message_type": "at",
             "phn": receiver.replace(/-/g, ''),
-            "profile": BIZM_PROFILE_KEY, // ✅ 환경 변수 적용
+            "profile": BIZM_PROFILE_KEY,
             "tmplId": "승인된_템플릿_코드", 
             "msg": `[Yogibo] 주문 안내...`,        
-            "button1": {
-                "name": "전자 영수증 보기",
-                "type": "WL",
-                "url_mobile": receiptUrl,
-                "url_pc": receiptUrl
-            },
+            "button1": { "name": "전자 영수증 보기", "type": "WL", "url_mobile": receiptUrl, "url_pc": receiptUrl },
             "smsKind": "L",
             "smsMsg": `[Yogibo] 주문 안내...\n\n영수증: ${receiptUrl}`,
             "smsSender": BIZM_SENDER_PHONE
         }];
 
-        // 비즈엠 서버로 전송
-        const response = await axios.post(
-            'https://alimtalk-api.bizmsg.kr/v2/sender/send',
-            payload,
-            {
-                headers: {
-                    'userid': BIZM_USER_ID, // ✅ 환경 변수 적용
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
-
+        const response = await axios.post('https://alimtalk-api.bizmsg.kr/v2/sender/send', payload, {
+            headers: { 'userid': BIZM_USER_ID, 'Content-Type': 'application/json' }
+        });
         res.json({ success: true, result: response.data });
     } catch (error) {
         console.error("알림톡 전송 에러:", error.response?.data || error.message);
