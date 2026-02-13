@@ -608,6 +608,100 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
 });
 
 
+//매장 URL 관리및 비밀번호 설정관리
+// 1. 관리자: 비밀번호 설정
+app.post('/api/jwasu/admin/store-auth/update', async (req, res) => {
+    const { storeName, password } = req.body;
+    await db.collection('storeCredentials').updateOne(
+        { storeName }, 
+        { $set: { password, updatedAt: new Date() } }, 
+        { upsert: true }
+    );
+    res.json({ success: true });
+});
+
+// 2. 매니저: 로그인 검증
+app.post('/api/store-auth', async (req, res) => {
+    const { storeName, password } = req.body;
+    const cred = await db.collection('storeCredentials').findOne({ storeName });
+    
+    if (cred && cred.password === password) {
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: 'Invalid password' });
+    }
+});
+
+// ==========================================
+// [8] 매장 접속 권한 관리 (비밀번호)
+// ==========================================
+const COLLECTION_CREDENTIALS = "storeCredentials"; // 비밀번호 저장용 DB 컬렉션 이름
+
+// 8-1. 매장 비밀번호 설정 (Admin 페이지에서 호출)
+app.post('/api/auth/store/password', async (req, res) => {
+    try {
+        const { storeName, password } = req.body;
+        
+        console.log(`🔐 비밀번호 설정 요청: ${storeName}`); // 로그 확인용
+
+        if (!storeName || !password) {
+            return res.status(400).json({ success: false, message: '값 누락' });
+        }
+
+        // 기존에 비밀번호가 있으면 수정(update), 없으면 생성(insert) -> upsert: true
+        const result = await db.collection(COLLECTION_CREDENTIALS).updateOne(
+            { storeName: storeName }, 
+            { 
+                $set: { 
+                    password: password, 
+                    updatedAt: new Date() 
+                } 
+            }, 
+            { upsert: true }
+        );
+
+        console.log(`✅ 비밀번호 저장 완료: ${result.matchedCount}개 일치, ${result.modifiedCount}개 수정, ${result.upsertedCount}개 생성`);
+        res.json({ success: true });
+
+    } catch (e) {
+        console.error("❌ 비밀번호 저장 에러:", e);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+
+// 8-2. 매장 로그인 검증 (Manager 페이지에서 호출)
+app.post('/api/auth/store/login', async (req, res) => {
+    try {
+        const { storeName, password } = req.body;
+        
+        // DB에서 해당 매장의 비밀번호 정보를 찾음
+        const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ storeName: storeName });
+        
+        // 데이터가 있고, 비밀번호가 일치하면 성공
+        if (cred && cred.password === password) {
+            console.log(`🔓 로그인 성공: ${storeName}`);
+            res.json({ success: true });
+        } else {
+            console.log(`🔒 로그인 실패: ${storeName} (비번 불일치 또는 정보 없음)`);
+            res.json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
+        }
+    } catch (e) {
+        console.error("❌ 로그인 에러:", e);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+// 8-3. 저장된 모든 매장 비밀번호 가져오기 (Admin용)
+app.get('/api/auth/store/credentials', async (req, res) => {
+    try {
+        // 모든 매장의 인증 정보를 가져옴
+        const credentials = await db.collection(COLLECTION_CREDENTIALS).find({}).toArray();
+        res.json({ success: true, data: credentials });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
+
 
 ///비즈앱
 const BIZM_USER_ID = process.env.BIZM_USER_ID;
