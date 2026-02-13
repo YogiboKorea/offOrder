@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 8080;
 app.use(cors({
     origin: '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'userid'] // userid 허용 (비즈엠용)
+    allowedHeaders: ['Content-Type', 'Authorization', 'userid'] // userid 허용 (비즈엠용), Authorization 추가 (보안용)
 }));
 
 app.use(express.json());
@@ -34,6 +34,7 @@ const COLLECTION_STATIC_MANAGERS = "staticManagers";// 직원 목록
 const COLLECTION_WAREHOUSES = "ecountWarehouses";   // 창고 목록
 const COLLECTION_CS_MEMOS = "csMemos";              // CS 메모
 const COLLECTION_CREDENTIALS = "storeCredentials";  // 매장 비밀번호 관리
+const COLLECTION_AUTH = "authSettings";             // ★ 공용 PIN 검증용 (새로 추가)
 
 // API 및 외부 연동 설정
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
@@ -76,6 +77,7 @@ async function startServer() {
         } catch (e) { console.error("⚠️ Token Load Warning:", e.message); }
 
         await initializeWarehouseDB(); 
+        await initializeGlobalPin(); // ★ 서버 시작 시 DB에 111 자동 세팅
         await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
         await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
 
@@ -88,6 +90,23 @@ async function startServer() {
     }
 }
 startServer();
+
+// ★ 새로 추가: DB에 매장 접속용 공용 비밀번호(111) 자동 생성
+async function initializeGlobalPin() {
+    try {
+        const count = await db.collection(COLLECTION_AUTH).countDocuments({ type: 'global_pin' });
+        if (count === 0) {
+            await db.collection(COLLECTION_AUTH).insertOne({ 
+                type: 'global_pin', 
+                pinCode: '111', 
+                created_at: new Date() 
+            });
+            console.log("✅ 기본 매장 접속 비밀번호(111) 초기화 완료");
+        }
+    } catch (e) {
+        console.error("⚠️ 비밀번호 DB 초기화 오류:", e.message);
+    }
+}
 
 // JSON 시딩 유틸리티
 async function seedCollectionFromJSON(filename, collectionName) {
@@ -147,8 +166,42 @@ async function refreshAccessToken() {
 }
 
 // ==========================================
-// [4] 매장 접속 권한 관리 (비밀번호)
+// [4] 매장 접속 권한 검증 및 미들웨어 (★추가 영역)
 // ==========================================
+
+// 4-0. 접속 화면에서 PIN 일치 여부 확인
+app.post('/api/verify-pin', async (req, res) => {
+    try {
+        const { pin } = req.body;
+        const setting = await db.collection(COLLECTION_AUTH).findOne({ type: 'global_pin' });
+        
+        if (setting && setting.pinCode === pin) {
+            res.json({ success: true, token: pin }); // 테스트/임시 용도로 pin을 토큰으로 반환
+        } else {
+            res.status(401).json({ success: false, message: '비밀번호가 틀렸습니다.' });
+        }
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// 4-0-1. API 보호용 미들웨어
+const authMiddleware = async (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ success: false, message: '인증 정보가 없습니다. 가짜 주문을 차단합니다.' });
+    }
+
+    const token = authHeader.split(' ')[1]; 
+    try {
+        const setting = await db.collection(COLLECTION_AUTH).findOne({ type: 'global_pin' });
+        if (!setting || setting.pinCode !== token) {
+            return res.status(403).json({ success: false, message: '비밀번호 인증 실패. 허용되지 않은 접근입니다.' });
+        }
+        next(); // 통과
+    } catch(e) {
+        res.status(500).json({ success: false });
+    }
+};
 
 // 4-1. 매장 비밀번호 설정/저장 (Admin용)
 app.post('/api/auth/store/password', async (req, res) => {
@@ -280,6 +333,7 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
 // ==========================================
 // [6] 주문 데이터 CRUD (미전송/완료/휴지통)
 // ==========================================
+
 app.get('/api/ordersOffData', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword, view } = req.query;
@@ -311,7 +365,8 @@ app.get('/api/ordersOffData', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-app.post('/api/ordersOffData', async (req, res) => {
+// ★ 데이터 입력/수정/삭제 라우터에 authMiddleware 장착 완료
+app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
     try {
         const d = req.body;
         const items = d.items || [{ product_name: d.product_name, option_name: d.option_name, price: 0, quantity: 1 }];
@@ -331,7 +386,7 @@ app.post('/api/ordersOffData', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-app.put('/api/ordersOffData/:id', async (req, res) => {
+app.put('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
@@ -346,7 +401,7 @@ app.put('/api/ordersOffData/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-app.delete('/api/ordersOffData/:id', async (req, res) => {
+app.delete('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         const { type } = req.query;
@@ -361,7 +416,7 @@ app.delete('/api/ordersOffData/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-app.put('/api/ordersOffData/restore/:id', async (req, res) => {
+app.put('/api/ordersOffData/restore/:id', authMiddleware, async (req, res) => {
     try {
         const { id } = req.params;
         if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
@@ -374,7 +429,7 @@ app.put('/api/ordersOffData/restore/:id', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
 });
 
-// ERP 동기화 처리 (성공/실패)
+// ERP 동기화 처리 (성공/실패) - 관리자쪽 API라 판단하여 미들웨어 제외, 필요시 추가
 app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
         const { results } = req.body; 
