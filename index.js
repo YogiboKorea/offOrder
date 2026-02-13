@@ -12,14 +12,29 @@ require("dotenv").config();
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+const whitelist = [
+    'https://yogibo.kr',
+    'https://www.yogibo.kr',
+    'http://skin-skin123.yogibo.cafe24.com'
+];
 app.use(cors({
-    origin: '*',
+    origin: function (origin, callback) {
+        // origin이 없거나(서버간 통신) whitelist에 있거나 cafe24 서브도메인이면 허용
+        if (!origin || whitelist.indexOf(origin) !== -1 || origin.includes('cafe24.com')) {
+            callback(null, true);
+        } else {
+            callback(new Error('CORS 정책에 의해 차단되었습니다.'));
+        }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'userid'] // userid 허용 (비즈엠용), Authorization 추가 (보안용)
+    allowedHeaders: ['Content-Type', 'Authorization', 'userid'],
+    credentials: true // 쿠키/인증헤더 허용
 }));
+
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 
 // ==========================================
 // [2] 환경변수 및 DB 컬렉션 설정
@@ -101,7 +116,7 @@ async function initializeGlobalPin() {
                 pinCode: '111', 
                 created_at: new Date() 
             });
-            console.log("✅ 기본 매장 접속 비밀번호(111) 초기화 완료");
+            //console.log("✅ 기본 매장 접속 비밀번호(111) 초기화 완료");
         }
     } catch (e) {
         console.error("⚠️ 비밀번호 DB 초기화 오류:", e.message);
