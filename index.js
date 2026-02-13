@@ -632,40 +632,61 @@ app.post('/api/store-auth', async (req, res) => {
     }
 });
 
-// ... (기존 코드 하단에 추가) ...
-
+// ==========================================
 // [8] 매장 접속 권한 관리 (비밀번호)
-const COLLECTION_CREDENTIALS = "storeCredentials"; // 비밀번호 저장용 컬렉션
+// ==========================================
+const COLLECTION_CREDENTIALS = "storeCredentials"; // 비밀번호 저장용 DB 컬렉션 이름
 
-// 8-1. 매장 비밀번호 설정 (Admin용)
+// 8-1. 매장 비밀번호 설정 (Admin 페이지에서 호출)
 app.post('/api/auth/store/password', async (req, res) => {
     try {
         const { storeName, password } = req.body;
-        // 기존 비밀번호가 있으면 업데이트, 없으면 생성 (upsert)
-        await db.collection(COLLECTION_CREDENTIALS).updateOne(
-            { storeName: storeName },
-            { $set: { password: password, updatedAt: new Date() } },
+        
+        console.log(`🔐 비밀번호 설정 요청: ${storeName}`); // 로그 확인용
+
+        if (!storeName || !password) {
+            return res.status(400).json({ success: false, message: '값 누락' });
+        }
+
+        // 기존에 비밀번호가 있으면 수정(update), 없으면 생성(insert) -> upsert: true
+        const result = await db.collection(COLLECTION_CREDENTIALS).updateOne(
+            { storeName: storeName }, 
+            { 
+                $set: { 
+                    password: password, 
+                    updatedAt: new Date() 
+                } 
+            }, 
             { upsert: true }
         );
+
+        console.log(`✅ 비밀번호 저장 완료: ${result.matchedCount}개 일치, ${result.modifiedCount}개 수정, ${result.upsertedCount}개 생성`);
         res.json({ success: true });
+
     } catch (e) {
-        console.error(e);
+        console.error("❌ 비밀번호 저장 에러:", e);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
 
-// 8-2. 매장 로그인 검증 (Manager용)
+// 8-2. 매장 로그인 검증 (Manager 페이지에서 호출)
 app.post('/api/auth/store/login', async (req, res) => {
     try {
         const { storeName, password } = req.body;
+        
+        // DB에서 해당 매장의 비밀번호 정보를 찾음
         const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ storeName: storeName });
         
+        // 데이터가 있고, 비밀번호가 일치하면 성공
         if (cred && cred.password === password) {
+            console.log(`🔓 로그인 성공: ${storeName}`);
             res.json({ success: true });
         } else {
+            console.log(`🔒 로그인 실패: ${storeName} (비번 불일치 또는 정보 없음)`);
             res.json({ success: false, message: '비밀번호가 일치하지 않습니다.' });
         }
     } catch (e) {
+        console.error("❌ 로그인 에러:", e);
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
