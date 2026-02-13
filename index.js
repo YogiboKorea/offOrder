@@ -690,6 +690,17 @@ app.post('/api/auth/store/login', async (req, res) => {
         res.status(500).json({ success: false, message: 'DB Error' });
     }
 });
+// 8-3. 저장된 모든 매장 비밀번호 가져오기 (Admin용)
+app.get('/api/auth/store/credentials', async (req, res) => {
+    try {
+        // 모든 매장의 인증 정보를 가져옴
+        const credentials = await db.collection(COLLECTION_CREDENTIALS).find({}).toArray();
+        res.json({ success: true, data: credentials });
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({ success: false, message: 'DB Error' });
+    }
+});
 
 
 ///비즈앱
