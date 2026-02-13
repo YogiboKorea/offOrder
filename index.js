@@ -608,6 +608,30 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
 });
 
 
+//매장 URL 관리및 비밀번호 설정관리
+// 1. 관리자: 비밀번호 설정
+app.post('/api/jwasu/admin/store-auth/update', async (req, res) => {
+    const { storeName, password } = req.body;
+    await db.collection('storeCredentials').updateOne(
+        { storeName }, 
+        { $set: { password, updatedAt: new Date() } }, 
+        { upsert: true }
+    );
+    res.json({ success: true });
+});
+
+// 2. 매니저: 로그인 검증
+app.post('/api/store-auth', async (req, res) => {
+    const { storeName, password } = req.body;
+    const cred = await db.collection('storeCredentials').findOne({ storeName });
+    
+    if (cred && cred.password === password) {
+        res.json({ success: true });
+    } else {
+        res.json({ success: false, message: 'Invalid password' });
+    }
+});
+
 
 ///비즈앱
 const BIZM_USER_ID = process.env.BIZM_USER_ID;
