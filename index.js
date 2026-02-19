@@ -317,77 +317,94 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
 });
 
 
-
 // ==========================================
-// [5-2] Cafe24 쿠폰 조회 (다운로드 쿠폰)
+// [5-2] Cafe24 쿠폰 조회 - ★ 상세 조회 포함 버전
 // ==========================================
 app.get('/api/cafe24/coupons', async (req, res) => {
     try {
-        const fetchCoupons = async (retry = false) => {
+        const fetchFromCafe24 = async (url, params, retry = false) => {
             try {
-                console.log(`🎫 쿠폰 조회 시도 - 토큰: ${accessToken?.substring(0, 20)}...`);
-                return await axios.get(
-                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
-                    {
-                        params: {
-                            shop_no: 1,
-                            limit: 100,
-                            issue_type: 'D',  // ★ 다운로드 쿠폰만
-                        },
-                        headers: {
-                            Authorization: `Bearer ${accessToken}`,
-                            'Content-Type': 'application/json',
-                            'X-Cafe24-Api-Version': CAFE24_API_VERSION
-                        }
+                return await axios.get(url, {
+                    params,
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Cafe24-Api-Version': CAFE24_API_VERSION
                     }
-                );
+                });
             } catch (err) {
-                console.log(`🎫 쿠폰 조회 에러 상태: ${err.response?.status}`);
                 if (err.response && err.response.status === 401 && !retry) {
-                    console.log('🔄 토큰 갱신 시도...');
                     await refreshAccessToken();
-                    return await fetchCoupons(true);
+                    return await fetchFromCafe24(url, params, true);
                 }
                 throw err;
             }
         };
 
-        const response = await fetchCoupons();
-        const coupons = response.data.coupons || [];
-        console.log(`✅ 쿠폰 전체 수신: ${coupons.length}개`);
+        // 1단계: 쿠폰 목록 조회 (다운로드 쿠폰만)
+        const listRes = await fetchFromCafe24(
+            `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
+            { shop_no: 1, limit: 100, issue_type: 'D' }
+        );
+        const coupons = listRes.data.coupons || [];
+        console.log(`🎫 쿠폰 전체 수신: ${coupons.length}개`);
 
         const now = new Date();
-        const activeCoupons = coupons
-        // 변경
-        .filter(c => {
+        const activeCoupons = coupons.filter(c => {
             if (c.deleted === 'T') return false;
             if (c.is_stopped_issued_coupon === 'T') return false;
-
-            // ★ 다운로드 쿠폰만 (API에서 못 걸러진 경우 이중 체크)
             if (c.issue_type !== 'D') return false;
-
-            // ★ 발급 기간 체크 (issue_start/end)
             if (c.issue_start_date) {
-                const issueStart = new Date(c.issue_start_date);
-                if (issueStart > now) return false;  // 아직 발급 시작 안 됨
+                if (new Date(c.issue_start_date) > now) return false;
             }
             if (c.issue_end_date) {
-                const issueEnd = new Date(c.issue_end_date);
-                if (issueEnd < now) return false;  // 발급 기간 종료
+                if (new Date(c.issue_end_date) < now) return false;
             }
-
-            // ★ 사용 가능 기간 체크
             if (c.available_period_type === 'F') {
-                const startDate = c.available_start_datetime ? new Date(c.available_start_datetime) : null;
-                const endDate = c.available_end_datetime ? new Date(c.available_end_datetime) : null;
-                if (startDate && startDate > now) return false;
-                if (endDate && endDate < now) return false;
+                if (c.available_start_datetime && new Date(c.available_start_datetime) > now) return false;
+                if (c.available_end_datetime && new Date(c.available_end_datetime) < now) return false;
+            }
+            return true;
+        });
+
+        console.log(`✅ 유효한 다운로드 쿠폰: ${activeCoupons.length}개`);
+
+        // 2단계: 각 쿠폰 상세 조회 (적용 상품 목록 가져오기)
+        const detailResults = await Promise.allSettled(
+            activeCoupons.map(c =>
+                fetchFromCafe24(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons/${c.coupon_no}`,
+                    { shop_no: 1 }
+                )
+            )
+        );
+
+        const enriched = activeCoupons.map((c, idx) => {
+            let availableProducts = [];
+            let availableProductType = c.available_product_type || 'A';
+
+            const detail = detailResults[idx];
+            if (detail.status === 'fulfilled' && detail.value.data.coupon) {
+                const dc = detail.value.data.coupon;
+                availableProductType = dc.available_product_type || availableProductType;
+
+                const raw = dc.available_product;
+                if (Array.isArray(raw)) {
+                    availableProducts = raw.map(p => {
+                        if (typeof p === 'object' && p !== null && p.product_no) return Number(p.product_no);
+                        return Number(p);
+                    }).filter(n => !isNaN(n));
+                } else if (typeof raw === 'number') {
+                    availableProducts = [raw];
+                } else if (typeof raw === 'string' && raw) {
+                    availableProducts = raw.split(',').map(s => Number(s.trim())).filter(n => !isNaN(n));
+                }
             }
 
-            return true;
-        })
-            .map(c => ({
-                coupon_no:   c.coupon_no,
+            console.log(`  - [${c.coupon_no}] ${c.coupon_name} | 타입:${c.benefit_type} | 상품적용:${availableProductType} | 상품수:${availableProducts.length}`);
+
+            return {
+                coupon_no: c.coupon_no,
                 coupon_name: c.coupon_name,
                 benefit_type: c.benefit_type,
                 benefit_percentage: c.benefit_percentage ? parseFloat(c.benefit_percentage) : null,
@@ -396,29 +413,20 @@ app.get('/api/cafe24/coupons', async (req, res) => {
                     ? Math.floor(parseFloat(c.benefit_percentage_max_price)) : null,
                 available_date: c.available_date || '',
                 benefit_text: c.benefit_text || '',
-            
-                // ★ 추가: 적용 가능 상품 정보
-                available_product: (() => {
-                    let raw = c.available_product;
-                    if (!raw) return [];
-                    // 문자열이면 쉼표 구분 배열로 변환
-                    if (typeof raw === 'string') raw = raw.split(',').map(s => s.trim()).filter(Boolean);
-                    // 숫자 하나면 배열로 감싸기
-                    if (typeof raw === 'number') return [raw];
-                    // 객체(단일)면 배열로 감싸기
-                    if (!Array.isArray(raw)) raw = [raw];
-                    return raw.map(p => {
-                        if (typeof p === 'object' && p !== null && p.product_no) return Number(p.product_no);
-                        return Number(p);
-                    }).filter(n => !isNaN(n));
-                })(),
+                available_product_type: availableProductType,
+                available_product: availableProducts,
                 issue_type: c.issue_type || '',
-            }));
+            };
+        });
 
-        console.log(`✅ 유효한 쿠폰: ${activeCoupons.length}개`);
-        activeCoupons.forEach(c => console.log(`  - [${c.coupon_no}] ${c.coupon_name} / 타입:${c.benefit_type} / ${c.benefit_percentage ?? c.benefit_price}`));
+        // 상품 적용 쿠폰만 로그 강조
+        const productSpecific = enriched.filter(c => c.available_product_type === 'I' && c.available_product.length > 0);
+        console.log(`🎯 상품 지정 쿠폰: ${productSpecific.length}개`);
+        productSpecific.forEach(c => {
+            console.log(`  🏷️ ${c.coupon_name}: 상품 ${c.available_product.length}개 [${c.available_product.slice(0, 5).join(', ')}${c.available_product.length > 5 ? '...' : ''}]`);
+        });
 
-        res.json({ success: true, count: activeCoupons.length, data: activeCoupons });
+        res.json({ success: true, count: enriched.length, data: enriched });
     } catch (error) {
         console.error('쿠폰 조회 에러:', error.response?.data || error.message);
         res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error', detail: error.response?.data });
