@@ -378,11 +378,20 @@ app.get('/api/cafe24/coupons', async (req, res) => {
                 benefit_text: c.benefit_text || '',
             
                 // ★ 추가: 적용 가능 상품 정보
-                available_product_type: c.available_product_type || 'A',
-                available_product: (c.available_product || []).map(p => {
-                    if (typeof p === 'object' && p.product_no) return Number(p.product_no);
-                    return Number(p);
-                }),
+                available_product: (() => {
+                    let raw = c.available_product;
+                    if (!raw) return [];
+                    // 문자열이면 쉼표 구분 배열로 변환
+                    if (typeof raw === 'string') raw = raw.split(',').map(s => s.trim()).filter(Boolean);
+                    // 숫자 하나면 배열로 감싸기
+                    if (typeof raw === 'number') return [raw];
+                    // 객체(단일)면 배열로 감싸기
+                    if (!Array.isArray(raw)) raw = [raw];
+                    return raw.map(p => {
+                        if (typeof p === 'object' && p !== null && p.product_no) return Number(p.product_no);
+                        return Number(p);
+                    }).filter(n => !isNaN(n));
+                })(),
                 issue_type: c.issue_type || '',
             }));
 
