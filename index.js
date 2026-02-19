@@ -332,6 +332,7 @@ app.get('/api/cafe24/coupons', async (req, res) => {
                         params: {
                             shop_no: 1,
                             limit: 100,
+                            issue_type: 'D',  // ★ 다운로드 쿠폰만
                         },
                         headers: {
                             Authorization: `Bearer ${accessToken}`,
@@ -357,15 +358,34 @@ app.get('/api/cafe24/coupons', async (req, res) => {
 
         const now = new Date();
         const activeCoupons = coupons
-            .filter(c => {
-                if (c.deleted === 'T') return false;
-                if (c.is_stopped_issued_coupon === 'T') return false;
-                if (c.available_period_type === 'F') {
-                    const endDate = c.available_end_datetime ? new Date(c.available_end_datetime) : null;
-                    if (endDate && endDate < now) return false;
-                }
-                return true;
-            })
+        // 변경
+        .filter(c => {
+            if (c.deleted === 'T') return false;
+            if (c.is_stopped_issued_coupon === 'T') return false;
+
+            // ★ 다운로드 쿠폰만 (API에서 못 걸러진 경우 이중 체크)
+            if (c.issue_type !== 'D') return false;
+
+            // ★ 발급 기간 체크 (issue_start/end)
+            if (c.issue_start_date) {
+                const issueStart = new Date(c.issue_start_date);
+                if (issueStart > now) return false;  // 아직 발급 시작 안 됨
+            }
+            if (c.issue_end_date) {
+                const issueEnd = new Date(c.issue_end_date);
+                if (issueEnd < now) return false;  // 발급 기간 종료
+            }
+
+            // ★ 사용 가능 기간 체크
+            if (c.available_period_type === 'F') {
+                const startDate = c.available_start_datetime ? new Date(c.available_start_datetime) : null;
+                const endDate = c.available_end_datetime ? new Date(c.available_end_datetime) : null;
+                if (startDate && startDate > now) return false;
+                if (endDate && endDate < now) return false;
+            }
+
+            return true;
+        })
             .map(c => ({
                 coupon_no:   c.coupon_no,
                 coupon_name: c.coupon_name,
