@@ -376,6 +376,14 @@ app.get('/api/cafe24/coupons', async (req, res) => {
                     ? Math.floor(parseFloat(c.benefit_percentage_max_price)) : null,
                 available_date: c.available_date || '',
                 benefit_text: c.benefit_text || '',
+            
+                // ★ 추가: 적용 가능 상품 정보
+                available_product_type: c.available_product_type || 'A',
+                available_product: (c.available_product || []).map(p => {
+                    if (typeof p === 'object' && p.product_no) return Number(p.product_no);
+                    return Number(p);
+                }),
+                issue_type: c.issue_type || '',
             }));
 
         console.log(`✅ 유효한 쿠폰: ${activeCoupons.length}개`);
