@@ -316,6 +316,81 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: "Cafe24 API Error" }); }
 });
 
+
+
+// ==========================================
+// [5-2] Cafe24 쿠폰 조회 (다운로드 쿠폰)
+// ==========================================
+app.get('/api/cafe24/coupons', async (req, res) => {
+    try {
+        const fetchCoupons = async (retry = false) => {
+            try {
+                return await axios.get(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
+                    {
+                        params: {
+                            shop_no: 1,
+                            limit: 100,
+                            // 다운로드 쿠폰만 필터 (issue_type: M = 수동/다운로드)
+                            issue_type: 'M',
+                        },
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Cafe24-Api-Version': CAFE24_API_VERSION
+                        }
+                    }
+                );
+            } catch (err) {
+                if (err.response && err.response.status === 401 && !retry) {
+                    await refreshAccessToken();
+                    return await fetchCoupons(true);
+                }
+                throw err;
+            }
+        };
+
+        const response = await fetchCoupons();
+        const coupons = response.data.coupons || [];
+        const now = new Date();
+
+        // 삭제되지 않고, 유효기간 내 쿠폰만 필터링
+        const activeCoupons = coupons
+            .filter(c => {
+                if (c.deleted === 'T') return false;
+                if (c.is_stopped_issued_coupon === 'T') return false;
+                // 유효기간 체크 (fixed 타입일 때)
+                if (c.available_period_type === 'F') {
+                    const endDate = c.available_end_datetime ? new Date(c.available_end_datetime) : null;
+                    if (endDate && endDate < now) return false;
+                }
+                return true;
+            })
+            .map(c => ({
+                coupon_no:   c.coupon_no,
+                coupon_name: c.coupon_name,
+                benefit_type: c.benefit_type,        // "B"=퍼센트, "A"=정액
+                benefit_percentage: c.benefit_percentage
+                    ? parseFloat(c.benefit_percentage)
+                    : null,
+                benefit_price: c.benefit_price
+                    ? Math.floor(parseFloat(c.benefit_price))
+                    : null,
+                benefit_percentage_max_price: c.benefit_percentage_max_price
+                    ? Math.floor(parseFloat(c.benefit_percentage_max_price))
+                    : null,
+                available_date: c.available_date || '',
+                benefit_text:   c.benefit_text || '',
+            }));
+
+        res.json({ success: true, count: activeCoupons.length, data: activeCoupons });
+    } catch (error) {
+        console.error('쿠폰 조회 에러:', error.response?.data || error.message);
+        res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error' });
+    }
+});
+
+
 // ==========================================
 // [6] 주문 데이터 CRUD
 // ==========================================
