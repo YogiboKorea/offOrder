@@ -434,6 +434,84 @@ app.get('/api/cafe24/coupons', async (req, res) => {
 });
 
 
+
+
+// ==========================================
+// [5-3] 쿠폰 번호로 상세 + 적용 상품 조회
+// ==========================================
+app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
+    try {
+        const { couponNo } = req.params;
+
+        const fetchFromCafe24 = async (url, params, retry = false) => {
+            try {
+                return await axios.get(url, {
+                    params,
+                    headers: {
+                        Authorization: `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json',
+                        'X-Cafe24-Api-Version': CAFE24_API_VERSION
+                    }
+                });
+            } catch (err) {
+                if (err.response && err.response.status === 401 && !retry) {
+                    await refreshAccessToken();
+                    return await fetchFromCafe24(url, params, true);
+                }
+                throw err;
+            }
+        };
+
+        // 1) 쿠폰 상세 조회
+        const detailRes = await fetchFromCafe24(
+            `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons/${couponNo}`,
+            { shop_no: 1 }
+        );
+        const coupon = detailRes.data.coupon;
+        if (!coupon) return res.status(404).json({ success: false, message: '쿠폰을 찾을 수 없습니다.' });
+
+        console.log(`🎫 쿠폰 상세: [${coupon.coupon_no}] ${coupon.coupon_name}`);
+        console.log(`   available_product_type: ${coupon.available_product_type}`);
+        console.log(`   available_product 원본:`, JSON.stringify(coupon.available_product));
+        console.log(`   available_category:`, JSON.stringify(coupon.available_category));
+
+        // 2) 적용 상품 번호 추출
+        let productNos = [];
+        const raw = coupon.available_product;
+
+        if (Array.isArray(raw) && raw.length > 0) {
+            productNos = raw.map(p => {
+                if (typeof p === 'object' && p !== null && p.product_no) return Number(p.product_no);
+                return Number(p);
+            }).filter(n => !isNaN(n) && n > 0);
+        }
+
+        // 3) 할인 정보
+        const benefitType = coupon.benefit_type;
+        const benefitPercentage = coupon.benefit_percentage ? parseFloat(coupon.benefit_percentage) : null;
+        const benefitPrice = coupon.benefit_price ? Math.floor(parseFloat(coupon.benefit_price)) : null;
+
+        const result = {
+            coupon_no: coupon.coupon_no,
+            coupon_name: coupon.coupon_name,
+            benefit_type: benefitType,
+            benefit_percentage: benefitPercentage,
+            benefit_price: benefitPrice,
+            available_product_type: coupon.available_product_type || 'A',
+            available_product: productNos,
+            product_count: productNos.length,
+        };
+
+        console.log(`✅ 쿠폰 결과: 할인 ${benefitPercentage || benefitPrice} / 상품 ${productNos.length}개`);
+
+        res.json({ success: true, data: result });
+    } catch (error) {
+        console.error('쿠폰 상세 조회 에러:', error.response?.data || error.message);
+        res.status(500).json({ success: false, message: 'Cafe24 Coupon Detail Error' });
+    }
+});
+
+
 // ==========================================
 // [6] 주문 데이터 CRUD
 // ==========================================
