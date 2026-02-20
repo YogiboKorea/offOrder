@@ -486,7 +486,7 @@ app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
                         shop_no: 1,
                         product_no: productNos.join(','),
                         fields: 'product_no,product_name,price,detail_image,list_image,small_image',
-                        limit: 100
+                        limit: 500
                     }
                 );
                 productDetails = (productRes.data.products || []).map(p => ({
