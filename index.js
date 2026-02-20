@@ -434,6 +434,7 @@ app.get('/api/cafe24/coupons', async (req, res) => {
         res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error', detail: error.response?.data });
     }
 });
+
 // ==========================================
 // [5-3] 쿠폰-상품 매핑 API (server.js에 추가)
 // ==========================================
@@ -476,26 +477,40 @@ app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
         const productNos = coupon.available_product_list || [];
         console.log(`🎫 [${coupon.coupon_no}] ${coupon.coupon_name} / 타입:${coupon.available_product} / 상품:${productNos.length}개`);
 
-        // 3) 상품번호로 Cafe24 상품 상세 조회 (한번에 최대 100개)
+        // 3) 상품번호로 Cafe24 상품 상세 조회 (한번에 최대 100개씩 청크 분할 처리)
         let productDetails = [];
         if (productNos.length > 0) {
             try {
-                const productRes = await fetchFromCafe24(
-                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
-                    {
-                        shop_no: 1,
-                        product_no: productNos.join(','),
-                        fields: 'product_no,product_name,price,detail_image,list_image,small_image',
-                        limit: 300
-                    }
-                );
-                productDetails = (productRes.data.products || []).map(p => ({
-                    product_no: p.product_no,
-                    product_name: p.product_name,
-                    price: Math.floor(Number(p.price)),
-                    image: p.detail_image || p.list_image || p.small_image || ''
-                }));
-                console.log(`✅ 상품 상세 조회 완료: ${productDetails.length}개`);
+                // 배열을 100개 단위로 쪼개기
+                const chunkSize = 100;
+                const chunkedProductNos = [];
+                for (let i = 0; i < productNos.length; i += chunkSize) {
+                    chunkedProductNos.push(productNos.slice(i, i + chunkSize));
+                }
+
+                // 쪼개진 배열 단위로 Cafe24 API 순차 호출
+                for (const chunk of chunkedProductNos) {
+                    const productRes = await fetchFromCafe24(
+                        `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
+                        {
+                            shop_no: 1,
+                            product_no: chunk.join(','),
+                            fields: 'product_no,product_name,price,detail_image,list_image,small_image',
+                            limit: 100
+                        }
+                    );
+                    
+                    const chunkDetails = (productRes.data.products || []).map(p => ({
+                        product_no: p.product_no,
+                        product_name: p.product_name,
+                        price: Math.floor(Number(p.price)),
+                        image: p.detail_image || p.list_image || p.small_image || ''
+                    }));
+                    
+                    // 조회된 청크 데이터를 전체 배열에 합치기
+                    productDetails = productDetails.concat(chunkDetails);
+                }
+                console.log(`✅ 상품 상세 조회 완료: 총 ${productDetails.length}개`);
             } catch (e) {
                 console.error('상품 상세 조회 실패:', e.message);
                 // 실패해도 번호만이라도 반환
