@@ -440,14 +440,12 @@ app.get('/api/cafe24/coupons', async (req, res) => {
 
 const COLLECTION_COUPON_MAP = "couponProductMap";
 
-// ★ 쿠폰 번호로 Cafe24에서 쿠폰 정보 조회
 app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
     try {
         const { couponNo } = req.params;
 
         const fetchFromCafe24 = async (retry = false) => {
             try {
-                // ★ 목록 API에서 coupon_no 파라미터로 필터링 (개별 상세 API 없음)
                 return await axios.get(
                     `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
                     {
@@ -469,36 +467,21 @@ app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
         };
 
         const response = await fetchFromCafe24();
-        const coupons = response.data.coupons || [];
-        const coupon = coupons[0];
+        const coupon = (response.data.coupons || [])[0];
 
-        if (!coupon) {
-            return res.status(404).json({ success: false, message: '쿠폰을 찾을 수 없습니다.' });
-        }
+        if (!coupon) return res.status(404).json({ success: false, message: '쿠폰 없음' });
 
-        // DB에서 기존 매핑된 상품 목록 가져오기
-        const mapping = await db.collection(COLLECTION_COUPON_MAP).findOne({ coupon_no: String(couponNo) });
+        // ★★★ 원본 응답 전체 로그 ★★★
+        console.log('========== Cafe24 쿠폰 원본 응답 ==========');
+        console.log(JSON.stringify(coupon, null, 2));
+        console.log('============================================');
 
-        const result = {
-            coupon_no: coupon.coupon_no,
-            coupon_name: coupon.coupon_name,
-            benefit_type: coupon.benefit_type,
-            benefit_percentage: coupon.benefit_percentage ? parseFloat(coupon.benefit_percentage) : null,
-            benefit_price: coupon.benefit_price ? Math.floor(parseFloat(coupon.benefit_price)) : null,
-            available_product_type: coupon.available_product_type || 'A',
-            // DB 매핑이 있으면 DB 데이터 사용
-            available_product_details: mapping ? mapping.products : [],
-        };
-
-        console.log(`🎫 쿠폰 조회: [${result.coupon_no}] ${result.coupon_name} / 할인:${result.benefit_percentage || result.benefit_price} / DB매핑:${result.available_product_details.length}개`);
-        res.json({ success: true, data: result });
-
+        res.json({ success: true, data: coupon });
     } catch (error) {
         console.error('쿠폰 조회 에러:', error.response?.data || error.message);
-        res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error' });
+        res.status(500).json({ success: false });
     }
 });
-
 // ★ 쿠폰-상품 매핑 저장 (upsert)
 app.post('/api/coupon-map', async (req, res) => {
     try {
