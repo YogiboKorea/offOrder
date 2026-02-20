@@ -18,9 +18,11 @@ const whitelist = [
     'http://skin-skin123.yogibo.cafe24.com', 
 ];
 
+
+// 변경 (origin === 'null' 추가)
 app.use(cors({
     origin: function (origin, callback) {
-        if (!origin || whitelist.indexOf(origin) !== -1 || origin.includes('cafe24.com')) {
+        if (!origin || origin === 'null' || whitelist.indexOf(origin) !== -1 || origin.includes('cafe24.com')) {
             callback(null, true);
         } else {
             console.log("🚫 CORS 차단됨:", origin);
