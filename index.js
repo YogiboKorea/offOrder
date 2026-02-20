@@ -433,83 +433,100 @@ app.get('/api/cafe24/coupons', async (req, res) => {
     }
 });
 
-
-
-
 // ==========================================
-// [5-3] 쿠폰 번호로 상세 + 적용 상품 조회
+// [5-3] 쿠폰 번호 등록 (쿠폰 정보 조회 + 상품 매핑 DB)
 // ==========================================
+
+const COLLECTION_COUPON_MAP = "couponProductMap";
+
+// ★ 쿠폰 번호로 조회 (목록 API에서 coupon_no 필터)
 app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
     try {
         const { couponNo } = req.params;
 
-        const fetchFromCafe24 = async (url, params, retry = false) => {
+        const fetchFromCafe24 = async (retry = false) => {
             try {
-                return await axios.get(url, {
-                    params,
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                        'X-Cafe24-Api-Version': CAFE24_API_VERSION
+                return await axios.get(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
+                    {
+                        params: { shop_no: 1, coupon_no: couponNo },
+                        headers: {
+                            Authorization: `Bearer ${accessToken}`,
+                            'Content-Type': 'application/json',
+                            'X-Cafe24-Api-Version': CAFE24_API_VERSION
+                        }
                     }
-                });
+                );
             } catch (err) {
                 if (err.response && err.response.status === 401 && !retry) {
                     await refreshAccessToken();
-                    return await fetchFromCafe24(url, params, true);
+                    return await fetchFromCafe24(true);
                 }
                 throw err;
             }
         };
 
-        // 1) 쿠폰 상세 조회
-        const detailRes = await fetchFromCafe24(
-            `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons/${couponNo}`,
-            { shop_no: 1 }
-        );
-        const coupon = detailRes.data.coupon;
+        const response = await fetchFromCafe24();
+        const coupons = response.data.coupons || [];
+        const coupon = coupons[0];
+
         if (!coupon) return res.status(404).json({ success: false, message: '쿠폰을 찾을 수 없습니다.' });
 
-        console.log(`🎫 쿠폰 상세: [${coupon.coupon_no}] ${coupon.coupon_name}`);
-        console.log(`   available_product_type: ${coupon.available_product_type}`);
-        console.log(`   available_product 원본:`, JSON.stringify(coupon.available_product));
-        console.log(`   available_category:`, JSON.stringify(coupon.available_category));
-
-        // 2) 적용 상품 번호 추출
-        let productNos = [];
-        const raw = coupon.available_product;
-
-        if (Array.isArray(raw) && raw.length > 0) {
-            productNos = raw.map(p => {
-                if (typeof p === 'object' && p !== null && p.product_no) return Number(p.product_no);
-                return Number(p);
-            }).filter(n => !isNaN(n) && n > 0);
-        }
-
-        // 3) 할인 정보
-        const benefitType = coupon.benefit_type;
-        const benefitPercentage = coupon.benefit_percentage ? parseFloat(coupon.benefit_percentage) : null;
-        const benefitPrice = coupon.benefit_price ? Math.floor(parseFloat(coupon.benefit_price)) : null;
+        // DB에서 매핑된 상품 목록 가져오기
+        const mapping = await db.collection(COLLECTION_COUPON_MAP).findOne({ coupon_no: String(couponNo) });
 
         const result = {
             coupon_no: coupon.coupon_no,
             coupon_name: coupon.coupon_name,
-            benefit_type: benefitType,
-            benefit_percentage: benefitPercentage,
-            benefit_price: benefitPrice,
+            benefit_type: coupon.benefit_type,
+            benefit_percentage: coupon.benefit_percentage ? parseFloat(coupon.benefit_percentage) : null,
+            benefit_price: coupon.benefit_price ? Math.floor(parseFloat(coupon.benefit_price)) : null,
             available_product_type: coupon.available_product_type || 'A',
-            available_product: productNos,
-            product_count: productNos.length,
+            // DB 매핑이 있으면 DB 우선, 없으면 API 값
+            available_product: mapping ? mapping.products : [],
+            product_count: mapping ? mapping.products.length : 0,
         };
 
-        console.log(`✅ 쿠폰 결과: 할인 ${benefitPercentage || benefitPrice} / 상품 ${productNos.length}개`);
-
+        console.log(`🎫 쿠폰 조회: [${result.coupon_no}] ${result.coupon_name} / ${result.benefit_percentage || result.benefit_price} / DB매핑: ${result.product_count}개`);
         res.json({ success: true, data: result });
+
     } catch (error) {
-        console.error('쿠폰 상세 조회 에러:', error.response?.data || error.message);
-        res.status(500).json({ success: false, message: 'Cafe24 Coupon Detail Error' });
+        console.error('쿠폰 조회 에러:', error.response?.data || error.message);
+        res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error' });
     }
 });
+
+// ★ 쿠폰-상품 매핑 저장
+app.post('/api/coupon-map', async (req, res) => {
+    try {
+        const { coupon_no, products } = req.body;
+        if (!coupon_no) return res.status(400).json({ success: false, message: 'coupon_no 필수' });
+
+        await db.collection(COLLECTION_COUPON_MAP).updateOne(
+            { coupon_no: String(coupon_no) },
+            { $set: { coupon_no: String(coupon_no), products: products || [], updated_at: new Date() } },
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// ★ 쿠폰-상품 매핑 조회
+app.get('/api/coupon-map/:couponNo', async (req, res) => {
+    try {
+        const mapping = await db.collection(COLLECTION_COUPON_MAP).findOne({ coupon_no: String(req.params.couponNo) });
+        res.json({ success: true, data: mapping || { products: [] } });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
+// ★ 전체 매핑 조회 (프론트 초기 로드용)
+app.get('/api/coupon-map', async (req, res) => {
+    try {
+        const mappings = await db.collection(COLLECTION_COUPON_MAP).find({}).toArray();
+        res.json({ success: true, data: mappings });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
 
 
 // ==========================================
