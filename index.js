@@ -18,8 +18,6 @@ const whitelist = [
     'http://skin-skin123.yogibo.cafe24.com', 
 ];
 
-
-// 변경 (origin === 'null' 추가)
 app.use(cors({
     origin: function (origin, callback) {
         if (!origin || origin === 'null' || whitelist.indexOf(origin) !== -1 || origin.includes('cafe24.com')) {
@@ -49,8 +47,9 @@ const COLLECTION_STORES = "ecountStores";
 const COLLECTION_STATIC_MANAGERS = "staticManagers";
 const COLLECTION_WAREHOUSES = "ecountWarehouses";
 const COLLECTION_CS_MEMOS = "csMemos";
-const COLLECTION_CREDENTIALS = "storeCredentials";
-const COLLECTION_AUTH = "authSettings"; 
+const COLLECTION_PIN_DATA = "OFFPINDATA"; // 🔥 매장별 접속 PIN 전용 관리 컬렉션
+const COLLECTION_AUTH = "authSettings";   // 🔥 마스터(통합) PIN 관리 컬렉션
+const COLLECTION_COUPON_MAP = "couponProductMap"; 
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
 const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
@@ -90,7 +89,7 @@ async function startServer() {
         } catch (e) {}
 
         await initializeWarehouseDB(); 
-        await initializeGlobalPin(); 
+        await initializeGlobalPin(); // 마스터 PIN 초기화
         await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
         await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
 
@@ -104,11 +103,13 @@ async function startServer() {
 }
 startServer();
 
+// 통합 비밀번호 초기화 (없으면 1111로 세팅)
 async function initializeGlobalPin() {
     try {
         const count = await db.collection(COLLECTION_AUTH).countDocuments({ type: 'global_pin' });
         if (count === 0) {
-            await db.collection(COLLECTION_AUTH).insertOne({ type: 'global_pin', pinCode: '111', created_at: new Date() });
+            await db.collection(COLLECTION_AUTH).insertOne({ type: 'global_pin', pinCode: '1111', created_at: new Date() });
+            console.log("🔑 기본 통합 비밀번호(1111)가 생성되었습니다.");
         }
     } catch (e) {}
 }
@@ -155,9 +156,10 @@ async function refreshAccessToken() {
 }
 
 // ==========================================
-// [4] 매장 접속 권한 검증 및 미들웨어
+// [4] 매장 접속 권한 및 통합 PIN 검증 API
 // ==========================================
 
+// 1. [관리자 모드] 마스터(통합) PIN 검증 API
 app.post('/api/verify-pin', async (req, res) => {
     try {
         const { pin } = req.body;
@@ -166,54 +168,36 @@ app.post('/api/verify-pin', async (req, res) => {
         if (setting && String(setting.pinCode) === String(pin)) {
             res.json({ success: true, token: pin }); 
         } else {
-            res.status(401).json({ success: false, message: '비밀번호가 틀렸습니다.' });
+            res.json({ success: false, message: '통합 비밀번호가 다릅니다.' });
         }
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 🚨 여기가 401 에러를 발생시키는 방어막(미들웨어) 입니다.
-const authMiddleware = async (req, res, next) => {
-    
-    // ★★★ 테스트를 위해 보안 검증을 무조건 통과시키도록 주석 처리 및 수정했습니다 ★★★
-    console.log("⚠️ 현재 보안 인증(PIN)이 임시로 해제되어 무조건 통과됩니다.");
-    return next(); // 이 한 줄로 인해 자물쇠가 풀립니다.
-
-    /* 나중에 PIN 번호를 다시 활성화 하려면 위 두 줄을 지우고 아래 주석을 푸세요.
-    const authHeader = req.headers['authorization'];
-    
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ success: false, message: '인증 정보가 없습니다. 401 에러 발생!' });
-    }
-
-    const token = authHeader.split(' ')[1]; 
+// 2. [관리자 모드] 마스터(통합) PIN 변경 API
+app.put('/api/auth/global-pin', async (req, res) => {
     try {
-        const setting = await db.collection(COLLECTION_AUTH).findOne({ type: 'global_pin' });
-        if (!setting || String(setting.pinCode) !== String(token)) {
-            return res.status(403).json({ success: false, message: '비밀번호가 다릅니다. 403 에러 발생!' });
-        }
-        next(); 
-    } catch(e) {
+        const { newPin } = req.body;
+        if (!newPin) return res.status(400).json({ success: false, message: '비밀번호를 입력해주세요.' });
+
+        await db.collection(COLLECTION_AUTH).updateOne(
+            { type: 'global_pin' },
+            { $set: { pinCode: String(newPin), updated_at: new Date() } },
+            { upsert: true }
+        );
+        res.json({ success: true, message: '통합 비밀번호가 변경되었습니다.' });
+    } catch (e) {
         res.status(500).json({ success: false });
     }
-    */
-};
-
-app.post('/api/auth/store/password', async (req, res) => {
-    try {
-        const { storeName, password } = req.body;
-        if (!storeName || !password) return res.status(400).json({ success: false, message: '값 누락' });
-        await db.collection(COLLECTION_CREDENTIALS).updateOne(
-            { storeName: storeName }, { $set: { password: password, updatedAt: new Date() } }, { upsert: true }
-        );
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
 });
 
+// 3. [개별 매장 모드] 매장별 PIN 검증 (로그인) API
 app.post('/api/auth/store/login', async (req, res) => {
     try {
         const { storeName, password } = req.body;
-        const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ storeName: storeName });
-        if (cred && cred.password === password) {
+        // OFFPINDATA 컬렉션에서 해당 매장 정보 조회
+        const cred = await db.collection(COLLECTION_PIN_DATA).findOne({ storeName: storeName });
+        
+        if (cred && String(cred.password) === String(password)) {
             res.json({ success: true });
         } else {
             res.json({ success: false, message: '비밀번호 불일치' });
@@ -221,42 +205,36 @@ app.post('/api/auth/store/login', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
-// ==========================================
-// [추가] PIN 번호 단독으로 매장을 찾아 로그인하는 API
-// ==========================================
-app.post('/api/auth/pin-login', async (req, res) => {
+// 4. [어드민] 매장별 PIN 설정/저장 API
+app.post('/api/auth/store/password', async (req, res) => {
     try {
-        const { pin } = req.body;
+        const { storeName, password } = req.body;
+        if (!storeName || !password) return res.status(400).json({ success: false, message: '값 누락' });
         
-        if (!pin) {
-            return res.status(400).json({ success: false, message: 'PIN 번호가 필요합니다.' });
-        }
-
-        // DB에서 PIN(password) 번호가 일치하는 매장 조회
-        const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ password: pin });
-
-        if (cred && cred.storeName) {
-            // 일치하는 매장이 있으면 매장 이름 반환
-            res.json({ success: true, storeName: cred.storeName });
-        } else {
-            // 일치하는 매장이 없으면 실패 반환
-            res.json({ success: false, message: '유효하지 않은 PIN입니다.' });
-        }
-    } catch (e) {
-        console.error("PIN 로그인 API 에러:", e);
-        res.status(500).json({ success: false, message: '서버 내부 오류' });
-    }
+        // OFFPINDATA 컬렉션에 매장 PIN 정보 업데이트
+        await db.collection(COLLECTION_PIN_DATA).updateOne(
+            { storeName: storeName }, 
+            { $set: { password: String(password), updatedAt: new Date() } }, 
+            { upsert: true }
+        );
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
-
+// 5. [어드민] 등록된 전체 매장 PIN 데이터 조회 (매장 접속 관리 팝업용)
 app.get('/api/auth/store/credentials', async (req, res) => {
     try {
-        const credentials = await db.collection(COLLECTION_CREDENTIALS).find({}).toArray();
+        const credentials = await db.collection(COLLECTION_PIN_DATA).find({}).toArray();
         res.json({ success: true, data: credentials });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
+// (임시) 방어막 미들웨어 - 개발/테스트 편의를 위해 임시로 무조건 패스
+const authMiddleware = async (req, res, next) => {
+    console.log("⚠️ 현재 주문 등록 보안 인증이 임시로 해제되어 무조건 통과됩니다.");
+    return next(); 
+};
+
 
 // ==========================================
 // [5] Cafe24 API (상품 & 옵션 조회)
@@ -348,9 +326,8 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false, message: "Cafe24 API Error" }); }
 });
 
-
 // ==========================================
-// [5-2] Cafe24 쿠폰 조회 - ★ 상세 조회 포함 버전
+// [5-2] Cafe24 쿠폰 및 자동 매핑 API
 // ==========================================
 app.get('/api/cafe24/coupons', async (req, res) => {
     try {
@@ -373,25 +350,19 @@ app.get('/api/cafe24/coupons', async (req, res) => {
             }
         };
 
-        // 1단계: 쿠폰 목록 조회 (다운로드 쿠폰만)
         const listRes = await fetchFromCafe24(
             `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
             { shop_no: 1, limit: 100, issue_type: 'D' }
         );
         const coupons = listRes.data.coupons || [];
-        console.log(`🎫 쿠폰 전체 수신: ${coupons.length}개`);
 
         const now = new Date();
         const activeCoupons = coupons.filter(c => {
             if (c.deleted === 'T') return false;
             if (c.is_stopped_issued_coupon === 'T') return false;
             if (c.issue_type !== 'D') return false;
-            if (c.issue_start_date) {
-                if (new Date(c.issue_start_date) > now) return false;
-            }
-            if (c.issue_end_date) {
-                if (new Date(c.issue_end_date) < now) return false;
-            }
+            if (c.issue_start_date && new Date(c.issue_start_date) > now) return false;
+            if (c.issue_end_date && new Date(c.issue_end_date) < now) return false;
             if (c.available_period_type === 'F') {
                 if (c.available_start_datetime && new Date(c.available_start_datetime) > now) return false;
                 if (c.available_end_datetime && new Date(c.available_end_datetime) < now) return false;
@@ -399,33 +370,21 @@ app.get('/api/cafe24/coupons', async (req, res) => {
             return true;
         });
 
-        console.log(`✅ 유효한 다운로드 쿠폰: ${activeCoupons.length}개`);
-
-        // 2단계: 각 쿠폰 상세 조회 (적용 상품 목록 가져오기)
         const detailResults = await Promise.allSettled(
-            activeCoupons.map(c =>
-                fetchFromCafe24(
-                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons/${c.coupon_no}`,
-                    { shop_no: 1 }
-                )
-            )
+            activeCoupons.map(c => fetchFromCafe24(`https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons/${c.coupon_no}`, { shop_no: 1 }))
         );
 
         const enriched = activeCoupons.map((c, idx) => {
             let availableProducts = [];
             let availableProductType = c.available_product_type || 'A';
-
             const detail = detailResults[idx];
+            
             if (detail.status === 'fulfilled' && detail.value.data.coupon) {
                 const dc = detail.value.data.coupon;
                 availableProductType = dc.available_product_type || availableProductType;
-
                 const raw = dc.available_product;
                 if (Array.isArray(raw)) {
-                    availableProducts = raw.map(p => {
-                        if (typeof p === 'object' && p !== null && p.product_no) return Number(p.product_no);
-                        return Number(p);
-                    }).filter(n => !isNaN(n));
+                    availableProducts = raw.map(p => (typeof p === 'object' && p !== null && p.product_no) ? Number(p.product_no) : Number(p)).filter(n => !isNaN(n));
                 } else if (typeof raw === 'number') {
                     availableProducts = [raw];
                 } else if (typeof raw === 'string' && raw) {
@@ -433,206 +392,103 @@ app.get('/api/cafe24/coupons', async (req, res) => {
                 }
             }
 
-            console.log(`  - [${c.coupon_no}] ${c.coupon_name} | 타입:${c.benefit_type} | 상품적용:${availableProductType} | 상품수:${availableProducts.length}`);
-
             return {
                 coupon_no: c.coupon_no,
                 coupon_name: c.coupon_name,
                 benefit_type: c.benefit_type,
                 benefit_percentage: c.benefit_percentage ? parseFloat(c.benefit_percentage) : null,
                 benefit_price: c.benefit_price ? Math.floor(parseFloat(c.benefit_price)) : null,
-                benefit_percentage_max_price: c.benefit_percentage_max_price
-                    ? Math.floor(parseFloat(c.benefit_percentage_max_price)) : null,
                 available_date: c.available_date || '',
-                benefit_text: c.benefit_text || '',
                 available_product_type: availableProductType,
-                available_product: availableProducts,
-                issue_type: c.issue_type || '',
+                available_product: availableProducts
             };
         });
 
-        // 상품 적용 쿠폰만 로그 강조
-        const productSpecific = enriched.filter(c => c.available_product_type === 'I' && c.available_product.length > 0);
-        console.log(`🎯 상품 지정 쿠폰: ${productSpecific.length}개`);
-        productSpecific.forEach(c => {
-            console.log(`  🏷️ ${c.coupon_name}: 상품 ${c.available_product.length}개 [${c.available_product.slice(0, 5).join(', ')}${c.available_product.length > 5 ? '...' : ''}]`);
-        });
-
         res.json({ success: true, count: enriched.length, data: enriched });
-    } catch (error) {
-        console.error('쿠폰 조회 에러:', error.response?.data || error.message);
-        res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error', detail: error.response?.data });
-    }
+    } catch (error) { res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error' }); }
 });
 
-// ==========================================
-// [5-3] 쿠폰-상품 매핑 API (server.js에 추가)
-// ==========================================
-// 아래 코드를 server.js의 [5-2] 쿠폰 조회 섹션 아래에 추가하세요
-// ==========================================
-
-const COLLECTION_COUPON_MAP = "couponProductMap";
 app.get('/api/cafe24/coupons/:couponNo', async (req, res) => {
     try {
         const { couponNo } = req.params;
-
         const fetchFromCafe24 = async (url, params, retry = false) => {
             try {
                 return await axios.get(url, {
                     params,
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`,
-                        'Content-Type': 'application/json',
-                        'X-Cafe24-Api-Version': CAFE24_API_VERSION
-                    }
+                    headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-Cafe24-Api-Version': CAFE24_API_VERSION }
                 });
             } catch (err) {
                 if (err.response && err.response.status === 401 && !retry) {
-                    await refreshAccessToken();
-                    return await fetchFromCafe24(url, params, true);
+                    await refreshAccessToken(); return await fetchFromCafe24(url, params, true);
                 }
                 throw err;
             }
         };
 
-        // 1) 쿠폰 조회
-        const couponRes = await fetchFromCafe24(
-            `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`,
-            { shop_no: 1, coupon_no: couponNo }
-        );
+        const couponRes = await fetchFromCafe24(`https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/coupons`, { shop_no: 1, coupon_no: couponNo });
         const coupon = (couponRes.data.coupons || [])[0];
         if (!coupon) return res.status(404).json({ success: false, message: '쿠폰 없음' });
 
-        // 2) ★ available_product_list에서 상품번호 추출
         const productNos = coupon.available_product_list || [];
-        console.log(`🎫 [${coupon.coupon_no}] ${coupon.coupon_name} / 타입:${coupon.available_product} / 상품:${productNos.length}개`);
-
-        // 3) 상품번호로 Cafe24 상품 상세 조회 (한번에 최대 100개씩 청크 분할 처리)
         let productDetails = [];
+        
         if (productNos.length > 0) {
             try {
-                // 배열을 100개 단위로 쪼개기
                 const chunkSize = 100;
-                const chunkedProductNos = [];
                 for (let i = 0; i < productNos.length; i += chunkSize) {
-                    chunkedProductNos.push(productNos.slice(i, i + chunkSize));
-                }
-
-                // 쪼개진 배열 단위로 Cafe24 API 순차 호출
-                for (const chunk of chunkedProductNos) {
+                    const chunk = productNos.slice(i, i + chunkSize);
                     const productRes = await fetchFromCafe24(
                         `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
-                        {
-                            shop_no: 1,
-                            product_no: chunk.join(','),
-                            fields: 'product_no,product_name,price,detail_image,list_image,small_image',
-                            limit: 100
-                        }
+                        { shop_no: 1, product_no: chunk.join(','), fields: 'product_no,product_name,price,detail_image,list_image,small_image', limit: 100 }
                     );
-                    
                     const chunkDetails = (productRes.data.products || []).map(p => ({
-                        product_no: p.product_no,
-                        product_name: p.product_name,
-                        price: Math.floor(Number(p.price)),
-                        image: p.detail_image || p.list_image || p.small_image || ''
+                        product_no: p.product_no, product_name: p.product_name, price: Math.floor(Number(p.price)), image: p.detail_image || p.list_image || p.small_image || ''
                     }));
-                    
-                    // 조회된 청크 데이터를 전체 배열에 합치기
                     productDetails = productDetails.concat(chunkDetails);
                 }
-                console.log(`✅ 상품 상세 조회 완료: 총 ${productDetails.length}개`);
             } catch (e) {
-                console.error('상품 상세 조회 실패:', e.message);
-                // 실패해도 번호만이라도 반환
-                productDetails = productNos.map(no => ({
-                    product_no: no,
-                    product_name: `상품 #${no}`,
-                    price: 0,
-                    image: ''
-                }));
+                productDetails = productNos.map(no => ({ product_no: no, product_name: `상품 #${no}`, price: 0, image: '' }));
             }
         }
 
-        const result = {
-            coupon_no: coupon.coupon_no,
-            coupon_name: coupon.coupon_name,
-            benefit_type: coupon.benefit_type,
-            benefit_percentage: coupon.benefit_percentage ? parseFloat(coupon.benefit_percentage) : null,
-            benefit_price: coupon.benefit_price ? Math.floor(parseFloat(coupon.benefit_price)) : null,
-            available_product_type: coupon.available_product || 'A',
-            available_product_list: productNos,
-            products: productDetails,
-        };
-
-        console.log(`✅ 응답: 할인 ${result.benefit_percentage || result.benefit_price} / 상품 ${productDetails.length}개`);
-        res.json({ success: true, data: result });
-
-    } catch (error) {
-        console.error('쿠폰 조회 에러:', error.response?.data || error.message);
-        res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error' });
-    }
+        res.json({
+            success: true, 
+            data: {
+                coupon_no: coupon.coupon_no, coupon_name: coupon.coupon_name, benefit_type: coupon.benefit_type,
+                benefit_percentage: coupon.benefit_percentage ? parseFloat(coupon.benefit_percentage) : null,
+                benefit_price: coupon.benefit_price ? Math.floor(parseFloat(coupon.benefit_price)) : null,
+                available_product_type: coupon.available_product || 'A', available_product_list: productNos, products: productDetails
+            }
+        });
+    } catch (error) { res.status(500).json({ success: false, message: 'Cafe24 Coupon API Error' }); }
 });
+
 app.post('/api/coupon-map', async (req, res) => {
     try {
         const { coupon_no, coupon_name, benefit_type, benefit_percentage, benefit_price, start_date, end_date, products } = req.body;
-        if (!coupon_no) return res.status(400).json({ success: false, message: 'coupon_no 필수' });
+        if (!coupon_no) return res.status(400).json({ success: false });
 
         await db.collection(COLLECTION_COUPON_MAP).updateOne(
             { coupon_no: String(coupon_no) },
-            {
-                $set: {
-                    coupon_no: String(coupon_no),
-                    coupon_name: coupon_name || '',
-                    benefit_type: benefit_type || 'B',
-                    benefit_percentage: benefit_percentage || null,
-                    benefit_price: benefit_price || null,
-                    start_date: start_date || '',
-                    end_date: end_date || '',
-                    products: products || [],
-                    updated_at: new Date()
-                }
-            },
+            { $set: { coupon_no: String(coupon_no), coupon_name, benefit_type, benefit_percentage, benefit_price, start_date, end_date, products, updated_at: new Date() } },
             { upsert: true }
         );
-        console.log(`✅ 쿠폰 매핑 저장: [${coupon_no}] ${coupon_name} / 기간:${start_date}~${end_date} / 상품 ${(products || []).length}개`);
         res.json({ success: true });
-    } catch (e) {
-        console.error('매핑 저장 에러:', e);
-        res.status(500).json({ success: false });
-    }
-});
-app.get('/api/coupon-map', async (req, res) => {
-    try {
-        const mappings = await db.collection(COLLECTION_COUPON_MAP).find({}).toArray();
-
-        // ★ 오늘 날짜 기준으로 유효한 쿠폰만 필터
-        const today = new Date().toISOString().slice(0, 10);
-        const active = mappings.filter(m => {
-            if (!m.end_date) return true;  // 기간 미설정이면 유효
-            return m.end_date >= today;
-        });
-
-        console.log(`📦 쿠폰 매핑 조회: 전체 ${mappings.length}개 / 유효 ${active.length}개`);
-        res.json({ success: true, data: active });
-    } catch (e) {
-        console.error('매핑 조회 에러:', e);
-        res.status(500).json({ success: false });
-    }
-});
-
-// ★ 특정 쿠폰 매핑 조회
-app.get('/api/coupon-map/:couponNo', async (req, res) => {
-    try {
-        const mapping = await db.collection(COLLECTION_COUPON_MAP).findOne({ coupon_no: String(req.params.couponNo) });
-        res.json({ success: true, data: mapping || { products: [] } });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// ★ 쿠폰 매핑 삭제
+app.get('/api/coupon-map', async (req, res) => {
+    try {
+        const mappings = await db.collection(COLLECTION_COUPON_MAP).find({}).toArray();
+        const today = new Date().toISOString().slice(0, 10);
+        const active = mappings.filter(m => !m.end_date || m.end_date >= today);
+        res.json({ success: true, data: active });
+    } catch (e) { res.status(500).json({ success: false }); }
+});
+
 app.delete('/api/coupon-map/:couponNo', async (req, res) => {
     try {
         await db.collection(COLLECTION_COUPON_MAP).deleteOne({ coupon_no: String(req.params.couponNo) });
-        console.log(`🗑️ 쿠폰 매핑 삭제: ${req.params.couponNo}`);
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
@@ -646,33 +502,19 @@ app.get('/api/ordersOffData', async (req, res) => {
         const { store_name, startDate, endDate, keyword, view } = req.query;
         let query = {};
 
-        if (view === 'trash') {
-            query.is_deleted = true;
-        } else if (view === 'completed') {
-            query.is_deleted = { $ne: true };
-            query.is_synced = true;
-        } else {
-            query.is_deleted = { $ne: true };
-            query.is_synced = { $ne: true }; 
-        }
+        if (view === 'trash') query.is_deleted = true;
+        else if (view === 'completed') { query.is_deleted = { $ne: true }; query.is_synced = true; } 
+        else { query.is_deleted = { $ne: true }; query.is_synced = { $ne: true }; }
 
         if (store_name && store_name !== '전체' && store_name !== 'null') query.store_name = store_name;
-        if (startDate && endDate) {
-            query.created_at = { $gte: new Date(startDate + "T00:00:00.000Z"), $lte: new Date(endDate + "T23:59:59.999Z") };
-        }
-        if (keyword) {
-            query.$or = [
-                { customer_name: { $regex: keyword, $options: 'i' } },
-                { customer_phone: { $regex: keyword, $options: 'i' } },
-                { product_name: { $regex: keyword, $options: 'i' } }
-            ];
-        }
+        if (startDate && endDate) query.created_at = { $gte: new Date(startDate + "T00:00:00.000Z"), $lte: new Date(endDate + "T23:59:59.999Z") };
+        if (keyword) query.$or = [ { customer_name: { $regex: keyword, $options: 'i' } }, { customer_phone: { $regex: keyword, $options: 'i' } }, { product_name: { $regex: keyword, $options: 'i' } } ];
+        
         const orders = await db.collection(COLLECTION_ORDERS).find(query).sort({ created_at: -1 }).toArray();
         res.json({ success: true, count: orders.length, data: orders });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 방패(authMiddleware)가 장착되어 있지만 위에서 무조건 패스하도록 설정함
 app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
     try {
         const d = req.body;
@@ -681,57 +523,40 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
             ...d, items,
             total_amount: Number(d.total_amount) || 0,
             shipping_cost: Number(d.shipping_cost) || 0,
-            is_synced: false, 
-            is_deleted: false,
-            created_at: new Date(), 
-            synced_at: null,
-            ecount_success: null
+            is_synced: false, is_deleted: false,
+            created_at: new Date(), synced_at: null, ecount_success: null
         };
         delete newOrder._id;
         const result = await db.collection(COLLECTION_ORDERS).insertOne(newOrder);
-        res.json({ success: true, message: "Order Saved", orderId: result.insertedId });
-    } catch (error) { res.status(500).json({ success: false, message: 'DB Error' }); }
+        res.json({ success: true, orderId: result.insertedId });
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.put('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
-        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
-        
+        if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
         const f = { ...req.body, updated_at: new Date() };
         delete f._id;
         if (f.shipping_cost !== undefined) f.shipping_cost = Number(f.shipping_cost);
         if (f.total_amount !== undefined) f.total_amount = Number(f.total_amount);
-
-        await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(id) }, { $set: f });
+        await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(req.params.id) }, { $set: f });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.delete('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
-        const { type } = req.query;
-        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
-
-        if (type === 'hard') {
-            await db.collection(COLLECTION_ORDERS).deleteOne({ _id: new ObjectId(id) });
-        } else {
-            await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(id) }, { $set: { is_deleted: true, deleted_at: new Date() } });
-        }
+        if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
+        if (req.query.type === 'hard') await db.collection(COLLECTION_ORDERS).deleteOne({ _id: new ObjectId(req.params.id) });
+        else await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(req.params.id) }, { $set: { is_deleted: true, deleted_at: new Date() } });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.put('/api/ordersOffData/restore/:id', authMiddleware, async (req, res) => {
     try {
-        const { id } = req.params;
-        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false });
-
-        await db.collection(COLLECTION_ORDERS).updateOne(
-            { _id: new ObjectId(id) },
-            { $set: { is_deleted: false, deleted_at: null, is_synced: false, synced_at: null, ecount_status: null, ecount_message: null } }
-        );
+        if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
+        await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(req.params.id) }, { $set: { is_deleted: false, deleted_at: null, is_synced: false, synced_at: null, ecount_status: null, ecount_message: null } });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
@@ -740,18 +565,12 @@ app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
         const { results } = req.body; 
         if (!results || !Array.isArray(results)) return res.status(400).json({ success: false });
-
         const bulkOps = results.map(item => ({
             updateOne: {
                 filter: { _id: new ObjectId(item.id) },
-                update: { $set: { 
-                    is_synced: true, synced_at: new Date(), 
-                    ecount_success: item.status === 'SUCCESS', 
-                    ecount_message: item.message || '' 
-                }}
+                update: { $set: { is_synced: true, synced_at: new Date(), ecount_success: item.status === 'SUCCESS', ecount_message: item.message || '' } }
             }
         }));
-
         if (bulkOps.length > 0) await db.collection(COLLECTION_ORDERS).bulkWrite(bulkOps);
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
@@ -761,7 +580,6 @@ app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
     try {
         const { results } = req.body;
         if (!results || !Array.isArray(results)) return res.status(400).json({ success: false });
-
         for (const item of results) {
             const amount = typeof item.matchKey.total_amount === 'string' ? Number(item.matchKey.total_amount.replace(/,/g, '')) : item.matchKey.total_amount;
             await db.collection(COLLECTION_ORDERS).updateOne(
@@ -774,7 +592,7 @@ app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
 });
 
 // ==========================================
-// [7] 정적 데이터 및 CS 메모
+// [7] 정적 데이터 (매장, 창고, 담당자 등)
 // ==========================================
 app.get('/api/item-codes', (req, res) => {
     const filePath = path.join(__dirname, 'ITEM_CODES.json');
@@ -832,7 +650,6 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 
 // ==========================================
 // [8] 비즈앰 알림톡
