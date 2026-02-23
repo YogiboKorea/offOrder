@@ -221,6 +221,36 @@ app.post('/api/auth/store/login', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+
+// ==========================================
+// [추가] PIN 번호 단독으로 매장을 찾아 로그인하는 API
+// ==========================================
+app.post('/api/auth/pin-login', async (req, res) => {
+    try {
+        const { pin } = req.body;
+        
+        if (!pin) {
+            return res.status(400).json({ success: false, message: 'PIN 번호가 필요합니다.' });
+        }
+
+        // DB에서 PIN(password) 번호가 일치하는 매장 조회
+        const cred = await db.collection(COLLECTION_CREDENTIALS).findOne({ password: pin });
+
+        if (cred && cred.storeName) {
+            // 일치하는 매장이 있으면 매장 이름 반환
+            res.json({ success: true, storeName: cred.storeName });
+        } else {
+            // 일치하는 매장이 없으면 실패 반환
+            res.json({ success: false, message: '유효하지 않은 PIN입니다.' });
+        }
+    } catch (e) {
+        console.error("PIN 로그인 API 에러:", e);
+        res.status(500).json({ success: false, message: '서버 내부 오류' });
+    }
+});
+
+
+
 app.get('/api/auth/store/credentials', async (req, res) => {
     try {
         const credentials = await db.collection(COLLECTION_CREDENTIALS).find({}).toArray();
