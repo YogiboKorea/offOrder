@@ -742,10 +742,8 @@ app.post('/api/send-alimtalk', async (req, res) => {
         console.error("🔥 비즈엠 알림톡 발송 에러:", error.response ? error.response.data : error.message);
         res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.' }); 
     }
-});
-
-// ==========================================
-// [8] 비즈엠 알림톡 (최종 완성본 - 중복 제거)
+});// ==========================================
+// [8] 비즈엠 알림톡 (최종 확정본)
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
@@ -767,6 +765,7 @@ app.post('/api/send-alimtalk', async (req, res) => {
         const contactPhone = order.customer_phone || receiver; 
         const address = `${order.address || ''} ${order.detail_address || ''}`.trim();
         
+        // 다중 상품 개별 나열 로직
         let productListText = '';
         if (order.items && order.items.length > 0) {
             productListText = order.items.map(item => {
@@ -780,11 +779,12 @@ app.post('/api/send-alimtalk', async (req, res) => {
             productListText = `- ${name} (${qty}개)`;
         }
 
+        // 금액 콤마 포맷팅
         const formatPrice = (num) => Number(num || 0).toLocaleString('ko-KR');
         const totalAmount = formatPrice(order.total_amount || 0);
 
         // 3. 템플릿 텍스트 조립 
-        // ⚠️ 절대 들여쓰기 하지 마세요!
+        // ⚠️ 주의: 백틱(`) 안의 띄어쓰기와 줄바꿈은 카카오톡에 그대로 전송되므로 절대 들여쓰기 하지 마세요!
         const msgText = `[Yogibo] 주문이 완료되었습니다.
 
 안녕하세요, ${customerName}님!
@@ -805,18 +805,18 @@ ${productListText}
         // 4. 비즈엠 전송 페이로드 구성
         const payload = [{
             "message_type": "at",
-            "phn": receiver.replace(/-/g, ''),
+            "phn": receiver.replace(/-/g, ''), // 번호 하이픈 제거
             "profile": BIZM_PROFILE_KEY,
-            "tmplId": "off_receipt",           // 🔥 제대로 된 템플릿 코드!
-            "msg": msgText,                    
+            "tmplId": "off_receipt",           // 🔥 카카오에 승인된 템플릿 코드
+            "msg": msgText,                    // 🔥 완성된 텍스트 통째로 삽입
             "button1": { 
-                "name": "온라인몰 바로가기",        
+                "name": "온라인몰 바로가기",        // 승인된 버튼명
                 "type": "WL", 
                 "url_mobile": "http://yogibo.kr",
                 "url_pc": "http://yogibo.kr" 
             },
             "smsKind": "L",
-            "smsMsg": msgText, 
+            "smsMsg": msgText,                 // 카톡 실패 시 문자로 전송될 내용
             "smsSender": BIZM_SENDER_PHONE
         }];
 
