@@ -638,9 +638,8 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
-
 // ==========================================
-// [8] 비즈엠 알림톡 (최종 확정본 - 중복 제거!)
+// [8] 비즈엠 알림톡 (주소 & 옵션명 포함 최종본)
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
@@ -660,20 +659,26 @@ app.post('/api/send-alimtalk', async (req, res) => {
         const customerName = order.customer_name || '고객';
         const storeName = order.store_name || '미지정';
         const contactPhone = order.customer_phone || receiver; 
-        const address = `${order.address || ''} ${order.detail_address || ''}`.trim();
         
-        // 다중 상품 개별 나열 로직
+        // 🔥 수정 1: 주소 필드명을 DB와 동일하게 'customer_address'로 변경
+        const address = order.customer_address || '매장 직접 수령 (또는 미입력)';
+        
+        // 🔥 수정 2: 상품명 뒤에 [옵션명]을 붙이도록 로직 강화
         let productListText = '';
         if (order.items && order.items.length > 0) {
             productListText = order.items.map(item => {
                 const name = item.product_name;
+                // 옵션명이 존재하면 대괄호 [ ] 안에 넣어서 추가
+                const option = item.option_name && item.option_name !== '.' ? ` [${item.option_name}]` : '';
                 const qty = Number(item.quantity) || 1;
-                return `- ${name} (${qty}개)`;
+                return `- ${name}${option} (${qty}개)`;
             }).join('\n');
         } else {
+            // items 배열이 없는 예전 데이터 예외 처리
             const name = order.product_name || '요기보 상품';
+            const option = order.option_name && order.option_name !== '.' ? ` [${order.option_name}]` : '';
             const qty = Number(order.quantity) || 1;
-            productListText = `- ${name} (${qty}개)`;
+            productListText = `- ${name}${option} (${qty}개)`;
         }
 
         // 금액 콤마 포맷팅
@@ -681,7 +686,7 @@ app.post('/api/send-alimtalk', async (req, res) => {
         const totalAmount = formatPrice(order.total_amount || 0);
 
         // 3. 템플릿 텍스트 조립 
-        // ⚠️ 주의: 백틱(`) 안의 띄어쓰기와 줄바꿈은 카카오톡에 그대로 전송되므로 절대 들여쓰기 하지 마세요!
+        // ⚠️ 들여쓰기 절대 금지!
         const msgText = `[Yogibo] 주문이 완료되었습니다.
 
 안녕하세요, ${customerName}님!
@@ -704,10 +709,10 @@ ${productListText}
             "message_type": "at",
             "phn": receiver.replace(/-/g, ''), // 번호 하이픈 제거
             "profile": BIZM_PROFILE_KEY,
-            "tmplId": "off_receipt",           // 🔥 카카오에 승인된 템플릿 코드
-            "msg": msgText,                    // 🔥 완성된 텍스트 통째로 삽입
+            "tmplId": "off_receipt",           // 카카오에 승인된 템플릿 코드
+            "msg": msgText,                    // 완성된 텍스트 통째로 삽입
             "button1": { 
-                "name": "온라인몰 바로가기",        // 승인된 버튼명
+                "name": "온라인몰 바로가기",      // 승인된 버튼명
                 "type": "WL", 
                 "url_mobile": "http://yogibo.kr",
                 "url_pc": "http://yogibo.kr" 
