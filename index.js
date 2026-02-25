@@ -47,8 +47,8 @@ const COLLECTION_STORES = "ecountStores";
 const COLLECTION_STATIC_MANAGERS = "staticManagers";
 const COLLECTION_WAREHOUSES = "ecountWarehouses";
 const COLLECTION_CS_MEMOS = "csMemos";
-const COLLECTION_PIN_DATA = "OFFPINDATA"; // 🔥 매장별 접속 PIN 전용 관리 컬렉션
-const COLLECTION_AUTH = "authSettings";   // 🔥 마스터(통합) PIN 관리 컬렉션
+const COLLECTION_PIN_DATA = "OFFPINDATA"; 
+const COLLECTION_AUTH = "authSettings";   
 const COLLECTION_COUPON_MAP = "couponProductMap"; 
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
@@ -89,7 +89,7 @@ async function startServer() {
         } catch (e) {}
 
         await initializeWarehouseDB(); 
-        await initializeGlobalPin(); // 마스터 PIN 초기화
+        await initializeGlobalPin(); 
         await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
         await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
 
@@ -103,7 +103,6 @@ async function startServer() {
 }
 startServer();
 
-// 통합 비밀번호 초기화 (없으면 1111로 세팅)
 async function initializeGlobalPin() {
     try {
         const count = await db.collection(COLLECTION_AUTH).countDocuments({ type: 'global_pin' });
@@ -158,8 +157,6 @@ async function refreshAccessToken() {
 // ==========================================
 // [4] 매장 접속 권한 및 통합 PIN 검증 API
 // ==========================================
-
-// 1. [관리자 모드] 마스터(통합) PIN 검증 API
 app.post('/api/verify-pin', async (req, res) => {
     try {
         const { pin } = req.body;
@@ -173,7 +170,6 @@ app.post('/api/verify-pin', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 2. [관리자 모드] 마스터(통합) PIN 변경 API
 app.put('/api/auth/global-pin', async (req, res) => {
     try {
         const { newPin } = req.body;
@@ -190,11 +186,9 @@ app.put('/api/auth/global-pin', async (req, res) => {
     }
 });
 
-// 3. [개별 매장 모드] 매장별 PIN 검증 (로그인) API
 app.post('/api/auth/store/login', async (req, res) => {
     try {
         const { storeName, password } = req.body;
-        // OFFPINDATA 컬렉션에서 해당 매장 정보 조회
         const cred = await db.collection(COLLECTION_PIN_DATA).findOne({ storeName: storeName });
         
         if (cred && String(cred.password) === String(password)) {
@@ -205,13 +199,11 @@ app.post('/api/auth/store/login', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 4. [어드민] 매장별 PIN 설정/저장 API
 app.post('/api/auth/store/password', async (req, res) => {
     try {
         const { storeName, password } = req.body;
         if (!storeName || !password) return res.status(400).json({ success: false, message: '값 누락' });
         
-        // OFFPINDATA 컬렉션에 매장 PIN 정보 업데이트
         await db.collection(COLLECTION_PIN_DATA).updateOne(
             { storeName: storeName }, 
             { $set: { password: String(password), updatedAt: new Date() } }, 
@@ -221,7 +213,6 @@ app.post('/api/auth/store/password', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// 5. [어드민] 등록된 전체 매장 PIN 데이터 조회 (매장 접속 관리 팝업용)
 app.get('/api/auth/store/credentials', async (req, res) => {
     try {
         const credentials = await db.collection(COLLECTION_PIN_DATA).find({}).toArray();
@@ -229,12 +220,10 @@ app.get('/api/auth/store/credentials', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-// (임시) 방어막 미들웨어 - 개발/테스트 편의를 위해 임시로 무조건 패스
 const authMiddleware = async (req, res, next) => {
     console.log("⚠️ 현재 주문 등록 보안 인증이 임시로 해제되어 무조건 통과됩니다.");
     return next(); 
 };
-
 
 // ==========================================
 // [5] Cafe24 API (상품 & 옵션 조회)
@@ -493,7 +482,6 @@ app.delete('/api/coupon-map/:couponNo', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
 // ==========================================
 // [6] 주문 데이터 CRUD
 // ==========================================
@@ -651,28 +639,211 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
+
 // ==========================================
-// [8] 비즈앰 알림톡
+// [8] 비즈엠 알림톡 (다중 상품 개별 나열 버전)
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
         const { orderId, receiver } = req.body;
+        
+        // 1. DB에서 주문 데이터 조회
+        if (!ObjectId.isValid(orderId)) {
+            return res.status(400).json({ success: false, message: '유효하지 않은 주문 ID입니다.' });
+        }
+        
+        const order = await db.collection(COLLECTION_ORDERS).findOne({ _id: new ObjectId(orderId) });
+        if (!order) {
+            return res.status(404).json({ success: false, message: '주문 내역을 찾을 수 없습니다.' });
+        }
+
+        // 2. 비즈엠 템플릿 변수에 맞게 데이터 가공
+        const customerName = order.customer_name || '고객';
+        const storeName = order.store_name || '미지정';
+        const managerName = order.manager_name || '담당자'; 
+        const contactPhone = order.customer_phone || receiver; // 주문자의 연락처 사용
+        const address = `${order.address || ''} ${order.detail_address || ''}`.trim();
+        
+        // 🔥 다중 상품 개별 나열 로직으로 변경
+        let productListText = '';
+        
+        if (order.items && order.items.length > 0) {
+            // 배열을 돌면서 '- 상품명 (수량개)' 형태로 만들고 줄바꿈(\n)으로 합침
+            productListText = order.items.map(item => {
+                const name = item.product_name;
+                const qty = Number(item.quantity) || 1;
+                return `- ${name} (${qty}개)`;
+            }).join('\n');
+        } else {
+            // items 배열이 없는 경우 예외 처리
+            const name = order.product_name || '요기보 상품';
+            const qty = Number(order.quantity) || 1;
+            productListText = `- ${name} (${qty}개)`;
+        }
+
+        // 금액 포맷팅 (콤마 찍기)
+        const formatPrice = (num) => Number(num || 0).toLocaleString('ko-KR');
+        const productPrice = formatPrice((order.total_amount || 0) - (order.shipping_cost || 0)); 
+        const shippingCost = formatPrice(order.shipping_cost || 0);
+        const totalAmount = formatPrice(order.total_amount || 0);
+
+        // 3. 템플릿 텍스트 조립 
+        // ⚠️ 주의: 백틱(`) 안의 띄어쓰기와 줄바꿈이 그대로 전송되므로 절대 들여쓰기 하지 마세요!
+        const msgText = `[Yogibo Korea] 주문이 완료되었습니다.
+                안녕하세요, ${customerName}님!
+                요기보 오프라인 매장을 이용해 주셔서 감사합니다.
+                고객님의 주문 내역을 안내해 드립니다.
+
+                ■ 주문 내역 요약
+                - 매장: ${storeName}
+                - 담당자: ${managerName}
+                - 연락처: ${contactPhone}
+
+                ■ 배송지 정보
+                - 주소: ${address}
+
+                ■ 주문 상품 정보
+                ${productListText}
+
+                ■ 결제 정보
+                - 상품 금액: ${productPrice}원
+                - 배송비: ${shippingCost}원
+                - 총 결제금액: ${totalAmount}원
+
+                감사합니다.
+                YOGIBO KOREA`;
         const receiptUrl = `${MY_DOMAIN}/receipt/${orderId}`;
+
+        // 4. 비즈엠 전송 페이로드 구성
         const payload = [{
             "message_type": "at",
-            "phn": receiver.replace(/-/g, ''),
+            "phn": receiver.replace(/-/g, ''), // 하이픈 제거 필수
             "profile": BIZM_PROFILE_KEY,
-            "tmplId": "승인된_템플릿_코드", 
-            "msg": `[Yogibo] 주문 안내...`,        
-            "button1": { "name": "전자 영수증 보기", "type": "WL", "url_mobile": receiptUrl, "url_pc": receiptUrl },
+            "tmplId": "승인된_템플릿_코드", // 🔥 비즈엠에서 발급받은 실제 템플릿 코드 입력 필수
+            "msg": msgText,                // 🔥 완성된 텍스트 통째로 삽입
+            "button1": { 
+                "name": "전자 영수증 보기", 
+                "type": "WL", 
+                "url_mobile": receiptUrl, 
+                "url_pc": receiptUrl 
+            },
             "smsKind": "L",
-            "smsMsg": `[Yogibo] 주문 안내...\n\n영수증: ${receiptUrl}`,
+            "smsMsg": msgText, // 카톡 발송 실패 시 문자로 전송될 내용 (LMS)
             "smsSender": BIZM_SENDER_PHONE
         }];
 
+        // 5. 비즈엠 API 호출
         const response = await axios.post('https://alimtalk-api.bizmsg.kr/v2/sender/send', payload, {
             headers: { 'userid': BIZM_USER_ID, 'Content-Type': 'application/json' }
         });
+        
         res.json({ success: true, result: response.data });
-    } catch (error) { res.status(500).json({ success: false }); }
+    } catch (error) { 
+        console.error("🔥 비즈엠 알림톡 발송 에러:", error.response ? error.response.data : error.message);
+        res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.' }); 
+    }
+});
+// ==========================================
+// [8] 비즈엠 알림톡 (버튼 포함 & 다중 상품 개별 나열 버전)
+// ==========================================
+app.post('/api/send-alimtalk', async (req, res) => {
+    try {
+        const { orderId, receiver } = req.body;
+        
+        // 1. DB에서 주문 데이터 조회
+        if (!ObjectId.isValid(orderId)) {
+            return res.status(400).json({ success: false, message: '유효하지 않은 주문 ID입니다.' });
+        }
+        
+        const order = await db.collection(COLLECTION_ORDERS).findOne({ _id: new ObjectId(orderId) });
+        if (!order) {
+            return res.status(404).json({ success: false, message: '주문 내역을 찾을 수 없습니다.' });
+        }
+
+        // 2. 비즈엠 템플릿 변수에 맞게 데이터 가공
+        const customerName = order.customer_name || '고객';
+        const storeName = order.store_name || '미지정';
+        const contactPhone = order.customer_phone || receiver; // 주문자의 연락처 사용
+        const address = `${order.address || ''} ${order.detail_address || ''}`.trim();
+        
+        // 🔥 다중 상품 개별 나열 로직으로 변경
+        let productListText = '';
+        
+        if (order.items && order.items.length > 0) {
+            // 배열을 돌면서 '- 상품명 (수량개)' 형태로 만들고 줄바꿈(\n)으로 합침
+            productListText = order.items.map(item => {
+                const name = item.product_name;
+                const qty = Number(item.quantity) || 1;
+                return `- ${name} (${qty}개)`;
+            }).join('\n');
+        } else {
+            // items 배열이 없는 경우 예외 처리
+            const name = order.product_name || '요기보 상품';
+            const qty = Number(order.quantity) || 1;
+            productListText = `- ${name} (${qty}개)`;
+        }
+
+        // 금액 포맷팅 (콤마 찍기)
+        const formatPrice = (num) => Number(num || 0).toLocaleString('ko-KR');
+        const totalAmount = formatPrice(order.total_amount || 0);
+
+
+        // 3. 템플릿 텍스트 조립 
+        // ⚠️ 백틱 안의 들여쓰기는 비즈엠 양식과 100% 동일해야 하므로 절대 수정하지 마세요!
+        const msgText = `[Yogibo] 주문이 완료되었습니다.
+
+안녕하세요, ${customerName}님!
+요기보 ${storeName} 매장을 이용해 주셔서 감사합니다.
+고객님의 주문 내역을 안내해 드립니다.
+
+■ 배송 정보
+- 고객명: ${customerName}
+- 연락처: ${contactPhone}
+- 주소: ${address}
+
+■ 주문 상품 정보
+${productListText}
+
+■ 결제 정보
+- 총 결제금액: ${totalAmount}원`;
+
+        // 🚨 디버깅용: 환경변수가 잘 들어왔는지 확인 (배포 후 로그에서 확인 가능)
+        console.log("--- [알림톡 발송 시도] ---");
+        console.log("USER_ID:", BIZM_USER_ID);
+        console.log("PROFILE_KEY:", BIZM_PROFILE_KEY ? "설정됨(O)" : "누락됨(X)");
+        console.log("SENDER_PHONE:", BIZM_SENDER_PHONE);
+        console.log("------------------------");
+
+        // 4. 비즈엠 전송 페이로드 구성
+        const payload = [{
+            "message_type": "at",
+            "phn": receiver.replace(/-/g, ''), // 하이픈 제거 필수
+            "profile": BIZM_PROFILE_KEY,
+            "tmplId": "off_receipt",           // 🔥 심사받은 템플릿 코드
+            "msg": msgText,                    
+            // 🔥 비즈엠 관리자에 등록한 내용과 100% 똑같이 버튼 정보 추가
+            "button1": { 
+                "name": "온라인몰 바로가기",        
+                "type": "WL", 
+                "url_mobile": "http://yogibo.kr",
+                "url_pc": "http://yogibo.kr" 
+            },
+            "smsKind": "L",
+            "smsMsg": msgText, 
+            "smsSender": BIZM_SENDER_PHONE
+        }];
+
+        // 5. 비즈엠 API 호출
+        const response = await axios.post('https://alimtalk-api.bizmsg.kr/v2/sender/send', payload, {
+            headers: { 'userid': BIZM_USER_ID, 'Content-Type': 'application/json' }
+        });
+
+        // 비즈엠 응답이 정상이더라도 내부 결과 코드(code)가 'success'가 아닐 수 있으므로 로깅
+        console.log("비즈엠 발송 결과:", response.data);
+
+        res.json({ success: true, result: response.data });
+    } catch (error) { 
+        console.error("🔥 비즈엠 알림톡 발송 에러:", error.response ? JSON.stringify(error.response.data) : error.message);
+        res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.', errorDetail: error.response?.data }); 
+    }
 });
