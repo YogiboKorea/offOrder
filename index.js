@@ -743,8 +743,9 @@ app.post('/api/send-alimtalk', async (req, res) => {
         res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.' }); 
     }
 });
+
 // ==========================================
-// [8] 비즈엠 알림톡 (버튼 포함 & 다중 상품 개별 나열 버전)
+// [8] 비즈엠 알림톡 (최종 완성본 - 중복 제거)
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
@@ -763,33 +764,27 @@ app.post('/api/send-alimtalk', async (req, res) => {
         // 2. 비즈엠 템플릿 변수에 맞게 데이터 가공
         const customerName = order.customer_name || '고객';
         const storeName = order.store_name || '미지정';
-        const contactPhone = order.customer_phone || receiver; // 주문자의 연락처 사용
+        const contactPhone = order.customer_phone || receiver; 
         const address = `${order.address || ''} ${order.detail_address || ''}`.trim();
         
-        // 🔥 다중 상품 개별 나열 로직으로 변경
         let productListText = '';
-        
         if (order.items && order.items.length > 0) {
-            // 배열을 돌면서 '- 상품명 (수량개)' 형태로 만들고 줄바꿈(\n)으로 합침
             productListText = order.items.map(item => {
                 const name = item.product_name;
                 const qty = Number(item.quantity) || 1;
                 return `- ${name} (${qty}개)`;
             }).join('\n');
         } else {
-            // items 배열이 없는 경우 예외 처리
             const name = order.product_name || '요기보 상품';
             const qty = Number(order.quantity) || 1;
             productListText = `- ${name} (${qty}개)`;
         }
 
-        // 금액 포맷팅 (콤마 찍기)
         const formatPrice = (num) => Number(num || 0).toLocaleString('ko-KR');
         const totalAmount = formatPrice(order.total_amount || 0);
 
-
         // 3. 템플릿 텍스트 조립 
-        // ⚠️ 백틱 안의 들여쓰기는 비즈엠 양식과 100% 동일해야 하므로 절대 수정하지 마세요!
+        // ⚠️ 절대 들여쓰기 하지 마세요!
         const msgText = `[Yogibo] 주문이 완료되었습니다.
 
 안녕하세요, ${customerName}님!
@@ -807,21 +802,13 @@ ${productListText}
 ■ 결제 정보
 - 총 결제금액: ${totalAmount}원`;
 
-        // 🚨 디버깅용: 환경변수가 잘 들어왔는지 확인 (배포 후 로그에서 확인 가능)
-        console.log("--- [알림톡 발송 시도] ---");
-        console.log("USER_ID:", BIZM_USER_ID);
-        console.log("PROFILE_KEY:", BIZM_PROFILE_KEY ? "설정됨(O)" : "누락됨(X)");
-        console.log("SENDER_PHONE:", BIZM_SENDER_PHONE);
-        console.log("------------------------");
-
         // 4. 비즈엠 전송 페이로드 구성
         const payload = [{
             "message_type": "at",
-            "phn": receiver.replace(/-/g, ''), // 하이픈 제거 필수
+            "phn": receiver.replace(/-/g, ''),
             "profile": BIZM_PROFILE_KEY,
-            "tmplId": "off_receipt",           // 🔥 심사받은 템플릿 코드
+            "tmplId": "off_receipt",           // 🔥 제대로 된 템플릿 코드!
             "msg": msgText,                    
-            // 🔥 비즈엠 관리자에 등록한 내용과 100% 똑같이 버튼 정보 추가
             "button1": { 
                 "name": "온라인몰 바로가기",        
                 "type": "WL", 
@@ -838,12 +825,9 @@ ${productListText}
             headers: { 'userid': BIZM_USER_ID, 'Content-Type': 'application/json' }
         });
 
-        // 비즈엠 응답이 정상이더라도 내부 결과 코드(code)가 'success'가 아닐 수 있으므로 로깅
-        console.log("비즈엠 발송 결과:", response.data);
-
         res.json({ success: true, result: response.data });
     } catch (error) { 
-        console.error("🔥 비즈엠 알림톡 발송 에러:", error.response ? JSON.stringify(error.response.data) : error.message);
-        res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.', errorDetail: error.response?.data }); 
+        console.error("🔥 비즈엠 알림톡 발송 에러:", error.response ? error.response.data : error.message);
+        res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.' }); 
     }
 });
