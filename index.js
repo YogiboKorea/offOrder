@@ -229,31 +229,82 @@ const authMiddleware = async (req, res, next) => {
 // [5] Cafe24 API (상품 & 옵션 조회)
 // ==========================================
 
-// 특정 분류(카테고리) 코드로 상품 목록을 가져오는 라우터
-app.get('/api/category-products', async (req, res) => {
-    const { categoryNo } = req.query; // 프론트에서 선택한 분류 코드
-  
+// ==========================================
+// [추가] Cafe24 카테고리(분류) 목록 조회 API
+// ==========================================
+app.get('/api/cafe24/categories', async (req, res) => {
     try {
-      // 쇼핑몰 상품 조회 API 호출
-      const response = await axios.get(`https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`, // 발급/갱신된 엑세스 토큰
-          'Content-Type': 'application/json'
-        },
-        params: {
-          category: categoryNo, // 분류 코드로 필터링
-          display: 'T' // 진열된 상품만 가져오는 등 필요한 조건 추가
-        }
-      });
-  
-      // 성공 시 상품 데이터 프론트로 전달
-      res.json({ success: true, data: response.data.products });
-    } catch (error) {
-      console.error('분류 상품 불러오기 실패:', error);
-      res.status(500).json({ success: false, message: '해당 분류의 상품을 불러오는데 실패했습니다.' });
-    }
-  });
+        const fetchFromCafe24 = async (retry = false) => {
+            try {
+                return await axios.get(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/categories`,
+                    {
+                        headers: { 
+                            Authorization: `Bearer ${accessToken}`, 
+                            'Content-Type': 'application/json', 
+                            'X-Cafe24-Api-Version': CAFE24_API_VERSION 
+                        }
+                    }
+                );
+            } catch (err) {
+                if (err.response && err.response.status === 401 && !retry) {
+                    await refreshAccessToken();
+                    return await fetchFromCafe24(true);
+                }
+                throw err;
+            }
+        };
 
+        const response = await fetchFromCafe24();
+        res.json({ success: true, data: response.data.categories });
+    } catch (error) {
+        console.error("🔥 Cafe24 카테고리 목록 조회 에러:", error.message);
+        res.status(500).json({ success: false, message: "Cafe24 API Error" });
+    }
+});
+
+// ==========================================
+// [추가] 특정 카테고리의 상품 목록 조회 API
+// ==========================================
+app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
+    try {
+        const { categoryNo } = req.params;
+        const fetchFromCafe24 = async (retry = false) => {
+            try {
+                return await axios.get(
+                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
+                    {
+                        params: { 
+                            shop_no: 1, 
+                            category: categoryNo, 
+                            display: 'T', 
+                            selling: 'T', 
+                            embed: 'options,images', 
+                            limit: 100 
+                        },
+                        headers: { 
+                            Authorization: `Bearer ${accessToken}`, 
+                            'Content-Type': 'application/json', 
+                            'X-Cafe24-Api-Version': CAFE24_API_VERSION 
+                        }
+                    }
+                );
+            } catch (err) {
+                if (err.response && err.response.status === 401 && !retry) {
+                    await refreshAccessToken();
+                    return await fetchFromCafe24(true);
+                }
+                throw err;
+            }
+        };
+
+        const response = await fetchFromCafe24();
+        res.json({ success: true, data: response.data.products });
+    } catch (error) {
+        console.error("🔥 Cafe24 카테고리별 상품 조회 에러:", error.message);
+        res.status(500).json({ success: false, message: "Cafe24 API Error" });
+    }
+});
   
 app.get('/api/cafe24/products', async (req, res) => {
     try {
