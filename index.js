@@ -228,6 +228,33 @@ const authMiddleware = async (req, res, next) => {
 // ==========================================
 // [5] Cafe24 API (상품 & 옵션 조회)
 // ==========================================
+
+// 특정 분류(카테고리) 코드로 상품 목록을 가져오는 라우터
+app.get('/api/category-products', async (req, res) => {
+    const { categoryNo } = req.query; // 프론트에서 선택한 분류 코드
+  
+    try {
+      // 쇼핑몰 상품 조회 API 호출
+      const response = await axios.get(`https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`, // 발급/갱신된 엑세스 토큰
+          'Content-Type': 'application/json'
+        },
+        params: {
+          category: categoryNo, // 분류 코드로 필터링
+          display: 'T' // 진열된 상품만 가져오는 등 필요한 조건 추가
+        }
+      });
+  
+      // 성공 시 상품 데이터 프론트로 전달
+      res.json({ success: true, data: response.data.products });
+    } catch (error) {
+      console.error('분류 상품 불러오기 실패:', error);
+      res.status(500).json({ success: false, message: '해당 분류의 상품을 불러오는데 실패했습니다.' });
+    }
+  });
+
+  
 app.get('/api/cafe24/products', async (req, res) => {
     try {
         const { keyword } = req.query;
