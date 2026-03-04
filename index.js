@@ -228,41 +228,64 @@ const authMiddleware = async (req, res, next) => {
 // ==========================================
 // [5] Cafe24 API (상품 & 옵션 조회)
 // ==========================================
-
 // ==========================================
-// [추가] Cafe24 카테고리(분류) 목록 조회 API
+// [수정] Cafe24 카테고리(분류) 목록 조회 API (전체 가져오기)
 // ==========================================
 app.get('/api/cafe24/categories', async (req, res) => {
     try {
-        const fetchFromCafe24 = async (retry = false) => {
-            try {
-                return await axios.get(
-                    `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/categories`,
-                    {
-                        headers: { 
-                            Authorization: `Bearer ${accessToken}`, 
-                            'Content-Type': 'application/json', 
-                            'X-Cafe24-Api-Version': CAFE24_API_VERSION 
-                        }
-                    }
-                );
-            } catch (err) {
-                if (err.response && err.response.status === 401 && !retry) {
-                    await refreshAccessToken();
-                    return await fetchFromCafe24(true);
-                }
-                throw err;
-            }
-        };
+        let allCategories = [];
+        let offset = 0;
+        const limit = 100; // 카페24가 허용하는 최대 개수
+        let hasMore = true;
+        let loopCount = 0;
 
-        const response = await fetchFromCafe24();
-        res.json({ success: true, data: response.data.categories });
+        // 데이터가 안 끊기고 다 나올 때까지 반복해서 긁어옵니다 (무한루프 방지: 최대 10번 = 1000개)
+        while (hasMore && loopCount < 10) {
+            const fetchFromCafe24 = async (retry = false) => {
+                try {
+                    return await axios.get(
+                        `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/categories`,
+                        {
+                            params: { 
+                                shop_no: 1, 
+                                limit: limit,
+                                offset: offset 
+                            },
+                            headers: { 
+                                Authorization: `Bearer ${accessToken}`, 
+                                'Content-Type': 'application/json', 
+                                'X-Cafe24-Api-Version': CAFE24_API_VERSION 
+                            }
+                        }
+                    );
+                } catch (err) {
+                    if (err.response && err.response.status === 401 && !retry) {
+                        await refreshAccessToken();
+                        return await fetchFromCafe24(true);
+                    }
+                    throw err;
+                }
+            };
+
+            const response = await fetchFromCafe24();
+            const cats = response.data.categories || [];
+            allCategories = allCategories.concat(cats);
+
+            // 불러온 개수가 100개보다 적으면 뒤에 더 이상 데이터가 없는 것이므로 종료
+            if (cats.length < limit) {
+                hasMore = false;
+            } else {
+                offset += limit; // 다음 100개를 가져오기 위해 오프셋 증가
+            }
+            loopCount++;
+        }
+
+        res.json({ success: true, data: allCategories });
     } catch (error) {
         console.error("🔥 Cafe24 카테고리 목록 조회 에러:", error.message);
         res.status(500).json({ success: false, message: "Cafe24 API Error" });
     }
 });
-
 // ==========================================
 // [추가] 특정 카테고리의 상품 목록 조회 API
 // ==========================================
