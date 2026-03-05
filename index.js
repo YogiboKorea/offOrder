@@ -739,6 +739,31 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
         res.json({ success: true });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
+
+
+// 주문 메모 업데이트 API
+app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
+     try {
+         const { id } = req.params;
+         const { cs_memo } = req.body;
+        
+         // ✅ 수정됨: mongoClient를 이용해 DB와 컬렉션을 정확히 지정
+         const dbOnline = mongoClient.db(ONLINE_DB_NAME);
+         const result = await dbOnline.collection('ordersOffData').updateOne(
+             { _id: new ObjectId(id) },
+             { $set: { cs_memo: cs_memo } }
+         );
+         
+         res.json({ success: true, message: '메모가 업데이트되었습니다.' });
+     } catch (error) {
+         console.error('메모 업데이트 오류:', error);
+         res.status(500).json({ success: false, message: '서버 오류' });
+     }
+});
+
+
+
 // ==========================================
 // [8] 비즈엠 알림톡 (주소 & 옵션명 포함 최종본)
 // ==========================================
