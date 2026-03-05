@@ -27,11 +27,12 @@ app.use(cors({
             callback(new Error('CORS 정책에 의해 차단되었습니다.'));
         }
     },
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'userid'],
+    // ✅ 수정 1: 'PATCH' 메서드 추가
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'], 
+    // ✅ 수정 2: 'Cache-Control', 'Pragma' 헤더 추가 (빨간 에러 완전 방지)
+    allowedHeaders: ['Content-Type', 'Authorization', 'userid', 'Cache-Control', 'Pragma'], 
     credentials: true 
 }));
-
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
