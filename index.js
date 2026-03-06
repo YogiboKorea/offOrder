@@ -841,13 +841,13 @@ ${productListText}
             "message_type": "at",
             "phn": receiver.replace(/-/g, ''), // 번호 하이픈 제거
             "profile": BIZM_PROFILE_KEY,
-            "tmplId": "off_receipt",           // 카카오에 승인된 템플릿 코드
+            "tmplId": "OFF_RECEIPTS",           // 카카오에 승인된 템플릿 코드
             "msg": msgText,                    // 완성된 텍스트 통째로 삽입
             "button1": { 
-                "name": "온라인몰 바로가기",      // 승인된 버튼명
+                "name": "FAQ 바로가기",      // 승인된 버튼명
                 "type": "WL", 
-                "url_mobile": "http://yogibo.kr",
-                "url_pc": "http://yogibo.kr" 
+                "url_mobile": "https://yogibo.kr/off/faq/index.html",
+                "url_pc": "https://yogibo.kr/off/faq/index.html" 
             },
             "smsKind": "L",
             "smsMsg": msgText,                 // 카톡 실패 시 문자로 전송될 내용
