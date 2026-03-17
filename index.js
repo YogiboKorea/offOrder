@@ -605,16 +605,40 @@ app.get('/api/ordersOffData', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// ✅ 신규 데이터(할인 수치화) 반영을 위한 POST 라우트 수정
 app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
     try {
         const d = req.body;
-        const items = d.items || [{ product_name: d.product_name, option_name: d.option_name, price: 0, quantity: 1 }];
+        
+        // items 배열 매핑: 프론트에서 넘어온 original_price와 promo_type을 명시적으로 포함
+        let items = (d.items || []).map(it => ({
+            product_no: it.product_no, 
+            product_name: it.product_name || d.product_name,
+            option_code: it.option_code, 
+            option_name: it.option_name || d.option_name,
+            original_price: Number(it.original_price) || 0, // 개별 정상가
+            price: Number(it.price) || 0, // 할인이 적용된 최종가
+            quantity: Number(it.quantity) || 1,
+            promo_type: it.promo_type || '' // 개별 프로모션 타입
+        }));
+
+        // 안전장치: 빈 배열 방지
+        if (items.length === 0) {
+            items = [{ product_name: d.product_name, option_name: d.option_name, price: 0, original_price: 0, quantity: 1, promo_type: '' }];
+        }
+
         const newOrder = {
-            ...d, items,
+            ...d, 
+            items,
             total_amount: Number(d.total_amount) || 0,
             shipping_cost: Number(d.shipping_cost) || 0,
-            is_synced: false, is_deleted: false,
-            created_at: new Date(), synced_at: null, ecount_success: null
+            total_discount_amount: Number(d.total_discount_amount) || 0, // 총 할인액 저장
+            applied_coupon_count: Number(d.applied_coupon_count) || 0,   // 쿠폰/할인 적용 건수 저장
+            is_synced: false, 
+            is_deleted: false,
+            created_at: new Date(), 
+            synced_at: null, 
+            ecount_success: null
         };
         delete newOrder._id;
         const result = await db.collection(COLLECTION_ORDERS).insertOne(newOrder);
@@ -622,17 +646,23 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
+// ✅ PUT(수정) 시에도 숫자형 데이터가 망가지지 않도록 캐스팅 추가
 app.put('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
         const f = { ...req.body, updated_at: new Date() };
         delete f._id;
+        
         if (f.shipping_cost !== undefined) f.shipping_cost = Number(f.shipping_cost);
         if (f.total_amount !== undefined) f.total_amount = Number(f.total_amount);
+        if (f.total_discount_amount !== undefined) f.total_discount_amount = Number(f.total_discount_amount);
+        if (f.applied_coupon_count !== undefined) f.applied_coupon_count = Number(f.applied_coupon_count);
+
         await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(req.params.id) }, { $set: f });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
+
 
 app.delete('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
