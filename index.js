@@ -762,7 +762,6 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
     }
 });
 
-
 // ==========================================
 // 맵핑 테스트 작업 (50개씩 배치 처리 방식으로 변경)
 // ==========================================
@@ -806,8 +805,26 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
             nextOffset: offset + limit
         };
 
+        // 🛑 제외할 온라인 공식 몰 전용 키워드 목록 (대괄호 빼고 유연하게 매칭)
+        const excludeKeywords = [
+            '한정수량특가',
+            'LAST CHANCE',
+            '리퍼 한정수량',
+            '무료배송',
+            '하늘이네 공동구매'
+        ];
+
         // 50개 상품에 대해 매핑 진행
         for (const prod of products) {
+            
+            // 🛑 1. 상품명에 제외 키워드가 하나라도 포함되어 있는지 확인
+            const isOnlineOnly = excludeKeywords.some(kw => prod.product_name.includes(kw));
+            
+            // 🛑 2. 포함되어 있다면 이 상품은 매핑 테스트에서 아예 건너뜁니다 (Skip).
+            if (isOnlineOnly) {
+                continue; 
+            }
+
             const options = prod.options && prod.options.length > 0 ? prod.options : [{ option_name: '' }];
             
             for (const opt of options) {
