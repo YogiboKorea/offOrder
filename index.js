@@ -801,61 +801,6 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
 
 
 // ==========================================
-// 맵핑 테스트 작업
-// ==========================================
-
-// server.js 하단 어딘가에 추가
-const { matchItemCode } = require('./utils/itemMatcher');
-
-app.get('/api/admin/mapping-test', async (req, res) => {
-    try {
-        // 1. Cafe24 전체 상품 조회 (위에서 작성하신 pagination 로직 활용)
-        // 주의: 전체를 다 가져오면 시간이 걸리므로 프론트에서 로딩 스피너 필수
-        const cafe24Products = await fetchAllCafe24Products(); 
-
-        const results = {
-            successCount: 0,
-            warningCount: 0,
-            failCount: 0,
-            details: []
-        };
-
-        for (const prod of cafe24Products) {
-            // 옵션이 여러 개일 경우 각각 매핑을 돌려봅니다
-            const options = prod.options.length > 0 ? prod.options : [{ option_name: '' }];
-            
-            for (const opt of options) {
-                const matchResult = matchItemCode(prod.product_name, opt.option_name);
-                
-                const record = {
-                    product_no: prod.product_no,
-                    cafe24_name: prod.product_name,
-                    cafe24_option: opt.option_name,
-                    mapped_code: matchResult.code,
-                    score: matchResult.score,
-                    status: matchResult.status
-                };
-
-                if (matchResult.status === 'SUCCESS' || matchResult.status === 'EXCEPTION') results.successCount++;
-                else if (matchResult.status === 'WARNING') results.warningCount++;
-                else results.failCount++;
-
-                results.details.push(record);
-            }
-        }
-
-        // 스코어 순으로 정렬해서 보기 편하게 내려줌 (실패나 경고가 맨 위로 오도록)
-        results.details.sort((a, b) => a.score - b.score);
-
-        res.json({ success: true, summary: results });
-
-    } catch (error) {
-        console.error("Mapping Test Error:", error);
-        res.status(500).json({ success: false });
-    }
-});
-
-// ==========================================
 // [8] 비즈엠 알림톡 (주소 & 옵션명 포함 최종본)
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
