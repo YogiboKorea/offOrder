@@ -229,18 +229,14 @@ const authMiddleware = async (req, res, next) => {
 // ==========================================
 // [5] Cafe24 API (상품 & 옵션 조회)
 // ==========================================
-// ==========================================
-// [수정] Cafe24 카테고리(분류) 목록 조회 API (전체 가져오기)
-// ==========================================
 app.get('/api/cafe24/categories', async (req, res) => {
     try {
         let allCategories = [];
         let offset = 0;
-        const limit = 100; // 카페24가 허용하는 최대 개수
+        const limit = 100;
         let hasMore = true;
         let loopCount = 0;
 
-        // 데이터가 안 끊기고 다 나올 때까지 반복해서 긁어옵니다 (무한루프 방지: 최대 10번 = 1000개)
         while (hasMore && loopCount < 10) {
             const fetchFromCafe24 = async (retry = false) => {
                 try {
@@ -272,11 +268,10 @@ app.get('/api/cafe24/categories', async (req, res) => {
             const cats = response.data.categories || [];
             allCategories = allCategories.concat(cats);
 
-            // 불러온 개수가 100개보다 적으면 뒤에 더 이상 데이터가 없는 것이므로 종료
             if (cats.length < limit) {
                 hasMore = false;
             } else {
-                offset += limit; // 다음 100개를 가져오기 위해 오프셋 증가
+                offset += limit;
             }
             loopCount++;
         }
@@ -287,9 +282,7 @@ app.get('/api/cafe24/categories', async (req, res) => {
         res.status(500).json({ success: false, message: "Cafe24 API Error" });
     }
 });
-// ==========================================
-// [추가] 특정 카테고리의 상품 목록 조회 API
-// ==========================================
+
 app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
     try {
         const { categoryNo } = req.params;
@@ -605,24 +598,21 @@ app.get('/api/ordersOffData', async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// ✅ 신규 데이터(할인 수치화) 반영을 위한 POST 라우트 수정
 app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
     try {
         const d = req.body;
         
-        // items 배열 매핑: 프론트에서 넘어온 original_price와 promo_type을 명시적으로 포함
         let items = (d.items || []).map(it => ({
             product_no: it.product_no, 
             product_name: it.product_name || d.product_name,
             option_code: it.option_code, 
             option_name: it.option_name || d.option_name,
-            original_price: Number(it.original_price) || 0, // 개별 정상가
-            price: Number(it.price) || 0, // 할인이 적용된 최종가
+            original_price: Number(it.original_price) || 0,
+            price: Number(it.price) || 0,
             quantity: Number(it.quantity) || 1,
-            promo_type: it.promo_type || '' // 개별 프로모션 타입
+            promo_type: it.promo_type || ''
         }));
 
-        // 안전장치: 빈 배열 방지
         if (items.length === 0) {
             items = [{ product_name: d.product_name, option_name: d.option_name, price: 0, original_price: 0, quantity: 1, promo_type: '' }];
         }
@@ -632,8 +622,8 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
             items,
             total_amount: Number(d.total_amount) || 0,
             shipping_cost: Number(d.shipping_cost) || 0,
-            total_discount_amount: Number(d.total_discount_amount) || 0, // 총 할인액 저장
-            applied_coupon_count: Number(d.applied_coupon_count) || 0,   // 쿠폰/할인 적용 건수 저장
+            total_discount_amount: Number(d.total_discount_amount) || 0,
+            applied_coupon_count: Number(d.applied_coupon_count) || 0,
             is_synced: false, 
             is_deleted: false,
             created_at: new Date(), 
@@ -646,7 +636,6 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// ✅ PUT(수정) 시에도 숫자형 데이터가 망가지지 않도록 캐스팅 추가
 app.put('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
@@ -662,7 +651,6 @@ app.put('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
-
 
 app.delete('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
     try {
@@ -771,8 +759,6 @@ app.delete('/api/cs-memos/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
-
-
 // ==========================================
 // [신규] 주문 메모 업데이트 API
 // ==========================================
@@ -781,12 +767,10 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
         const { id } = req.params;
         const { cs_memo } = req.body;
         
-        // 올효하지 않은 ObjectID인 경우 튕겨냄
         if (!ObjectId.isValid(id)) {
             return res.status(400).json({ success: false, message: '잘못된 주문 ID입니다.' });
         }
         
-        // ✅ 보내주신 코드의 전역 변수 'db'와 'COLLECTION_ORDERS'를 사용하도록 수정!
         await db.collection(COLLECTION_ORDERS).updateOne(
             { _id: new ObjectId(id) },
             { $set: { cs_memo: cs_memo, updated_at: new Date() } }
@@ -801,13 +785,116 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
 
 
 // ==========================================
+// 맵핑 테스트 작업
+// ==========================================
+const { matchItemCode } = require('./utils/itemMatcher');
+
+// 👉 누락되었던 fetchAllCafe24Products 함수 추가 완료
+async function fetchAllCafe24Products() {
+    let allProducts = [];
+    let offset = 0;
+    const limit = 100;
+    let hasMore = true;
+    let loopCount = 0;
+
+    console.log("⏳ 매핑 테스트: Cafe24 전체 상품 로딩 시작...");
+
+    while (hasMore && loopCount < 50) { 
+        try {
+            const response = await axios.get(
+                `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
+                {
+                    params: { 
+                        shop_no: 1, 
+                        display: 'T', 
+                        selling: 'T', 
+                        embed: 'options', 
+                        limit: limit,
+                        offset: offset 
+                    },
+                    headers: { 
+                        Authorization: `Bearer ${accessToken}`, 
+                        'Content-Type': 'application/json', 
+                        'X-Cafe24-Api-Version': CAFE24_API_VERSION 
+                    }
+                }
+            );
+
+            const products = response.data.products || [];
+            allProducts = allProducts.concat(products);
+
+            if (products.length < limit) {
+                hasMore = false;
+            } else {
+                offset += limit;
+            }
+            loopCount++;
+        } catch (err) {
+            if (err.response && err.response.status === 401) {
+                console.log("🔄 토큰 만료, 갱신 시도...");
+                await refreshAccessToken();
+                throw new Error("Token Refreshed. Please try again."); 
+            } else {
+                console.error("🔥 전체 상품 로드 에러:", err.message);
+                break;
+            }
+        }
+    }
+    console.log(`✅ Cafe24 상품 총 ${allProducts.length}개 로딩 완료`);
+    return allProducts;
+}
+
+app.get('/api/admin/mapping-test', async (req, res) => {
+    try {
+        const cafe24Products = await fetchAllCafe24Products(); 
+
+        const results = {
+            successCount: 0,
+            warningCount: 0,
+            failCount: 0,
+            details: []
+        };
+
+        for (const prod of cafe24Products) {
+            const options = prod.options && prod.options.length > 0 ? prod.options : [{ option_name: '' }];
+            
+            for (const opt of options) {
+                const matchResult = matchItemCode(prod.product_name, opt.option_name);
+                
+                const record = {
+                    product_no: prod.product_no,
+                    cafe24_name: prod.product_name,
+                    cafe24_option: opt.option_name,
+                    mapped_code: matchResult.code,
+                    score: matchResult.score,
+                    status: matchResult.status
+                };
+
+                if (matchResult.status === 'SUCCESS' || matchResult.status === 'EXCEPTION') results.successCount++;
+                else if (matchResult.status === 'WARNING') results.warningCount++;
+                else results.failCount++;
+
+                results.details.push(record);
+            }
+        }
+
+        results.details.sort((a, b) => a.score - b.score);
+
+        res.json({ success: true, summary: results });
+
+    } catch (error) {
+        console.error("Mapping Test Error:", error);
+        res.status(500).json({ success: false });
+    }
+});
+
+// ==========================================
 // [8] 비즈엠 알림톡 (주소 & 옵션명 포함 최종본)
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
         const { orderId, receiver } = req.body;
         
-        // 1. DB에서 주문 데이터 조회
         if (!ObjectId.isValid(orderId)) {
             return res.status(400).json({ success: false, message: '유효하지 않은 주문 ID입니다.' });
         }
@@ -817,38 +904,30 @@ app.post('/api/send-alimtalk', async (req, res) => {
             return res.status(404).json({ success: false, message: '주문 내역을 찾을 수 없습니다.' });
         }
 
-        // 2. 비즈엠 템플릿 변수에 맞게 데이터 가공
         const customerName = order.customer_name || '고객';
         const storeName = order.store_name || '미지정';
         const contactPhone = order.customer_phone || receiver; 
         
-        // 🔥 수정 1: 주소 필드명을 DB와 동일하게 'customer_address'로 변경
         const address = order.customer_address || '매장 직접 수령 (또는 미입력)';
         
-        // 🔥 수정 2: 상품명 뒤에 [옵션명]을 붙이도록 로직 강화
         let productListText = '';
         if (order.items && order.items.length > 0) {
             productListText = order.items.map(item => {
                 const name = item.product_name;
-                // 옵션명이 존재하면 대괄호 [ ] 안에 넣어서 추가
                 const option = item.option_name && item.option_name !== '.' ? ` [${item.option_name}]` : '';
                 const qty = Number(item.quantity) || 1;
                 return `- ${name}${option} (${qty}개)`;
             }).join('\n');
         } else {
-            // items 배열이 없는 예전 데이터 예외 처리
             const name = order.product_name || '요기보 상품';
             const option = order.option_name && order.option_name !== '.' ? ` [${order.option_name}]` : '';
             const qty = Number(order.quantity) || 1;
             productListText = `- ${name}${option} (${qty}개)`;
         }
 
-        // 금액 콤마 포맷팅
         const formatPrice = (num) => Number(num || 0).toLocaleString('ko-KR');
         const totalAmount = formatPrice(order.total_amount || 0);
 
-        // 3. 템플릿 텍스트 조립 
-        // ⚠️ 들여쓰기 절대 금지!
         const msgText = `[Yogibo] 주문이 완료되었습니다.
 
 안녕하세요, ${customerName}님!
@@ -866,25 +945,23 @@ ${productListText}
 ■ 결제 정보
 - 총 결제금액: ${totalAmount}원`;
 
-        // 4. 비즈엠 전송 페이로드 구성
         const payload = [{
             "message_type": "at",
-            "phn": receiver.replace(/-/g, ''), // 번호 하이픈 제거
+            "phn": receiver.replace(/-/g, ''),
             "profile": BIZM_PROFILE_KEY,
-            "tmplId": "OFF_RECEIPTS",           // 카카오에 승인된 템플릿 코드
-            "msg": msgText,                    // 완성된 텍스트 통째로 삽입
+            "tmplId": "OFF_RECEIPTS", 
+            "msg": msgText,
             "button1": { 
-                "name": "FAQ 바로가기",      // 승인된 버튼명
+                "name": "FAQ 바로가기",
                 "type": "WL", 
                 "url_mobile": "https://yogibo.kr/off/faq/index.html",
                 "url_pc": "https://yogibo.kr/off/faq/index.html" 
             },
             "smsKind": "L",
-            "smsMsg": msgText,                 // 카톡 실패 시 문자로 전송될 내용
+            "smsMsg": msgText,
             "smsSender": BIZM_SENDER_PHONE
         }];
 
-        // 5. 비즈엠 API 호출
         const response = await axios.post('https://alimtalk-api.bizmsg.kr/v2/sender/send', payload, {
             headers: { 'userid': BIZM_USER_ID, 'Content-Type': 'application/json' }
         });
