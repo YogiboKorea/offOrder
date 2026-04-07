@@ -231,7 +231,7 @@ app.get('/api/cafe24/categories', async (req, res) => {
     try {
         let allCategories = [];
         let offset = 0;
-        const limit = 100; // 카페24가 허용하는 최대 개수
+        const limit = 100;
         let hasMore = true;
         let loopCount = 0;
 
@@ -762,6 +762,7 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
     }
 });
 
+
 // ==========================================
 // 맵핑 테스트 작업 (50개씩 배치 처리 방식으로 변경)
 // ==========================================
@@ -839,49 +840,6 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
     }
 });
 
-app.get('/api/admin/mapping-test', async (req, res) => {
-    try {
-        const cafe24Products = await fetchAllCafe24Products(); 
-
-        const results = {
-            successCount: 0,
-            warningCount: 0,
-            failCount: 0,
-            details: []
-        };
-
-        for (const prod of cafe24Products) {
-            const options = prod.options && prod.options.length > 0 ? prod.options : [{ option_name: '' }];
-            
-            for (const opt of options) {
-                const matchResult = matchItemCode(prod.product_name, opt.option_name);
-                
-                const record = {
-                    product_no: prod.product_no,
-                    cafe24_name: prod.product_name,
-                    cafe24_option: opt.option_name,
-                    mapped_code: matchResult.code,
-                    score: matchResult.score,
-                    status: matchResult.status
-                };
-
-                if (matchResult.status === 'SUCCESS' || matchResult.status === 'EXCEPTION') results.successCount++;
-                else if (matchResult.status === 'WARNING') results.warningCount++;
-                else results.failCount++;
-
-                results.details.push(record);
-            }
-        }
-
-        results.details.sort((a, b) => a.score - b.score);
-
-        res.json({ success: true, summary: results });
-
-    } catch (error) {
-        console.error("Mapping Test Error:", error);
-        res.status(500).json({ success: false });
-    }
-});
 
 // ==========================================
 // [8] 비즈엠 알림톡 (주소 & 옵션명 포함 최종본)
