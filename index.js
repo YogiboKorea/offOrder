@@ -762,23 +762,17 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
     }
 });
 
-
 // ==========================================
-// 맵핑 테스트 작업
+// 맵핑 테스트 작업 (50개씩 배치 처리 방식으로 변경)
 // ==========================================
 const { matchItemCode } = require('./utils/itemMatcher');
 
-// 👉 누락되었던 fetchAllCafe24Products 함수 수정(재귀 호출로 401 처리 완벽 대응)
-async function fetchAllCafe24Products() {
-    let allProducts = [];
-    let offset = 0;
-    const limit = 100;
-    let hasMore = true;
-    let loopCount = 0;
+app.get('/api/admin/mapping-test-batch', async (req, res) => {
+    try {
+        // 프론트엔드에서 전달받은 limit과 offset (기본값 50, 0)
+        const limit = parseInt(req.query.limit) || 50;
+        const offset = parseInt(req.query.offset) || 0;
 
-    console.log("⏳ 매핑 테스트: Cafe24 전체 상품 로딩 시작...");
-
-    while (hasMore && loopCount < 50) { 
         const fetchFromCafe24 = async (retry = false) => {
             try {
                 return await axios.get(
@@ -792,31 +786,58 @@ async function fetchAllCafe24Products() {
                 if (err.response && err.response.status === 401 && !retry) {
                     console.log("🔄 토큰 만료, 갱신 시도...");
                     await refreshAccessToken();
-                    return await fetchFromCafe24(true); // 핵심: 에러 안 던지고 다시 호출
+                    return await fetchFromCafe24(true);
                 }
                 throw err;
             }
         };
 
-        try {
-            const response = await fetchFromCafe24();
-            const products = response.data.products || [];
-            allProducts = allProducts.concat(products);
+        console.log(`⏳ 매핑 테스트 배치 실행: offset ${offset} 부터 ${limit}개 요청...`);
+        const response = await fetchFromCafe24();
+        const products = response.data.products || [];
 
-            if (products.length < limit) {
-                hasMore = false;
-            } else {
-                offset += limit;
+        const results = {
+            successCount: 0,
+            warningCount: 0,
+            failCount: 0,
+            details: [],
+            hasMore: products.length === limit, // 가져온 개수가 limit과 같으면 다음 페이지가 있다고 판단
+            nextOffset: offset + limit
+        };
+
+        // 50개 상품에 대해 매핑 진행
+        for (const prod of products) {
+            const options = prod.options && prod.options.length > 0 ? prod.options : [{ option_name: '' }];
+            
+            for (const opt of options) {
+                const matchResult = matchItemCode(prod.product_name, opt.option_name);
+                
+                const record = {
+                    product_no: prod.product_no,
+                    cafe24_name: prod.product_name,
+                    cafe24_option: opt.option_name,
+                    mapped_code: matchResult.code,
+                    score: matchResult.score,
+                    status: matchResult.status
+                };
+
+                if (matchResult.status === 'SUCCESS' || matchResult.status === 'EXCEPTION') results.successCount++;
+                else if (matchResult.status === 'WARNING') results.warningCount++;
+                else results.failCount++;
+
+                results.details.push(record);
             }
-            loopCount++;
-        } catch (err) {
-            console.error("🔥 전체 상품 로드 에러:", err.message);
-            break; // 해당 루프 중단
         }
+
+        // 스코어 정렬 후 프론트엔드로 응답
+        results.details.sort((a, b) => a.score - b.score);
+        res.json({ success: true, summary: results });
+
+    } catch (error) {
+        console.error("🔥 Mapping Test Batch Error:", error.message);
+        res.status(500).json({ success: false, message: "서버 매핑 처리 중 오류가 발생했습니다." });
     }
-    console.log(`✅ Cafe24 상품 총 ${allProducts.length}개 로딩 완료`);
-    return allProducts;
-}
+});
 
 app.get('/api/admin/mapping-test', async (req, res) => {
     try {
