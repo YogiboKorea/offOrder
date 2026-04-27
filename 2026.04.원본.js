@@ -65,16 +65,6 @@ let accessToken = process.env.ACCESS_TOKEN;
 let refreshToken = process.env.REFRESH_TOKEN;
 
 // ==========================================
-// [2-1] 🆕 주문 상태 머신 상수
-// ==========================================
-const ORDER_STATUS = {
-    PENDING:   'PENDING',    // 신규 주문 (미전송)
-    EXPORTED:  'EXPORTED',   // 엑셀 다운로드됨, 이카운트 결과 미확인 (확정 대기)
-    CONFIRMED: 'CONFIRMED',  // 이카운트 등록 확정 (전송완료)
-    FAILED:    'FAILED'      // 이카운트 거절됨 (등록 실패)
-};
-
-// ==========================================
 // [3] 서버 시작
 // ==========================================
 async function startServer() {
@@ -101,12 +91,6 @@ async function startServer() {
         await initializeGlobalPin(); 
         await seedCollectionFromJSON('ECOUNT_STORES.json', COLLECTION_STORES);
         await seedCollectionFromJSON('STATIC_MANAGER_LIST.json', COLLECTION_STATIC_MANAGERS);
-
-        // 🆕 기존 주문 데이터 status 필드 마이그레이션 (1회성, 안전)
-        await migrateOrderStatus();
-
-        // 🆕 인덱스 생성 (성능)
-        await ensureOrderIndexes();
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
@@ -152,52 +136,6 @@ async function initializeWarehouseDB() {
             await collection.insertMany([{ warehouse_code: 'C0001', warehouse_name: '판매입력(물류센터) (기본)', created_at: new Date() }]);
         }
     } catch (e) {}
-}
-
-// 🆕 기존 주문 데이터를 새 status 필드로 마이그레이션
-async function migrateOrderStatus() {
-    try {
-        const collection = db.collection(COLLECTION_ORDERS);
-        
-        // status 필드가 없는 주문만 대상
-        const needsMigration = await collection.countDocuments({ status: { $exists: false } });
-        if (needsMigration === 0) {
-            console.log("✅ Order Status 마이그레이션: 이미 완료됨 (스킵)");
-            return;
-        }
-
-        console.log(`⏳ Order Status 마이그레이션 시작: ${needsMigration}건 처리 중...`);
-
-        // 1) 휴지통 → status는 그대로 유지 (is_deleted: true가 우선이므로 status는 PENDING으로)
-        // 2) is_synced: true → CONFIRMED
-        const r1 = await collection.updateMany(
-            { status: { $exists: false }, is_synced: true },
-            { $set: { status: ORDER_STATUS.CONFIRMED, ecount_confirmed_at: new Date() } }
-        );
-
-        // 3) is_synced: false 또는 미정의 → PENDING
-        const r2 = await collection.updateMany(
-            { status: { $exists: false } },
-            { $set: { status: ORDER_STATUS.PENDING } }
-        );
-
-        console.log(`✅ 마이그레이션 완료: CONFIRMED ${r1.modifiedCount}건, PENDING ${r2.modifiedCount}건`);
-    } catch (e) {
-        console.error("⚠️ 마이그레이션 오류 (서버는 계속 실행):", e.message);
-    }
-}
-
-// 🆕 자주 쓰는 쿼리에 인덱스 추가
-async function ensureOrderIndexes() {
-    try {
-        const collection = db.collection(COLLECTION_ORDERS);
-        await collection.createIndex({ status: 1, is_deleted: 1, created_at: -1 });
-        await collection.createIndex({ excel_batch_id: 1 });
-        await collection.createIndex({ store_name: 1, created_at: -1 });
-        console.log("✅ 인덱스 확인 완료");
-    } catch (e) {
-        console.error("⚠️ 인덱스 생성 오류:", e.message);
-    }
 }
 
 async function refreshAccessToken() {
@@ -626,58 +564,17 @@ app.get('/api/ordersOffData', async (req, res) => {
         const { store_name, startDate, endDate, keyword, view } = req.query;
         let query = {};
 
-        // 🆕 view 파라미터에 따라 status로 필터링 (기존 호환 + 신규 상태 지원)
-        if (view === 'trash') {
-            query.is_deleted = true;
-        } else if (view === 'completed') {
-            // 전송완료 = CONFIRMED (기존 is_synced: true와 동일)
-            query.is_deleted = { $ne: true };
-            query.$or = [
-                { status: ORDER_STATUS.CONFIRMED },
-                // 마이그레이션 누락 케이스 대비 (혹시 status 없어도 is_synced로 fallback)
-                { status: { $exists: false }, is_synced: true }
-            ];
-        } else if (view === 'exported') {
-            // 🆕 확정 대기 = EXPORTED
-            query.is_deleted = { $ne: true };
-            query.status = ORDER_STATUS.EXPORTED;
-        } else if (view === 'failed') {
-            // 🆕 등록 실패 = FAILED
-            query.is_deleted = { $ne: true };
-            query.status = ORDER_STATUS.FAILED;
-        } else {
-            // 기본: 미전송 = PENDING (기존 is_synced ≠ true와 동일)
-            query.is_deleted = { $ne: true };
-            query.$or = [
-                { status: ORDER_STATUS.PENDING },
-                // 마이그레이션 누락 케이스 대비
-                { status: { $exists: false }, is_synced: { $ne: true } }
-            ];
-        }
+        if (view === 'trash') query.is_deleted = true;
+        else if (view === 'completed') { query.is_deleted = { $ne: true }; query.is_synced = true; } 
+        else { query.is_deleted = { $ne: true }; query.is_synced = { $ne: true }; }
 
         if (store_name && store_name !== '전체' && store_name !== 'null') query.store_name = store_name;
         if (startDate && endDate) query.created_at = { $gte: new Date(startDate + "T00:00:00.000Z"), $lte: new Date(endDate + "T23:59:59.999Z") };
-        if (keyword) {
-            const keywordOr = [
-                { customer_name: { $regex: keyword, $options: 'i' } },
-                { customer_phone: { $regex: keyword, $options: 'i' } },
-                { product_name: { $regex: keyword, $options: 'i' } }
-            ];
-            // status 조건과 keyword 조건이 모두 $or로 들어갈 경우 $and로 묶음
-            if (query.$or) {
-                query.$and = [{ $or: query.$or }, { $or: keywordOr }];
-                delete query.$or;
-            } else {
-                query.$or = keywordOr;
-            }
-        }
+        if (keyword) query.$or = [ { customer_name: { $regex: keyword, $options: 'i' } }, { customer_phone: { $regex: keyword, $options: 'i' } }, { product_name: { $regex: keyword, $options: 'i' } } ];
         
         const orders = await db.collection(COLLECTION_ORDERS).find(query).sort({ created_at: -1 }).toArray();
         res.json({ success: true, count: orders.length, data: orders });
-    } catch (error) {
-        console.error("🔥 주문 조회 오류:", error);
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
@@ -706,9 +603,6 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
             shipping_cost: Number(d.shipping_cost) || 0,
             total_discount_amount: Number(d.total_discount_amount) || 0,
             applied_coupon_count: Number(d.applied_coupon_count) || 0,
-            // 🆕 상태 머신 초기값
-            status: ORDER_STATUS.PENDING,
-            // 기존 호환 필드 유지
             is_synced: false, 
             is_deleted: false,
             created_at: new Date(), 
@@ -718,10 +612,7 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
         delete newOrder._id;
         const result = await db.collection(COLLECTION_ORDERS).insertOne(newOrder);
         res.json({ success: true, orderId: result.insertedId });
-    } catch (error) {
-        console.error("🔥 주문 생성 오류:", error);
-        res.status(500).json({ success: false });
-    }
+    } catch (error) { res.status(500).json({ success: false }); }
 });
 
 app.put('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
@@ -752,31 +643,11 @@ app.delete('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
 app.put('/api/ordersOffData/restore/:id', authMiddleware, async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
-        // 🆕 복구 시 status도 PENDING으로 초기화
-        await db.collection(COLLECTION_ORDERS).updateOne(
-            { _id: new ObjectId(req.params.id) },
-            { 
-                $set: { 
-                    is_deleted: false, 
-                    deleted_at: null, 
-                    is_synced: false, 
-                    synced_at: null, 
-                    ecount_status: null, 
-                    ecount_message: null,
-                    status: ORDER_STATUS.PENDING,
-                    excel_batch_id: null,
-                    excel_downloaded_at: null,
-                    ecount_confirmed_at: null,
-                    ecount_failed_at: null
-                } 
-            }
-        );
+        await db.collection(COLLECTION_ORDERS).updateOne({ _id: new ObjectId(req.params.id) }, { $set: { is_deleted: false, deleted_at: null, is_synced: false, synced_at: null, ecount_status: null, ecount_message: null } });
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 🟡 [기존 호환] /sync 엔드포인트 - 사용 빈도가 낮아질 예정이지만 하위 호환을 위해 유지
-// admin.html이 새 엔드포인트로 전환되면 자연스럽게 사용 안 됨
 app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
         const { results } = req.body; 
@@ -784,19 +655,7 @@ app.post('/api/ordersOffData/sync', async (req, res) => {
         const bulkOps = results.map(item => ({
             updateOne: {
                 filter: { _id: new ObjectId(item.id) },
-                update: { 
-                    $set: { 
-                        is_synced: true, 
-                        synced_at: new Date(), 
-                        ecount_success: item.status === 'SUCCESS', 
-                        ecount_message: item.message || '',
-                        // 🆕 status도 함께 업데이트
-                        status: item.status === 'SUCCESS' ? ORDER_STATUS.CONFIRMED : ORDER_STATUS.FAILED,
-                        ...(item.status === 'SUCCESS' 
-                            ? { ecount_confirmed_at: new Date() } 
-                            : { ecount_failed_at: new Date(), ecount_failure_reason: item.message || '' })
-                    } 
-                }
+                update: { $set: { is_synced: true, synced_at: new Date(), ecount_success: item.status === 'SUCCESS', ecount_message: item.message || '' } }
             }
         }));
         if (bulkOps.length > 0) await db.collection(COLLECTION_ORDERS).bulkWrite(bulkOps);
@@ -812,309 +671,11 @@ app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
             const amount = typeof item.matchKey.total_amount === 'string' ? Number(item.matchKey.total_amount.replace(/,/g, '')) : item.matchKey.total_amount;
             await db.collection(COLLECTION_ORDERS).updateOne(
                 { is_synced: { $ne: true }, customer_name: item.matchKey.customer_name, total_amount: amount },
-                { 
-                    $set: { 
-                        is_synced: true, 
-                        synced_at: new Date(), 
-                        ecount_success: item.status === 'SUCCESS', 
-                        ecount_message: item.message || '',
-                        status: item.status === 'SUCCESS' ? ORDER_STATUS.CONFIRMED : ORDER_STATUS.FAILED,
-                        ...(item.status === 'SUCCESS' 
-                            ? { ecount_confirmed_at: new Date() } 
-                            : { ecount_failed_at: new Date(), ecount_failure_reason: item.message || '' })
-                    } 
-                }
+                { $set: { is_synced: true, synced_at: new Date(), ecount_success: item.status === 'SUCCESS', ecount_message: item.message || '' } }
             );
         }
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
-});
-
-// ==========================================
-// 🆕 [6-2] 주문 상태 머신 신규 API (방법 A 핵심)
-// ==========================================
-
-/**
- * 🆕 [POST] 엑셀 다운로드 시 EXPORTED 마킹
- * - PENDING 상태 주문에만 적용 (이미 다른 상태인 건 스킵)
- * - 배치 ID 자동 발급 (BATCH_YYYYMMDD_NNN)
- * - 📌 중복 다운로드 방지: PENDING 조건이 들어가있어 이미 EXPORTED인 건 다시 영향 안 받음
- */
-app.post('/api/ordersOffData/mark-exported', async (req, res) => {
-    try {
-        const { orderIds } = req.body;
-        if (!Array.isArray(orderIds) || orderIds.length === 0) {
-            return res.status(400).json({ success: false, message: 'orderIds가 필요합니다.' });
-        }
-
-        const validIds = orderIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
-        if (validIds.length === 0) {
-            return res.status(400).json({ success: false, message: '유효한 주문 ID가 없습니다.' });
-        }
-
-        // 배치 ID 생성: BATCH_20260427_001
-        const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const todayBatchCount = await db.collection(COLLECTION_ORDERS).countDocuments({
-            excel_batch_id: { $regex: `^BATCH_${today}_` }
-        });
-        // 같은 날 여러 다운로드가 있을 수 있으므로 distinct로 카운트
-        const distinctBatches = await db.collection(COLLECTION_ORDERS).distinct('excel_batch_id', {
-            excel_batch_id: { $regex: `^BATCH_${today}_` }
-        });
-        const seq = String(distinctBatches.length + 1).padStart(3, '0');
-        const batchId = `BATCH_${today}_${seq}`;
-
-        // 🛡️ 안전장치: PENDING 상태인 것만 업데이트
-        // (status 필드가 아예 없는 마이그레이션 누락 케이스도 흡수)
-        const result = await db.collection(COLLECTION_ORDERS).updateMany(
-            {
-                _id: { $in: validIds },
-                is_deleted: { $ne: true },
-                $or: [
-                    { status: ORDER_STATUS.PENDING },
-                    { status: { $exists: false }, is_synced: { $ne: true } }
-                ]
-            },
-            {
-                $set: {
-                    status: ORDER_STATUS.EXPORTED,
-                    excel_batch_id: batchId,
-                    excel_downloaded_at: new Date()
-                }
-            }
-        );
-
-        res.json({
-            success: true,
-            batchId,
-            markedCount: result.modifiedCount,
-            requestedCount: orderIds.length,
-            skippedCount: orderIds.length - result.modifiedCount
-        });
-    } catch (error) {
-        console.error("🔥 mark-exported 오류:", error);
-        res.status(500).json({ success: false, message: '서버 오류' });
-    }
-});
-
-/**
- * 🆕 [POST] 배치 단위 전체 확정 (전체 성공 처리)
- * - 해당 배치의 EXPORTED 상태 주문을 모두 CONFIRMED로 변경
- */
-app.post('/api/ordersOffData/confirm-batch', async (req, res) => {
-    try {
-        const { batchId } = req.body;
-        if (!batchId) return res.status(400).json({ success: false, message: 'batchId가 필요합니다.' });
-
-        const result = await db.collection(COLLECTION_ORDERS).updateMany(
-            { excel_batch_id: batchId, status: ORDER_STATUS.EXPORTED },
-            {
-                $set: {
-                    status: ORDER_STATUS.CONFIRMED,
-                    ecount_confirmed_at: new Date(),
-                    is_synced: true, // 기존 호환
-                    synced_at: new Date(),
-                    ecount_success: true
-                }
-            }
-        );
-
-        res.json({ success: true, confirmedCount: result.modifiedCount });
-    } catch (error) {
-        console.error("🔥 confirm-batch 오류:", error);
-        res.status(500).json({ success: false });
-    }
-});
-
-/**
- * 🆕 [POST] 선택 건만 확정 (일부 성공인 경우)
- */
-app.post('/api/ordersOffData/confirm-selected', async (req, res) => {
-    try {
-        const { orderIds } = req.body;
-        if (!Array.isArray(orderIds) || orderIds.length === 0) {
-            return res.status(400).json({ success: false, message: 'orderIds가 필요합니다.' });
-        }
-
-        const validIds = orderIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
-
-        const result = await db.collection(COLLECTION_ORDERS).updateMany(
-            { _id: { $in: validIds }, status: ORDER_STATUS.EXPORTED },
-            {
-                $set: {
-                    status: ORDER_STATUS.CONFIRMED,
-                    ecount_confirmed_at: new Date(),
-                    is_synced: true,
-                    synced_at: new Date(),
-                    ecount_success: true
-                }
-            }
-        );
-
-        res.json({ success: true, confirmedCount: result.modifiedCount });
-    } catch (error) {
-        console.error("🔥 confirm-selected 오류:", error);
-        res.status(500).json({ success: false });
-    }
-});
-
-/**
- * 🆕 [POST] 선택 건 실패 처리
- * - retry_count 증가 + retry_history에 이력 추가
- */
-app.post('/api/ordersOffData/mark-failed', async (req, res) => {
-    try {
-        const { orderIds, reason } = req.body;
-        if (!Array.isArray(orderIds) || orderIds.length === 0) {
-            return res.status(400).json({ success: false, message: 'orderIds가 필요합니다.' });
-        }
-
-        const validIds = orderIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
-        const failureReason = reason || '이카운트 등록 실패';
-
-        // 배치 ID와 함께 이력에 남기기 위해 주문을 먼저 조회
-        const orders = await db.collection(COLLECTION_ORDERS).find(
-            { _id: { $in: validIds }, status: ORDER_STATUS.EXPORTED }
-        ).toArray();
-
-        if (orders.length === 0) {
-            return res.json({ success: true, failedCount: 0, message: '처리 대상 없음' });
-        }
-
-        const bulkOps = orders.map(o => ({
-            updateOne: {
-                filter: { _id: o._id },
-                update: {
-                    $set: {
-                        status: ORDER_STATUS.FAILED,
-                        ecount_failed_at: new Date(),
-                        ecount_failure_reason: failureReason,
-                        // 기존 호환 필드
-                        is_synced: true,
-                        synced_at: new Date(),
-                        ecount_success: false,
-                        ecount_message: failureReason
-                    },
-                    $inc: { retry_count: 1 },
-                    $push: {
-                        retry_history: {
-                            batch_id: o.excel_batch_id || null,
-                            failed_at: new Date(),
-                            reason: failureReason
-                        }
-                    }
-                }
-            }
-        }));
-
-        const result = await db.collection(COLLECTION_ORDERS).bulkWrite(bulkOps);
-        res.json({ success: true, failedCount: result.modifiedCount });
-    } catch (error) {
-        console.error("🔥 mark-failed 오류:", error);
-        res.status(500).json({ success: false });
-    }
-});
-
-/**
- * 🆕 [POST] 실패한 주문을 재처리 대기열로 (FAILED → PENDING)
- * - 다음 엑셀 다운로드 배치에 다시 포함됨
- * - retry_history는 보존 (이력 추적)
- */
-app.post('/api/ordersOffData/requeue', async (req, res) => {
-    try {
-        const { orderIds } = req.body;
-        if (!Array.isArray(orderIds) || orderIds.length === 0) {
-            return res.status(400).json({ success: false, message: 'orderIds가 필요합니다.' });
-        }
-
-        const validIds = orderIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
-
-        const result = await db.collection(COLLECTION_ORDERS).updateMany(
-            { _id: { $in: validIds }, status: ORDER_STATUS.FAILED },
-            {
-                $set: {
-                    status: ORDER_STATUS.PENDING,
-                    // 기존 호환 필드도 미전송 상태로 되돌림
-                    is_synced: false,
-                    synced_at: null,
-                    ecount_success: null,
-                    ecount_message: null,
-                    // 배치 정보는 초기화 (새 배치에 다시 포함되어야 함)
-                    excel_batch_id: null,
-                    excel_downloaded_at: null,
-                    ecount_failed_at: null
-                    // ecount_failure_reason과 retry_history는 보존
-                }
-            }
-        );
-
-        res.json({ success: true, requeuedCount: result.modifiedCount });
-    } catch (error) {
-        console.error("🔥 requeue 오류:", error);
-        res.status(500).json({ success: false });
-    }
-});
-
-/**
- * 🆕 [GET] 확정 대기 중인 배치 목록 조회
- * - admin이 어떤 배치가 처리 대기 중인지 한눈에 보기 위함
- */
-app.get('/api/ordersOffData/batches', async (req, res) => {
-    try {
-        const batches = await db.collection(COLLECTION_ORDERS).aggregate([
-            { 
-                $match: { 
-                    status: ORDER_STATUS.EXPORTED, 
-                    is_deleted: { $ne: true } 
-                } 
-            },
-            {
-                $group: {
-                    _id: '$excel_batch_id',
-                    count: { $sum: 1 },
-                    downloadedAt: { $first: '$excel_downloaded_at' },
-                    totalAmount: { $sum: '$total_amount' },
-                    stores: { $addToSet: '$store_name' }
-                }
-            },
-            { $sort: { downloadedAt: -1 } }
-        ]).toArray();
-
-        res.json({ success: true, data: batches });
-    } catch (error) {
-        console.error("🔥 batches 조회 오류:", error);
-        res.status(500).json({ success: false });
-    }
-});
-
-/**
- * 🆕 [GET] 사이드바 뱃지용 카운트 조회 (성능 최적화)
- */
-app.get('/api/ordersOffData/counts', async (req, res) => {
-    try {
-        const [pending, exported, failed] = await Promise.all([
-            db.collection(COLLECTION_ORDERS).countDocuments({
-                is_deleted: { $ne: true },
-                $or: [
-                    { status: ORDER_STATUS.PENDING },
-                    { status: { $exists: false }, is_synced: { $ne: true } }
-                ]
-            }),
-            db.collection(COLLECTION_ORDERS).countDocuments({
-                is_deleted: { $ne: true },
-                status: ORDER_STATUS.EXPORTED
-            }),
-            db.collection(COLLECTION_ORDERS).countDocuments({
-                is_deleted: { $ne: true },
-                status: ORDER_STATUS.FAILED
-            })
-        ]);
-
-        res.json({ success: true, data: { pending, exported, failed } });
-    } catch (error) {
-        console.error("🔥 counts 조회 오류:", error);
-        res.status(500).json({ success: false });
-    }
 });
 
 // ==========================================
