@@ -74,6 +74,9 @@ const ORDER_STATUS = {
     FAILED:    'FAILED'      // 이카운트 거절됨 (등록 실패)
 };
 
+// 🆕 자동 복구 설정: EXPORTED 상태로 N분 이상 방치 시 PENDING으로 자동 복구
+const AUTO_REQUEUE_STALE_MINUTES = 30;
+
 // ==========================================
 // [3] 서버 시작
 // ==========================================
@@ -111,6 +114,13 @@ async function startServer() {
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
         });
+
+        // 🆕 자동 복구 cron 시작 (서버 시작 후 5초 뒤 첫 실행)
+        setTimeout(() => {
+            startAutoRequeueCron();
+            // 서버 시작 직후 한 번 즉시 실행 (혹시 다운타임 동안 쌓인 건 처리)
+            performAutoRequeue();
+        }, 5000);
 
     } catch (err) {
         console.error("🔥 Server Error:", err);
@@ -159,7 +169,6 @@ async function migrateOrderStatus() {
     try {
         const collection = db.collection(COLLECTION_ORDERS);
         
-        // status 필드가 없는 주문만 대상
         const needsMigration = await collection.countDocuments({ status: { $exists: false } });
         if (needsMigration === 0) {
             console.log("✅ Order Status 마이그레이션: 이미 완료됨 (스킵)");
@@ -168,14 +177,11 @@ async function migrateOrderStatus() {
 
         console.log(`⏳ Order Status 마이그레이션 시작: ${needsMigration}건 처리 중...`);
 
-        // 1) 휴지통 → status는 그대로 유지 (is_deleted: true가 우선이므로 status는 PENDING으로)
-        // 2) is_synced: true → CONFIRMED
         const r1 = await collection.updateMany(
             { status: { $exists: false }, is_synced: true },
             { $set: { status: ORDER_STATUS.CONFIRMED, ecount_confirmed_at: new Date() } }
         );
 
-        // 3) is_synced: false 또는 미정의 → PENDING
         const r2 = await collection.updateMany(
             { status: { $exists: false } },
             { $set: { status: ORDER_STATUS.PENDING } }
@@ -194,6 +200,8 @@ async function ensureOrderIndexes() {
         await collection.createIndex({ status: 1, is_deleted: 1, created_at: -1 });
         await collection.createIndex({ excel_batch_id: 1 });
         await collection.createIndex({ store_name: 1, created_at: -1 });
+        // 🆕 자동 복구 쿼리 최적화용 인덱스
+        await collection.createIndex({ status: 1, excel_downloaded_at: 1, auto_requeued: 1 });
         console.log("✅ 인덱스 확인 완료");
     } catch (e) {
         console.error("⚠️ 인덱스 생성 오류:", e.message);
@@ -626,31 +634,24 @@ app.get('/api/ordersOffData', async (req, res) => {
         const { store_name, startDate, endDate, keyword, view } = req.query;
         let query = {};
 
-        // 🆕 view 파라미터에 따라 status로 필터링 (기존 호환 + 신규 상태 지원)
         if (view === 'trash') {
             query.is_deleted = true;
         } else if (view === 'completed') {
-            // 전송완료 = CONFIRMED (기존 is_synced: true와 동일)
             query.is_deleted = { $ne: true };
             query.$or = [
                 { status: ORDER_STATUS.CONFIRMED },
-                // 마이그레이션 누락 케이스 대비 (혹시 status 없어도 is_synced로 fallback)
                 { status: { $exists: false }, is_synced: true }
             ];
         } else if (view === 'exported') {
-            // 🆕 확정 대기 = EXPORTED
             query.is_deleted = { $ne: true };
             query.status = ORDER_STATUS.EXPORTED;
         } else if (view === 'failed') {
-            // 🆕 등록 실패 = FAILED
             query.is_deleted = { $ne: true };
             query.status = ORDER_STATUS.FAILED;
         } else {
-            // 기본: 미전송 = PENDING (기존 is_synced ≠ true와 동일)
             query.is_deleted = { $ne: true };
             query.$or = [
                 { status: ORDER_STATUS.PENDING },
-                // 마이그레이션 누락 케이스 대비
                 { status: { $exists: false }, is_synced: { $ne: true } }
             ];
         }
@@ -663,7 +664,6 @@ app.get('/api/ordersOffData', async (req, res) => {
                 { customer_phone: { $regex: keyword, $options: 'i' } },
                 { product_name: { $regex: keyword, $options: 'i' } }
             ];
-            // status 조건과 keyword 조건이 모두 $or로 들어갈 경우 $and로 묶음
             if (query.$or) {
                 query.$and = [{ $or: query.$or }, { $or: keywordOr }];
                 delete query.$or;
@@ -706,9 +706,7 @@ app.post('/api/ordersOffData', authMiddleware, async (req, res) => {
             shipping_cost: Number(d.shipping_cost) || 0,
             total_discount_amount: Number(d.total_discount_amount) || 0,
             applied_coupon_count: Number(d.applied_coupon_count) || 0,
-            // 🆕 상태 머신 초기값
             status: ORDER_STATUS.PENDING,
-            // 기존 호환 필드 유지
             is_synced: false, 
             is_deleted: false,
             created_at: new Date(), 
@@ -752,7 +750,6 @@ app.delete('/api/ordersOffData/:id', authMiddleware, async (req, res) => {
 app.put('/api/ordersOffData/restore/:id', authMiddleware, async (req, res) => {
     try {
         if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
-        // 🆕 복구 시 status도 PENDING으로 초기화
         await db.collection(COLLECTION_ORDERS).updateOne(
             { _id: new ObjectId(req.params.id) },
             { 
@@ -775,8 +772,7 @@ app.put('/api/ordersOffData/restore/:id', authMiddleware, async (req, res) => {
     } catch (error) { res.status(500).json({ success: false }); }
 });
 
-// 🟡 [기존 호환] /sync 엔드포인트 - 사용 빈도가 낮아질 예정이지만 하위 호환을 위해 유지
-// admin.html이 새 엔드포인트로 전환되면 자연스럽게 사용 안 됨
+// 🟡 [기존 호환] /sync 엔드포인트
 app.post('/api/ordersOffData/sync', async (req, res) => {
     try {
         const { results } = req.body; 
@@ -790,7 +786,6 @@ app.post('/api/ordersOffData/sync', async (req, res) => {
                         synced_at: new Date(), 
                         ecount_success: item.status === 'SUCCESS', 
                         ecount_message: item.message || '',
-                        // 🆕 status도 함께 업데이트
                         status: item.status === 'SUCCESS' ? ORDER_STATUS.CONFIRMED : ORDER_STATUS.FAILED,
                         ...(item.status === 'SUCCESS' 
                             ? { ecount_confirmed_at: new Date() } 
@@ -833,13 +828,6 @@ app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
 // ==========================================
 // 🆕 [6-2] 주문 상태 머신 신규 API (방법 A 핵심)
 // ==========================================
-
-/**
- * 🆕 [POST] 엑셀 다운로드 시 EXPORTED 마킹
- * - PENDING 상태 주문에만 적용 (이미 다른 상태인 건 스킵)
- * - 배치 ID 자동 발급 (BATCH_YYYYMMDD_NNN)
- * - 📌 중복 다운로드 방지: PENDING 조건이 들어가있어 이미 EXPORTED인 건 다시 영향 안 받음
- */
 app.post('/api/ordersOffData/mark-exported', async (req, res) => {
     try {
         const { orderIds } = req.body;
@@ -852,20 +840,13 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
             return res.status(400).json({ success: false, message: '유효한 주문 ID가 없습니다.' });
         }
 
-        // 배치 ID 생성: BATCH_20260427_001
         const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-        const todayBatchCount = await db.collection(COLLECTION_ORDERS).countDocuments({
-            excel_batch_id: { $regex: `^BATCH_${today}_` }
-        });
-        // 같은 날 여러 다운로드가 있을 수 있으므로 distinct로 카운트
         const distinctBatches = await db.collection(COLLECTION_ORDERS).distinct('excel_batch_id', {
             excel_batch_id: { $regex: `^BATCH_${today}_` }
         });
         const seq = String(distinctBatches.length + 1).padStart(3, '0');
         const batchId = `BATCH_${today}_${seq}`;
 
-        // 🛡️ 안전장치: PENDING 상태인 것만 업데이트
-        // (status 필드가 아예 없는 마이그레이션 누락 케이스도 흡수)
         const result = await db.collection(COLLECTION_ORDERS).updateMany(
             {
                 _id: { $in: validIds },
@@ -897,10 +878,6 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
     }
 });
 
-/**
- * 🆕 [POST] 배치 단위 전체 확정 (전체 성공 처리)
- * - 해당 배치의 EXPORTED 상태 주문을 모두 CONFIRMED로 변경
- */
 app.post('/api/ordersOffData/confirm-batch', async (req, res) => {
     try {
         const { batchId } = req.body;
@@ -912,7 +889,7 @@ app.post('/api/ordersOffData/confirm-batch', async (req, res) => {
                 $set: {
                     status: ORDER_STATUS.CONFIRMED,
                     ecount_confirmed_at: new Date(),
-                    is_synced: true, // 기존 호환
+                    is_synced: true,
                     synced_at: new Date(),
                     ecount_success: true
                 }
@@ -926,9 +903,6 @@ app.post('/api/ordersOffData/confirm-batch', async (req, res) => {
     }
 });
 
-/**
- * 🆕 [POST] 선택 건만 확정 (일부 성공인 경우)
- */
 app.post('/api/ordersOffData/confirm-selected', async (req, res) => {
     try {
         const { orderIds } = req.body;
@@ -958,10 +932,6 @@ app.post('/api/ordersOffData/confirm-selected', async (req, res) => {
     }
 });
 
-/**
- * 🆕 [POST] 선택 건 실패 처리
- * - retry_count 증가 + retry_history에 이력 추가
- */
 app.post('/api/ordersOffData/mark-failed', async (req, res) => {
     try {
         const { orderIds, reason } = req.body;
@@ -972,7 +942,6 @@ app.post('/api/ordersOffData/mark-failed', async (req, res) => {
         const validIds = orderIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
         const failureReason = reason || '이카운트 등록 실패';
 
-        // 배치 ID와 함께 이력에 남기기 위해 주문을 먼저 조회
         const orders = await db.collection(COLLECTION_ORDERS).find(
             { _id: { $in: validIds }, status: ORDER_STATUS.EXPORTED }
         ).toArray();
@@ -989,7 +958,6 @@ app.post('/api/ordersOffData/mark-failed', async (req, res) => {
                         status: ORDER_STATUS.FAILED,
                         ecount_failed_at: new Date(),
                         ecount_failure_reason: failureReason,
-                        // 기존 호환 필드
                         is_synced: true,
                         synced_at: new Date(),
                         ecount_success: false,
@@ -1015,11 +983,6 @@ app.post('/api/ordersOffData/mark-failed', async (req, res) => {
     }
 });
 
-/**
- * 🆕 [POST] 실패한 주문을 재처리 대기열로 (FAILED → PENDING)
- * - 다음 엑셀 다운로드 배치에 다시 포함됨
- * - retry_history는 보존 (이력 추적)
- */
 app.post('/api/ordersOffData/requeue', async (req, res) => {
     try {
         const { orderIds } = req.body;
@@ -1034,16 +997,13 @@ app.post('/api/ordersOffData/requeue', async (req, res) => {
             {
                 $set: {
                     status: ORDER_STATUS.PENDING,
-                    // 기존 호환 필드도 미전송 상태로 되돌림
                     is_synced: false,
                     synced_at: null,
                     ecount_success: null,
                     ecount_message: null,
-                    // 배치 정보는 초기화 (새 배치에 다시 포함되어야 함)
                     excel_batch_id: null,
                     excel_downloaded_at: null,
                     ecount_failed_at: null
-                    // ecount_failure_reason과 retry_history는 보존
                 }
             }
         );
@@ -1055,10 +1015,6 @@ app.post('/api/ordersOffData/requeue', async (req, res) => {
     }
 });
 
-/**
- * 🆕 [GET] 확정 대기 중인 배치 목록 조회
- * - admin이 어떤 배치가 처리 대기 중인지 한눈에 보기 위함
- */
 app.get('/api/ordersOffData/batches', async (req, res) => {
     try {
         const batches = await db.collection(COLLECTION_ORDERS).aggregate([
@@ -1087,9 +1043,6 @@ app.get('/api/ordersOffData/batches', async (req, res) => {
     }
 });
 
-/**
- * 🆕 [GET] 사이드바 뱃지용 카운트 조회 (성능 최적화)
- */
 app.get('/api/ordersOffData/counts', async (req, res) => {
     try {
         const [pending, exported, failed] = await Promise.all([
@@ -1116,6 +1069,123 @@ app.get('/api/ordersOffData/counts', async (req, res) => {
         res.status(500).json({ success: false });
     }
 });
+
+// ==========================================
+// 🆕 [6-3] 자동 복구 (Stale EXPORTED → PENDING)
+// ==========================================
+
+/**
+ * 🆕 핵심 자동 복구 로직 (재사용 가능한 함수)
+ * - status: EXPORTED + downloaded_at이 30분 이상 경과 + auto_requeued !== true
+ * - 1회만 자동 복구 (auto_requeued: true 플래그로 무한 루프 방지)
+ */
+async function performAutoRequeue() {
+    try {
+        if (!db) return { requeuedCount: 0, targets: [] };
+        
+        const staleThreshold = new Date(Date.now() - AUTO_REQUEUE_STALE_MINUTES * 60 * 1000);
+
+        // 1. 대상 조회
+        const targets = await db.collection(COLLECTION_ORDERS).find({
+            status: ORDER_STATUS.EXPORTED,
+            excel_downloaded_at: { $lte: staleThreshold, $ne: null },
+            auto_requeued: { $ne: true },
+            is_deleted: { $ne: true }
+        }).project({
+            _id: 1, store_name: 1, customer_name: 1,
+            excel_batch_id: 1, excel_downloaded_at: 1, total_amount: 1
+        }).toArray();
+
+        if (targets.length === 0) {
+            return { requeuedCount: 0, targets: [] };
+        }
+
+        const targetIds = targets.map(t => t._id);
+
+        // 2. 일괄 업데이트
+        const result = await db.collection(COLLECTION_ORDERS).updateMany(
+            { _id: { $in: targetIds } },
+            {
+                $set: {
+                    status: ORDER_STATUS.PENDING,
+                    auto_requeued: true,                     // 🔥 1회 제한 플래그
+                    auto_requeued_at: new Date(),
+                    is_synced: false,
+                    synced_at: null,
+                    ecount_success: null,
+                    ecount_message: null,
+                    excel_batch_id: null,
+                    excel_downloaded_at: null
+                },
+                $inc: { auto_requeue_count: 1 }
+            }
+        );
+
+        // 3. 로깅
+        console.log(`[AUTO-REQUEUE] ${new Date().toISOString()} - ${result.modifiedCount}건 자동 복구`);
+        targets.forEach(t => {
+            console.log(`  └ ${t.store_name} | ${t.customer_name} | batch:${t.excel_batch_id}`);
+        });
+
+        return { requeuedCount: result.modifiedCount, targets };
+    } catch (err) {
+        console.error('[AUTO-REQUEUE ERROR]', err);
+        return { requeuedCount: 0, targets: [], error: err.message };
+    }
+}
+
+/**
+ * 🆕 [POST] 수동 트리거 (프론트엔드에서 호출)
+ */
+app.post('/api/ordersOffData/auto-requeue', async (req, res) => {
+    const result = await performAutoRequeue();
+    if (result.error) {
+        return res.status(500).json({ success: false, message: result.error });
+    }
+    res.json({
+        success: true,
+        requeuedCount: result.requeuedCount,
+        targets: result.targets,
+        staleMinutes: AUTO_REQUEUE_STALE_MINUTES,
+        message: result.requeuedCount > 0
+            ? `${result.requeuedCount}건이 ${AUTO_REQUEUE_STALE_MINUTES}분 이상 미처리되어 미전송 상태로 자동 복구되었습니다.`
+            : '복구 대상 없음'
+    });
+});
+
+/**
+ * 🆕 [GET] 복구 대상 미리보기 (실제 복구 X, 모니터링용)
+ */
+app.get('/api/ordersOffData/auto-requeue/check', async (req, res) => {
+    try {
+        const staleThreshold = new Date(Date.now() - AUTO_REQUEUE_STALE_MINUTES * 60 * 1000);
+        const count = await db.collection(COLLECTION_ORDERS).countDocuments({
+            status: ORDER_STATUS.EXPORTED,
+            excel_downloaded_at: { $lte: staleThreshold, $ne: null },
+            auto_requeued: { $ne: true },
+            is_deleted: { $ne: true }
+        });
+        res.json({ success: true, count, staleMinutes: AUTO_REQUEUE_STALE_MINUTES });
+    } catch (err) {
+        res.status(500).json({ success: false, message: err.message });
+    }
+});
+
+/**
+ * 🆕 자동 복구 cron (10분 간격, setInterval 사용)
+ */
+function startAutoRequeueCron() {
+    const INTERVAL_MS = 10 * 60 * 1000; // 10분
+
+    setInterval(async () => {
+        const result = await performAutoRequeue();
+        if (result.requeuedCount > 0) {
+            console.log(`[CRON AUTO-REQUEUE] ✅ ${result.requeuedCount}건 자동 복구 완료`);
+        }
+    }, INTERVAL_MS);
+
+    console.log(`✅ Auto-Requeue Cron 등록 완료 (10분 간격, ${AUTO_REQUEUE_STALE_MINUTES}분 이상 미처리 건 대상)`);
+}
 
 // ==========================================
 // [7] 정적 데이터 (매장, 창고, 담당자 등)
@@ -1202,13 +1272,12 @@ app.patch('/api/ordersOffData/:id/memo', async (req, res) => {
 });
 
 // ==========================================
-// 맵핑 테스트 작업 (50개씩 배치 처리 방식으로 변경)
+// 맵핑 테스트 작업
 // ==========================================
 const { matchItemCode } = require('./utils/itemMatcher');
 
 app.get('/api/admin/mapping-test-batch', async (req, res) => {
     try {
-        // 프론트엔드에서 전달받은 limit과 offset (기본값 50, 0)
         const limit = parseInt(req.query.limit) || 50;
         const offset = parseInt(req.query.offset) || 0;
 
@@ -1240,11 +1309,10 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
             warningCount: 0,
             failCount: 0,
             details: [],
-            hasMore: products.length === limit, // 가져온 개수가 limit과 같으면 다음 페이지가 있다고 판단
+            hasMore: products.length === limit,
             nextOffset: offset + limit
         };
 
-        // 🛑 제외할 온라인 공식 몰 전용 키워드 목록 (대괄호 빼고 유연하게 매칭)
         const excludeKeywords = [
             '한정수량특가',
             'LAST CHANCE',
@@ -1253,16 +1321,9 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
             '하늘이네 공동구매'
         ];
 
-        // 50개 상품에 대해 매핑 진행
         for (const prod of products) {
-            
-            // 🛑 1. 상품명에 제외 키워드가 하나라도 포함되어 있는지 확인
             const isOnlineOnly = excludeKeywords.some(kw => prod.product_name.includes(kw));
-            
-            // 🛑 2. 포함되어 있다면 이 상품은 매핑 테스트에서 아예 건너뜁니다 (Skip).
-            if (isOnlineOnly) {
-                continue; 
-            }
+            if (isOnlineOnly) continue;
 
             const options = prod.options && prod.options.length > 0 ? prod.options : [{ option_name: '' }];
             
@@ -1286,7 +1347,6 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
             }
         }
 
-        // 스코어 정렬 후 프론트엔드로 응답
         results.details.sort((a, b) => a.score - b.score);
         res.json({ success: true, summary: results });
 
@@ -1298,7 +1358,7 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
 
 
 // ==========================================
-// [8] 비즈엠 알림톡 (주소 & 옵션명 포함 최종본)
+// [8] 비즈엠 알림톡
 // ==========================================
 app.post('/api/send-alimtalk', async (req, res) => {
     try {
