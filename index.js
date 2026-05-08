@@ -824,9 +824,8 @@ app.post('/api/ordersOffData/sync-by-content', async (req, res) => {
         res.json({ success: true });
     } catch (error) { res.status(500).json({ success: false }); }
 });
-
 // ==========================================
-// 🆕 [6-2] 주문 상태 머신 신규 API (방법 A 핵심)
+// 🆕 [6-2] 주문 상태 머신 신규 API (매크로 실행 기반 자동 복구 추가)
 // ==========================================
 app.post('/api/ordersOffData/mark-exported', async (req, res) => {
     try {
@@ -840,6 +839,49 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
             return res.status(400).json({ success: false, message: '유효한 주문 ID가 없습니다.' });
         }
 
+        // ------------------------------------------------------------------
+        // 🔥 [추가된 로직] 매크로 실행 기반 "방치 카운트" 증가 및 3회 이상 시 롤백
+        // ------------------------------------------------------------------
+        
+        // 1. 이번 엑셀 다운로드에 포함되지 않은 '기존 확정대기(EXPORTED)' 주문들의 누락 횟수 1 증가
+        await db.collection(COLLECTION_ORDERS).updateMany(
+            {
+                status: ORDER_STATUS.EXPORTED,
+                _id: { $nin: validIds }, // 이번에 다운받는 건 제외
+                is_deleted: { $ne: true }
+            },
+            { $inc: { macro_miss_count: 1 } }
+        );
+
+        // 2. 누락 횟수(macro_miss_count)가 3 이상인 주문들을 미전송(PENDING)으로 복구
+        const autoRequeueResult = await db.collection(COLLECTION_ORDERS).updateMany(
+            {
+                status: ORDER_STATUS.EXPORTED,
+                macro_miss_count: { $gte: 3 }, // 최대 3회 매크로 실행 동안 방치된 건
+                is_deleted: { $ne: true }
+            },
+            {
+                $set: {
+                    status: ORDER_STATUS.PENDING, // 미전송으로 복구
+                    auto_requeued: true,
+                    auto_requeued_at: new Date(),
+                    macro_miss_count: 0, // 초기화 (다음 다운로드 때 다시 정상 포함되도록)
+                    is_synced: false,
+                    synced_at: null,
+                    ecount_success: null,
+                    excel_batch_id: null,
+                    excel_downloaded_at: null
+                },
+                $inc: { auto_requeue_count: 1 }
+            }
+        );
+
+        if (autoRequeueResult.modifiedCount > 0) {
+            console.log(`[MACRO-REQUEUE] 매크로 3회 누락으로 인해 ${autoRequeueResult.modifiedCount}건 미전송(PENDING)으로 자동 복구됨`);
+        }
+        // ------------------------------------------------------------------
+
+        // 3. [기존 로직] 이번에 다운로드할 주문들을 EXPORTED로 상태 변경
         const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         const distinctBatches = await db.collection(COLLECTION_ORDERS).distinct('excel_batch_id', {
             excel_batch_id: { $regex: `^BATCH_${today}_` }
@@ -860,7 +902,8 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
                 $set: {
                     status: ORDER_STATUS.EXPORTED,
                     excel_batch_id: batchId,
-                    excel_downloaded_at: new Date()
+                    excel_downloaded_at: new Date(),
+                    macro_miss_count: 0 // 새로 확정대기가 된 건 카운트 0으로 시작
                 }
             }
         );
@@ -870,7 +913,8 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
             batchId,
             markedCount: result.modifiedCount,
             requestedCount: orderIds.length,
-            skippedCount: orderIds.length - result.modifiedCount
+            skippedCount: orderIds.length - result.modifiedCount,
+            requeuedFromStale: autoRequeueResult.modifiedCount // 프론트에 롤백 건수도 알려주면 좋습니다
         });
     } catch (error) {
         console.error("🔥 mark-exported 오류:", error);
