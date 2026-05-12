@@ -1400,6 +1400,50 @@ app.get('/api/admin/mapping-test-batch', async (req, res) => {
     }
 });
 
+// ==========================================
+// [신규] 수동 확정대기 -> 미등록 강제 이동 API (매니저 권한 재전송)
+// ==========================================
+app.post('/api/ordersOffData/force-pending', async (req, res) => {
+    try {
+        const { orderIds } = req.body;
+        let filter = { 
+            status: ORDER_STATUS.EXPORTED, 
+            is_deleted: { $ne: true } 
+        };
+
+        // 프론트에서 특정 주문(들)의 ID를 넘기면 해당 주문만, 안 넘기면 전체 확정대기 주문을 대상으로 함
+        if (orderIds && Array.isArray(orderIds)) {
+            if (orderIds.length === 0) {
+                return res.json({ success: true, modifiedCount: 0, message: '선택된 주문이 없습니다.' });
+            }
+            const validIds = orderIds.filter(id => ObjectId.isValid(id)).map(id => new ObjectId(id));
+            filter._id = { $in: validIds };
+        }
+
+        const result = await db.collection(COLLECTION_ORDERS).updateMany(
+            filter,
+            {
+                $set: {
+                    status: ORDER_STATUS.PENDING,
+                    is_synced: false,
+                    synced_at: null,
+                    ecount_success: null,
+                    ecount_message: null,
+                    excel_batch_id: null,
+                    excel_downloaded_at: null,
+                    auto_requeued: false, // 다음 매크로 누락 시 다시 자동복구가 탈 수 있도록 초기화
+                    macro_miss_count: 0
+                }
+            }
+        );
+
+        res.json({ success: true, modifiedCount: result.modifiedCount });
+    } catch (error) {
+        console.error("🔥 강제 미등록 이동 오류:", error);
+        res.status(500).json({ success: false, message: '서버 오류가 발생했습니다.' });
+    }
+});
+
 
 // ==========================================
 // [8] 비즈엠 알림톡
