@@ -75,7 +75,7 @@ const ORDER_STATUS = {
 };
 
 // 🆕 자동 복구 설정: EXPORTED 상태로 N분 이상 방치 시 PENDING으로 자동 복구
-const AUTO_REQUEUE_STALE_MINUTES = 11;
+const AUTO_REQUEUE_STALE_MINUTES = 5;
 
 // ==========================================
 // [3] 서버 시작
