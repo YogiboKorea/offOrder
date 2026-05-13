@@ -75,7 +75,7 @@ const ORDER_STATUS = {
 };
 
 // 🆕 자동 복구 설정: EXPORTED 상태로 N분 이상 방치 시 PENDING으로 자동 복구
-const AUTO_REQUEUE_STALE_MINUTES = 30;
+const AUTO_REQUEUE_STALE_MINUTES = 11;
 
 // ==========================================
 // [3] 서버 시작
@@ -857,7 +857,7 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
         const autoRequeueResult = await db.collection(COLLECTION_ORDERS).updateMany(
             {
                 status: ORDER_STATUS.EXPORTED,
-                macro_miss_count: { $gte: 3 }, // 최대 3회 매크로 실행 동안 방치된 건
+                macro_miss_count: { $gte: 1 }, // 최대 3회 매크로 실행 동안 방치된 건
                 is_deleted: { $ne: true }
             },
             {
@@ -877,7 +877,7 @@ app.post('/api/ordersOffData/mark-exported', async (req, res) => {
         );
 
         if (autoRequeueResult.modifiedCount > 0) {
-            console.log(`[MACRO-REQUEUE] 매크로 3회 누락으로 인해 ${autoRequeueResult.modifiedCount}건 미전송(PENDING)으로 자동 복구됨`);
+            console.log(`[MACRO-REQUEUE] 매크로 1회 누락으로 인해 ${autoRequeueResult.modifiedCount}건 미전송(PENDING)으로 자동 복구됨`);
         }
         // ------------------------------------------------------------------
 
