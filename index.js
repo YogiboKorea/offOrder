@@ -1572,39 +1572,58 @@ function shipMatchesOrderItem(shipTokens, orderTokens) {
 
 /**
  * 주문 ↔ 출하 매칭 결과
+ *
+ * 묶음 인식 룰:
+ *  - 한 운송장에 여러 품목이 슬래시로 묶여있으면 묶음 배송
+ *  - 운송장 내 품목 중 하나라도 주문과 매칭되면 → 같은 운송장의 나머지는 "묶음 동봉" 으로 처리 (정상)
+ *  - 운송장 내 모든 품목이 매칭 안되면 → 진짜 잘못된 출고 (오배송/픽업)
  */
 function matchOrderShipments(order, shipments) {
     const orderItems = buildOrderItemSignatures(order);
-    const allShipPieces = [];
-    shipments.forEach(s => {
-        extractShipmentPieces(s.product_text).forEach(piece => {
-            allShipPieces.push({ ...piece, shipment: s });
-        });
-    });
-
-    // 그리디 매칭: 출하 품목 하나씩, 매칭되는 주문 아이템 찾기 (수량 차감)
     const remaining = orderItems.map((it, idx) => ({ ...it, idx, remainingQty: it.quantity }));
-    const matchedItems = [];
-    const wrongShipItems = [];
 
-    allShipPieces.forEach(piece => {
-        const matchIdx = remaining.findIndex(oi =>
-            oi.remainingQty > 0 && shipMatchesOrderItem(piece.tokens, oi.tokens)
-        );
-        if (matchIdx >= 0) {
-            remaining[matchIdx].remainingQty--;
-            matchedItems.push({
-                raw: piece.raw,
-                matched_to: remaining[matchIdx].raw,
-                ship_status: piece.shipment.ship_status
-            });
-        } else {
-            wrongShipItems.push({
-                raw: piece.raw,
-                ship_status: piece.shipment.ship_status,
-                tracking_no: piece.shipment.tracking_no || ''   // 🆕 운송장 유무로 오배송/픽업 분리
-            });
-        }
+    const matchedItems = [];
+    const wrongShipItems = [];     // 같은 운송장에 매칭된 게 0건 → 잘못된 출고 (오배송 후보)
+    const bundleCompanions = [];   // 같은 운송장에 매칭이 있음 → 묶음 동봉 (정상)
+    let shipItemCount = 0;
+
+    shipments.forEach(s => {
+        const pieces = extractShipmentPieces(s.product_text);
+        shipItemCount += pieces.length;
+
+        const localUnmatched = [];
+        let localMatchCount = 0;
+
+        pieces.forEach(piece => {
+            const matchIdx = remaining.findIndex(oi =>
+                oi.remainingQty > 0 && shipMatchesOrderItem(piece.tokens, oi.tokens)
+            );
+            if (matchIdx >= 0) {
+                remaining[matchIdx].remainingQty--;
+                matchedItems.push({
+                    raw: piece.raw,
+                    matched_to: remaining[matchIdx].raw,
+                    ship_status: s.ship_status
+                });
+                localMatchCount++;
+            } else {
+                localUnmatched.push(piece);
+            }
+        });
+
+        // 운송장 단위 묶음 판정
+        localUnmatched.forEach(p => {
+            const item = {
+                raw: p.raw,
+                ship_status: s.ship_status,
+                tracking_no: s.tracking_no || ''
+            };
+            if (localMatchCount > 0) {
+                bundleCompanions.push(item);  // 같은 운송장에 매칭 있음 → 묶음 동봉
+            } else {
+                wrongShipItems.push(item);    // 운송장 전체가 unmatch → 진짜 잘못된 출고
+            }
+        });
     });
 
     const missingOrderItems = remaining
@@ -1615,12 +1634,13 @@ function matchOrderShipments(order, shipments) {
 
     return {
         shipped: shipments.some(s => s.ship_status === 'SHIPPED'),
-        itemMatched: wrongShipItems.length === 0 && missingOrderItems.length === 0,
+        itemMatched: wrongShipItems.length === 0 && bundleCompanions.length === 0 && missingOrderItems.length === 0,
         matchedItems,
         wrongShipItems,
+        bundleCompanions,
         missingOrderItems,
         orderItemCount: totalOrderQty,
-        shipItemCount: allShipPieces.length
+        shipItemCount
     };
 }
 
@@ -1882,26 +1902,23 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                     daysSinceShipped = Math.floor((Date.now() - latest.getTime()) / 86400000);
                 }
 
-                // 🔥 분류 우선순위:
-                //    a) 매칭된 출고가 하나라도 있고 + 안 맞는 것도 있는 경우
-                //       → 픽업상품예상포함 (정상 출고 + 픽업분 동봉 가능성)
-                //    b) 매칭된 출고가 0건이고 안 맞는 출고가 운송장과 함께 발송된 경우
-                //       → 실제 오배송 (다른 고객 주문이 잘못 분배된 가능성)
-                //    c) 안 맞는 출고가 운송장 없이 등록된 경우 → 픽업
-                //    d) 출고 모두 정상 + 일부 미출하 → PARTIAL (정상 부분출하)
+                // 🔥 분류 우선순위 (묶음 인식 적용):
+                //    wrongShipItems = 운송장 전체가 주문과 안 맞는 경우만 (진짜 잘못된 출고)
+                //    bundleCompanions = 같은 운송장에 매칭이 있어서 동봉된 것 (정상)
+                //
+                //    a) wrongShipItems 운송장 있음 → 실제 오배송 (운송장 통째로 잘못 분배)
+                //    b) wrongShipItems 운송장 없음 → 픽업상품예상포함
+                //    c) 묶음 동봉만 있음 → 정상 출하/배송 (별도 안내 없음)
+                //    d) 미출하 항목 있음 + 출하된 건 정상 → PARTIAL
                 const hasWrong   = match.wrongShipItems.length > 0;
+                const hasBundle  = match.bundleCompanions.length > 0;
                 const hasMissing = match.missingOrderItems.length > 0;
-                const matchedCount     = match.matchedItems.length;
                 const wrongHasTracking = match.wrongShipItems.some(w => w.tracking_no && String(w.tracking_no).trim() !== '');
 
-                if (hasWrong) {
-                    if (matchedCount === 0 && wrongHasTracking) {
-                        // 매칭 0건 + 운송장 있는 잘못된 출고 → 실제 오배송 의심
-                        shipStatus = 'MISMATCHED';
-                    } else {
-                        // 일부라도 매칭됐거나 운송장이 없는 케이스 → 픽업상품예상포함
-                        shipStatus = 'PICKUP_INCLUDED';
-                    }
+                if (hasWrong && wrongHasTracking) {
+                    shipStatus = 'MISMATCHED';       // 운송장 통째로 잘못 분배 → 실제 오배송
+                } else if (hasWrong) {
+                    shipStatus = 'PICKUP_INCLUDED';  // 운송장 없는 잘못된 출고 → 픽업 가능성
                 } else if (anyHold && !anyShipped) {
                     shipStatus = 'HOLD';             // 모두 출고보류
                 } else if (allShipped && !hasMissing) {
@@ -1928,13 +1945,17 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                     ship_item_count: match.shipItemCount,
                     matched_count: match.matchedItems.length,
                     wrong_ship_items: match.wrongShipItems.map(w => w.raw),
+                    bundle_companions: match.bundleCompanions.map(b => b.raw),   // 🆕 묶음 동봉
                     missing_order_items: match.missingOrderItems.map(m => ({ raw: m.raw, qty: m.qty }))
                 },
                 shipments: ships.map(s => {
-                    // 이 출하 row의 모든 품목이 주문에 매칭됐는지
+                    // 이 출하 row의 piece가 어디 속하는지 (wrong / bundle / matched)
                     const myPieces = extractShipmentPieces(s.product_text);
                     const isWrong = myPieces.some(p =>
                         match.wrongShipItems.some(w => w.raw === p.raw)
+                    );
+                    const isBundleCompanion = myPieces.some(p =>
+                        match.bundleCompanions.some(b => b.raw === p.raw)
                     );
                     return {
                         tracking_no: s.tracking_no,
@@ -1944,7 +1965,8 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                         ship_date: s.ship_date,
                         ship_status: s.ship_status,
                         product_text: s.product_text,
-                        is_wrong_product: isWrong  // ⚠️ 오배송 의심
+                        is_wrong_product: isWrong,            // ⚠️ 운송장 통째로 안 맞음 → 오배송/픽업 후보
+                        is_bundle_companion: isBundleCompanion // 📦 묶음 동봉 (정상)
                     };
                 })
             };
