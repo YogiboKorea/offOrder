@@ -1504,13 +1504,16 @@ function tokenizeProduct(s) {
 // "롤맥스프리미엄_아보카도그린/코지보트래블_아쿠아블루_#3"
 //   → [{tokens:["롤맥스프리미엄","아보카도그린"], raw:"..."},
 //      {tokens:["코지보트래블","아쿠아블루"],    raw:"..."}]
+// 끝의 _#1, _#5, _#BT 같은 마커 모두 제거
 function extractShipmentPieces(shipmentText) {
     let text = String(shipmentText || '').trim();
     if (!text) return [];
-    // 끝에 붙은 _#수량 제거
-    text = text.replace(/_#\d+\s*$/, '');
+    // _#숫자 또는 _#영문(BT, BS 등 운송 마커) 모두 제거
+    text = text.replace(/_#[A-Za-z0-9]+\s*$/, '');
+    // 슬래시로 다중 품목 분리하되, 각 조각에도 _#마커가 끝에 붙어있을 수 있음
     return text.split('/')
-        .map(p => ({ tokens: tokenizeProduct(p), raw: p.trim() }))
+        .map(p => p.replace(/_#[A-Za-z0-9]+\s*$/, '').trim())
+        .map(p => ({ tokens: tokenizeProduct(p), raw: p }))
         .filter(p => p.tokens.length > 0);
 }
 
@@ -1876,18 +1879,25 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                 }
 
                 // 🔥 분류 우선순위:
-                //    1) 주문에 없는 출고가 있는 경우:
-                //       - 운송장 있음 → MISMATCHED (실제 발송된 오배송, 빨간 알람)
-                //       - 운송장 없음 → PICKUP_INCLUDED (픽업상품예상포함, 호박색 안내)
-                //    2) 주문 수량이 남아있어도 출고된 게 모두 일치 → PARTIAL (정상 부분출하)
+                //    a) 매칭된 출고가 하나라도 있고 + 안 맞는 것도 있는 경우
+                //       → 픽업상품예상포함 (정상 출고 + 픽업분 동봉 가능성)
+                //    b) 매칭된 출고가 0건이고 안 맞는 출고가 운송장과 함께 발송된 경우
+                //       → 실제 오배송 (다른 고객 주문이 잘못 분배된 가능성)
+                //    c) 안 맞는 출고가 운송장 없이 등록된 경우 → 픽업
+                //    d) 출고 모두 정상 + 일부 미출하 → PARTIAL (정상 부분출하)
                 const hasWrong   = match.wrongShipItems.length > 0;
                 const hasMissing = match.missingOrderItems.length > 0;
+                const matchedCount     = match.matchedItems.length;
                 const wrongHasTracking = match.wrongShipItems.some(w => w.tracking_no && String(w.tracking_no).trim() !== '');
 
-                if (hasWrong && wrongHasTracking) {
-                    shipStatus = 'MISMATCHED';       // 운송장 있는 출고가 주문과 불일치 → 실제 오배송
-                } else if (hasWrong) {
-                    shipStatus = 'PICKUP_INCLUDED';  // 운송장 없는 불일치 → 픽업 가능성
+                if (hasWrong) {
+                    if (matchedCount === 0 && wrongHasTracking) {
+                        // 매칭 0건 + 운송장 있는 잘못된 출고 → 실제 오배송 의심
+                        shipStatus = 'MISMATCHED';
+                    } else {
+                        // 일부라도 매칭됐거나 운송장이 없는 케이스 → 픽업상품예상포함
+                        shipStatus = 'PICKUP_INCLUDED';
+                    }
                 } else if (anyHold && !anyShipped) {
                     shipStatus = 'HOLD';             // 모두 출고보류
                 } else if (allShipped && !hasMissing) {
