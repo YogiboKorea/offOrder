@@ -1553,11 +1553,15 @@ function buildOrderItemSignatures(order) {
 }
 
 // 두 토큰이 같은 의미인지 (정확일치 or 한쪽이 다른쪽을 포함)
+// - 한글 단음절(롤, 닷, 미 등)도 의미있는 토큰이므로 허용
+// - 영문/숫자는 2글자 이상 + 'L'/'M'/'S' 같은 사이즈는 정확일치만 (오버매칭 방지)
+const HANGUL_RE = /[가-힯]/;
 function tokenSimilar(a, b) {
     if (!a || !b) return false;
     if (a === b) return true;
-    if (a.length >= 2 && b.includes(a)) return true;
-    if (b.length >= 2 && a.includes(b)) return true;
+    const minOk = (s) => s.length >= 2 || HANGUL_RE.test(s);  // 한글이면 1글자도 OK
+    if (minOk(a) && b.includes(a)) return true;
+    if (minOk(b) && a.includes(b)) return true;
     return false;
 }
 
