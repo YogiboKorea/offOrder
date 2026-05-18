@@ -48,7 +48,8 @@ const COLLECTION_WAREHOUSES = "ecountWarehouses";
 const COLLECTION_CS_MEMOS = "csMemos";
 const COLLECTION_PIN_DATA = "OFFPINDATA"; 
 const COLLECTION_AUTH = "authSettings";   
-const COLLECTION_COUPON_MAP = "couponProductMap"; 
+const COLLECTION_COUPON_MAP = "couponProductMap";
+const COLLECTION_DELIVERIES = "deliveryShipments";  // 🚚 출하 매핑용
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
 const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
@@ -110,6 +111,7 @@ async function startServer() {
 
         // 🆕 인덱스 생성 (성능)
         await ensureOrderIndexes();
+        await ensureDeliveryIndexes();
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
@@ -1444,6 +1446,288 @@ app.post('/api/ordersOffData/force-pending', async (req, res) => {
     }
 });
 
+
+// ==========================================
+// 🚚 [7-2] 출하 매핑 (deliveryList.xlsx 기반)
+// - 프론트에서 SheetJS로 파싱한 JSON을 받아 DB에 저장
+// - 매장 + 고객명으로 등록완료(CONFIRMED) 주문에 매핑하여 출하상태 조회
+// ==========================================
+const REQUIRED_DELIVERY_COLS = ['매장', '운송장번호', '택배사', '주문번호', '출하일자', '이름', '품명'];
+
+function normalizeName(s) {
+    return String(s || '').replace(/\s+/g, '').trim();
+}
+
+function classifyShipDate(raw) {
+    if (raw === null || raw === undefined || raw === '') {
+        return { status: 'EMPTY', shipDate: null, raw: '' };
+    }
+    const s = String(raw).trim();
+    if (!s) return { status: 'EMPTY', shipDate: null, raw: '' };
+
+    if (s.includes('출고보류')) return { status: 'HOLD', shipDate: null, raw: s };
+    if (s.includes('재고소진')) return { status: 'OUT_OF_STOCK', shipDate: null, raw: s };
+
+    const d = new Date(s);
+    if (!isNaN(d.getTime())) {
+        return { status: 'SHIPPED', shipDate: d, raw: s };
+    }
+    return { status: 'OTHER', shipDate: null, raw: s };
+}
+
+async function ensureDeliveryIndexes() {
+    try {
+        const col = db.collection(COLLECTION_DELIVERIES);
+        await col.createIndex({ store_name: 1, customer_name: 1 });
+        await col.createIndex({ tracking_no: 1 });
+        await col.createIndex({ order_no: 1 });
+        await col.createIndex({ uploaded_at: -1 });
+        console.log("✅ Delivery 인덱스 확인 완료");
+    } catch (e) {
+        console.error("⚠️ Delivery 인덱스 오류:", e.message);
+    }
+}
+
+// 서버 시작 시 인덱스 보장 - startServer 안에서 호출되지만 안전하게 lazy 호출
+/**
+ * 🚚 출하데이터 전체 교체 (snapshot replace)
+ * - 엑셀이 누적 전체본이므로, 기존 출하 데이터를 비우고 새로 적재
+ * - 청크 분할 업로드 시 첫 청크에서만 wipe 하도록 `replaceMode` 플래그 사용
+ *   - replaceMode=true (또는 미지정+isFirstChunk=true): 기존 데이터 삭제 후 insert
+ *   - replaceMode=false: 단순 append (이어붙이기)
+ */
+app.post('/api/deliveries/bulk-upload', async (req, res) => {
+    try {
+        const { rows, fileName, replaceMode, isFirstChunk, isLastChunk, totalChunks, chunkIndex } = req.body;
+        if (!Array.isArray(rows) || rows.length === 0) {
+            return res.status(400).json({ success: false, message: '업로드 데이터가 없습니다.' });
+        }
+
+        await ensureDeliveryIndexes();
+
+        const uploadedAt = new Date();
+
+        // 🔥 첫 청크일 때만 기존 데이터 wipe (전체 교체 모드)
+        let wipedCount = 0;
+        if (replaceMode !== false && (isFirstChunk === true || isFirstChunk === undefined)) {
+            const wipe = await db.collection(COLLECTION_DELIVERIES).deleteMany({ _meta: { $exists: false } });
+            wipedCount = wipe.deletedCount || 0;
+            console.log(`[DELIVERY] 🗑️  기존 출하 데이터 ${wipedCount}건 삭제 후 재적재 시작`);
+        }
+
+        // 진행중 배치 ID는 메타에서 끌어오거나(추가 청크), 새로 발급(첫 청크)
+        let batchId;
+        if (isFirstChunk === false) {
+            const meta = await db.collection(COLLECTION_DELIVERIES).findOne({ _meta: 'current_batch' });
+            batchId = meta ? meta.batch_id : `DEL_${uploadedAt.getTime()}`;
+        } else {
+            batchId = `DEL_${uploadedAt.getFullYear()}${String(uploadedAt.getMonth()+1).padStart(2,'0')}${String(uploadedAt.getDate()).padStart(2,'0')}_${String(uploadedAt.getHours()).padStart(2,'0')}${String(uploadedAt.getMinutes()).padStart(2,'0')}${String(uploadedAt.getSeconds()).padStart(2,'0')}`;
+            await db.collection(COLLECTION_DELIVERIES).updateOne(
+                { _meta: 'current_batch' },
+                { $set: { _meta: 'current_batch', batch_id: batchId, started_at: uploadedAt, file_name: fileName || null } },
+                { upsert: true }
+            );
+        }
+
+        let inserted = 0, skipped = 0;
+        const docs = [];
+
+        for (const r of rows) {
+            const store = String(r['매장'] || '').trim();
+            const name = String(r['이름'] || '').trim();
+            if (!store || !name) { skipped++; continue; }
+
+            const shipInfo = classifyShipDate(r['출하일자']);
+
+            docs.push({
+                store_name: store,
+                store_name_norm: normalizeName(store),
+                tracking_no: String(r['운송장번호'] || '').trim(),
+                courier: String(r['택배사'] || '').trim(),
+                order_no: String(r['주문번호'] || '').trim(),
+                ship_date_raw: shipInfo.raw,
+                ship_date: shipInfo.shipDate,
+                ship_status: shipInfo.status,
+                customer_name: name,
+                customer_name_norm: normalizeName(name),
+                product_text: String(r['품명'] || '').trim(),
+                batch_id: batchId,
+                source_file: fileName || null,
+                uploaded_at: uploadedAt
+            });
+        }
+
+        if (docs.length > 0) {
+            const r = await db.collection(COLLECTION_DELIVERIES).insertMany(docs, { ordered: false });
+            inserted = r.insertedCount || docs.length;
+        }
+
+        // 마지막 청크에서 최종 메타 확정
+        if (isLastChunk === true || isLastChunk === undefined) {
+            const totalNow = await db.collection(COLLECTION_DELIVERIES).countDocuments({ _meta: { $exists: false }, batch_id: batchId });
+            await db.collection(COLLECTION_DELIVERIES).updateOne(
+                { _meta: 'last_upload' },
+                { $set: { _meta: 'last_upload', batch_id: batchId, file_name: fileName || null, uploaded_at: uploadedAt, row_count: totalNow } },
+                { upsert: true }
+            );
+            await db.collection(COLLECTION_DELIVERIES).deleteOne({ _meta: 'current_batch' });
+            console.log(`[DELIVERY] ✅ 전체 교체 완료: 신규 ${totalNow}건 (이전 ${wipedCount}건 삭제됨) | batch:${batchId}`);
+        }
+
+        res.json({
+            success: true,
+            batchId,
+            inserted,
+            skipped,
+            totalRows: rows.length,
+            wipedCount,
+            mode: replaceMode === false ? 'append' : 'replace'
+        });
+    } catch (e) {
+        console.error("🔥 출하 업로드 오류:", e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+app.get('/api/deliveries/last-upload', async (req, res) => {
+    try {
+        const meta = await db.collection(COLLECTION_DELIVERIES).findOne({ _meta: 'last_upload' });
+        const total = await db.collection(COLLECTION_DELIVERIES).countDocuments({ _meta: { $exists: false } });
+        res.json({ success: true, data: meta || null, totalRecords: total });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+app.delete('/api/deliveries/clear', async (req, res) => {
+    try {
+        const { batchId } = req.query;
+        const filter = batchId ? { batch_id: batchId } : { _meta: { $exists: false } };
+        const r = await db.collection(COLLECTION_DELIVERIES).deleteMany(filter);
+        if (!batchId) {
+            await db.collection(COLLECTION_DELIVERIES).deleteOne({ _meta: 'last_upload' });
+        }
+        res.json({ success: true, deletedCount: r.deletedCount });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+/**
+ * 출하상황 조회 - 등록완료(CONFIRMED) 주문 + 매장+고객명 기준 출하 데이터 조인
+ * Query: store_name, startDate, endDate, keyword, status (all|shipped|pending|hold|unmatched)
+ */
+app.get('/api/deliveries/shipping-status', async (req, res) => {
+    try {
+        const { store_name, startDate, endDate, keyword, status } = req.query;
+
+        // 1) CONFIRMED 주문 조회 (등록 완료)
+        const orderQuery = {
+            is_deleted: { $ne: true },
+            $or: [
+                { status: ORDER_STATUS.CONFIRMED },
+                { status: { $exists: false }, is_synced: true }
+            ]
+        };
+        if (store_name && store_name !== '전체' && store_name !== 'null') {
+            orderQuery.store_name = store_name;
+        }
+        if (startDate && endDate) {
+            orderQuery.created_at = {
+                $gte: new Date(startDate + "T00:00:00.000Z"),
+                $lte: new Date(endDate + "T23:59:59.999Z")
+            };
+        }
+        if (keyword) {
+            const kw = { $regex: keyword, $options: 'i' };
+            orderQuery.$and = [
+                { $or: orderQuery.$or },
+                { $or: [
+                    { customer_name: kw },
+                    { customer_phone: kw },
+                    { product_name: kw }
+                ]}
+            ];
+            delete orderQuery.$or;
+        }
+
+        const orders = await db.collection(COLLECTION_ORDERS)
+            .find(orderQuery)
+            .sort({ created_at: -1 })
+            .toArray();
+
+        // 2) 출하 데이터 일괄 조회 (메모리 매핑이 빠름)
+        const allShipments = await db.collection(COLLECTION_DELIVERIES)
+            .find({ _meta: { $exists: false } })
+            .toArray();
+
+        // 매장+고객명 기준 인덱싱
+        const shipMap = new Map();
+        for (const s of allShipments) {
+            const key = `${s.store_name_norm}||${s.customer_name_norm}`;
+            if (!shipMap.has(key)) shipMap.set(key, []);
+            shipMap.get(key).push(s);
+        }
+
+        // 3) 주문에 출하정보 조인
+        const enriched = orders.map(o => {
+            const key = `${normalizeName(o.store_name)}||${normalizeName(o.customer_name)}`;
+            const ships = shipMap.get(key) || [];
+
+            // 출하상태 종합
+            let shipStatus = 'UNMATCHED';
+            if (ships.length > 0) {
+                const hasShipped = ships.some(s => s.ship_status === 'SHIPPED');
+                const hasHold    = ships.some(s => s.ship_status === 'HOLD');
+                const allShipped = ships.every(s => s.ship_status === 'SHIPPED');
+                if (allShipped) shipStatus = 'SHIPPED';
+                else if (hasShipped) shipStatus = 'PARTIAL';
+                else if (hasHold) shipStatus = 'HOLD';
+                else shipStatus = 'PENDING';
+            }
+
+            return {
+                ...o,
+                ship_status_overall: shipStatus,
+                shipments: ships.map(s => ({
+                    tracking_no: s.tracking_no,
+                    courier: s.courier,
+                    order_no: s.order_no,
+                    ship_date_raw: s.ship_date_raw,
+                    ship_date: s.ship_date,
+                    ship_status: s.ship_status,
+                    product_text: s.product_text
+                }))
+            };
+        });
+
+        // 4) status 필터
+        let filtered = enriched;
+        if (status && status !== 'all') {
+            const filterMap = {
+                shipped: 'SHIPPED',
+                partial: 'PARTIAL',
+                pending: 'PENDING',
+                hold: 'HOLD',
+                unmatched: 'UNMATCHED'
+            };
+            const target = filterMap[status];
+            if (target) filtered = enriched.filter(e => e.ship_status_overall === target);
+        }
+
+        // 5) 요약 카운트
+        const summary = enriched.reduce((acc, e) => {
+            acc.total++;
+            acc[e.ship_status_overall.toLowerCase()] = (acc[e.ship_status_overall.toLowerCase()] || 0) + 1;
+            return acc;
+        }, { total: 0, shipped: 0, partial: 0, pending: 0, hold: 0, unmatched: 0 });
+
+        res.json({ success: true, count: filtered.length, summary, data: filtered });
+    } catch (e) {
+        console.error("🔥 출하상황 조회 오류:", e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
 
 // ==========================================
 // [8] 비즈엠 알림톡
