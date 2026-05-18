@@ -51,7 +51,7 @@ const COLLECTION_AUTH = "authSettings";
 const COLLECTION_COUPON_MAP = "couponProductMap";
 const COLLECTION_DELIVERIES = "deliveryShipments";  // 🚚 출하 매핑용
 
-// 🚚 배달완료 추정 일수 (출하 후 N일 경과 시 자동 '배달완료'로 표시)
+// 🚚 배송완료 추정 일수 (출하 후 N일 경과 시 자동 '배송완료'로 표시)
 const DELIVERY_ESTIMATE_DAYS = 3;
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
@@ -1489,9 +1489,12 @@ function classifyShipDate(raw) {
 
 // 텍스트를 의미 있는 단어 토큰들로 분해
 // "요기보 라운저 프리미엄_라이트그레이" → ["요기보","라운저","프리미엄","라이트그레이"]
+// "메가문필로우(스탠다드)_아쿠아블루" → ["메가문필로우","아쿠아블루"]  (괄호내 메타데이터 무시)
 function tokenizeProduct(s) {
     return String(s || '')
         .toLowerCase()
+        .replace(/\([^)]*\)/g, ' ')         // 🔥 괄호 내용 제거 (스탠다드/쿠션/사이즈 등 메타)
+        .replace(/\[[^\]]*\]/g, ' ')        // 🔥 대괄호 내용 제거
         .replace(/[#\(\)\[\]\-\+.,_\/]/g, ' ')
         .split(/\s+/)
         .filter(t => t.length > 0);
@@ -1511,11 +1514,28 @@ function extractShipmentPieces(shipmentText) {
         .filter(p => p.tokens.length > 0);
 }
 
-// 주문 아이템 → 토큰 시그니처 배열 (수량 포함)
+// 배송비 등 가상상품(매칭 무시 대상) 판별
+function isVirtualShippingItem(item) {
+    if (!item) return false;
+    const name = String(item.product_name || '').toLowerCase();
+    const code = String(item.product_no || item.item_code || '').toUpperCase();
+    if (name.includes('배송비')) return true;
+    if (name.includes('delivery charge')) return true;
+    if (name.includes('shipping')) return true;
+    if (code.startsWith('SHIP_')) return true;
+    if (code.startsWith('DA') && code.length <= 6) return true;   // DA0003 등
+    if (code.startsWith('DB') && code.length <= 6) return true;   // DB0003 등
+    return false;
+}
+
+// 주문 아이템 → 토큰 시그니처 배열 (수량 포함, 배송비 등 가상상품 제외)
 function buildOrderItemSignatures(order) {
-    const items = Array.isArray(order.items) && order.items.length > 0
+    const rawItems = Array.isArray(order.items) && order.items.length > 0
         ? order.items
         : [{ product_name: order.product_name, option_name: order.option_name }];
+
+    // 🔥 배송비/Delivery Charge 항목은 실제 출고 대상이 아니므로 매칭에서 제외
+    const items = rawItems.filter(it => !isVirtualShippingItem(it));
 
     return items.map(it => {
         const opt = it.option_name && it.option_name !== '.' ? it.option_name : '';
@@ -1845,7 +1865,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                 const anyHold    = ships.some(s => s.ship_status === 'HOLD');
                 const anyShipped = ships.some(s => s.ship_status === 'SHIPPED');
 
-                // 가장 최근 출하일 계산 (가장 늦게 나간 화물 기준으로 배달완료 판정)
+                // 가장 최근 출하일 계산 (가장 늦게 나간 화물 기준으로 배송완료 판정)
                 const shipDates = ships
                     .filter(s => s.ship_status === 'SHIPPED' && s.ship_date)
                     .map(s => new Date(s.ship_date));
@@ -1866,7 +1886,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                 } else if (allShipped && !hasMissing) {
                     // 모든 출하 완료 + 주문 완전 일치
                     if (daysSinceShipped !== null && daysSinceShipped >= DELIVERY_ESTIMATE_DAYS) {
-                        shipStatus = 'DELIVERED';    // 출하 3일+ → 배달완료(추정)
+                        shipStatus = 'DELIVERED';    // 출하 3일+ → 배송완료(추정)
                     } else {
                         shipStatus = 'SHIPPED';      // 출하완료 (배송중)
                     }
@@ -1913,7 +1933,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
         let filtered = enriched;
         if (status && status !== 'all') {
             const filterMap = {
-                delivered:   'DELIVERED',    // 배달완료(3일+ 경과 추정)
+                delivered:   'DELIVERED',    // 배송완료(3일+ 경과 추정)
                 shipped:     'SHIPPED',      // 출하완료(배송중)
                 mismatched:  'MISMATCHED',   // 오배송 의심
                 hold:        'HOLD',
