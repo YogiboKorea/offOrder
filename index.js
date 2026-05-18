@@ -1594,7 +1594,8 @@ function matchOrderShipments(order, shipments) {
         } else {
             wrongShipItems.push({
                 raw: piece.raw,
-                ship_status: piece.shipment.ship_status
+                ship_status: piece.shipment.ship_status,
+                tracking_no: piece.shipment.tracking_no || ''   // 🆕 운송장 유무로 오배송/픽업 분리
             });
         }
     });
@@ -1874,13 +1875,19 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                     daysSinceShipped = Math.floor((Date.now() - latest.getTime()) / 86400000);
                 }
 
-                // 🔥 MISMATCHED 판정은 "주문에 없는 상품이 출고된 경우"만 해당
-                //    주문 수량이 남아있어도 출고된 게 모두 주문과 일치하면 PARTIAL (정상 부분출하)
+                // 🔥 분류 우선순위:
+                //    1) 주문에 없는 출고가 있는 경우:
+                //       - 운송장 있음 → MISMATCHED (실제 발송된 오배송, 빨간 알람)
+                //       - 운송장 없음 → PICKUP_INCLUDED (픽업상품예상포함, 호박색 안내)
+                //    2) 주문 수량이 남아있어도 출고된 게 모두 일치 → PARTIAL (정상 부분출하)
                 const hasWrong   = match.wrongShipItems.length > 0;
                 const hasMissing = match.missingOrderItems.length > 0;
+                const wrongHasTracking = match.wrongShipItems.some(w => w.tracking_no && String(w.tracking_no).trim() !== '');
 
-                if (hasWrong) {
-                    shipStatus = 'MISMATCHED';       // 진짜 오배송 (주문에 없는 상품이 나감)
+                if (hasWrong && wrongHasTracking) {
+                    shipStatus = 'MISMATCHED';       // 운송장 있는 출고가 주문과 불일치 → 실제 오배송
+                } else if (hasWrong) {
+                    shipStatus = 'PICKUP_INCLUDED';  // 운송장 없는 불일치 → 픽업 가능성
                 } else if (anyHold && !anyShipped) {
                     shipStatus = 'HOLD';             // 모두 출고보류
                 } else if (allShipped && !hasMissing) {
@@ -1933,13 +1940,14 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
         let filtered = enriched;
         if (status && status !== 'all') {
             const filterMap = {
-                delivered:   'DELIVERED',    // 배송완료(3일+ 경과 추정)
-                shipped:     'SHIPPED',      // 출하완료(배송중)
-                mismatched:  'MISMATCHED',   // 오배송 의심
-                hold:        'HOLD',
-                partial:     'PARTIAL',
-                pending:     'PENDING',
-                not_shipped: 'NOT_SHIPPED'
+                delivered:       'DELIVERED',
+                shipped:         'SHIPPED',
+                mismatched:      'MISMATCHED',       // 진짜 오배송 (운송장 있음)
+                pickup_included: 'PICKUP_INCLUDED',  // 픽업상품예상포함 (운송장 없음)
+                hold:            'HOLD',
+                partial:         'PARTIAL',
+                pending:         'PENDING',
+                not_shipped:     'NOT_SHIPPED'
             };
             const target = filterMap[status];
             if (target) filtered = enriched.filter(e => e.ship_status_overall === target);
@@ -1951,7 +1959,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
             const k = e.ship_status_overall.toLowerCase();
             acc[k] = (acc[k] || 0) + 1;
             return acc;
-        }, { total: 0, delivered: 0, shipped: 0, mismatched: 0, hold: 0, partial: 0, pending: 0, not_shipped: 0 });
+        }, { total: 0, delivered: 0, shipped: 0, mismatched: 0, pickup_included: 0, hold: 0, partial: 0, pending: 0, not_shipped: 0 });
 
         res.json({
             success: true,
