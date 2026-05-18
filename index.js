@@ -1484,96 +1484,115 @@ function classifyShipDate(raw) {
 }
 
 // ==========================================
-// 🔍 상품명 매칭 헬퍼 (주문 vs 출하 품명 비교)
+// 🔍 상품명 매칭 헬퍼 (주문 vs 출하 품명 비교) — 토큰 단위 매칭
 // ==========================================
-function normProdToken(s) {
+
+// 텍스트를 의미 있는 단어 토큰들로 분해
+// "요기보 라운저 프리미엄_라이트그레이" → ["요기보","라운저","프리미엄","라이트그레이"]
+function tokenizeProduct(s) {
     return String(s || '')
         .toLowerCase()
-        .replace(/\s+/g, '')
-        .replace(/[#\(\)\[\]\-\+.,]/g, '');
+        .replace(/[#\(\)\[\]\-\+.,_\/]/g, ' ')
+        .split(/\s+/)
+        .filter(t => t.length > 0);
 }
 
-// 출하 품명 파싱: "롤맥스프리미엄_아보카도그린/코지보트래블_아쿠아블루_#3"
-//   → ["롤맥스프리미엄_아보카도그린", "코지보트래블_아쿠아블루"]
-function extractShipmentTokens(shipmentText) {
+// 출하 품명 파싱 → 품목별 토큰 배열
+// "롤맥스프리미엄_아보카도그린/코지보트래블_아쿠아블루_#3"
+//   → [{tokens:["롤맥스프리미엄","아보카도그린"], raw:"..."},
+//      {tokens:["코지보트래블","아쿠아블루"],    raw:"..."}]
+function extractShipmentPieces(shipmentText) {
     let text = String(shipmentText || '').trim();
     if (!text) return [];
     // 끝에 붙은 _#수량 제거
     text = text.replace(/_#\d+\s*$/, '');
-    // 슬래시로 다중 품목 분리
     return text.split('/')
-        .map(p => normProdToken(p))
-        .filter(Boolean);
+        .map(p => ({ tokens: tokenizeProduct(p), raw: p.trim() }))
+        .filter(p => p.tokens.length > 0);
 }
 
-// 주문 아이템에서 매칭용 토큰 추출
-function extractOrderTokens(order) {
+// 주문 아이템 → 토큰 시그니처 배열 (수량 포함)
+function buildOrderItemSignatures(order) {
     const items = Array.isArray(order.items) && order.items.length > 0
         ? order.items
         : [{ product_name: order.product_name, option_name: order.option_name }];
 
-    const tokens = [];
-    items.forEach(it => {
-        const opt = it.option_name && it.option_name !== '.' ? `_${it.option_name}` : '';
+    return items.map(it => {
+        const opt = it.option_name && it.option_name !== '.' ? it.option_name : '';
         const qty = Math.max(1, Number(it.quantity) || 1);
-        const tok = normProdToken(`${it.product_name || ''}${opt}`);
-        if (!tok) return;
-        // 수량만큼 토큰 반복 (1주문 다수량 출하 대응)
-        for (let i = 0; i < qty; i++) tokens.push(tok);
-    });
-    return tokens;
+        const raw = `${it.product_name || ''} ${opt}`.trim();
+        return {
+            tokens: tokenizeProduct(raw),
+            quantity: qty,
+            raw
+        };
+    }).filter(it => it.tokens.length > 0);
 }
 
-// 토큰 유사도: 양방향 포함 검사 (정규화된 텍스트 기준)
-function tokensMatch(a, b) {
+// 두 토큰이 같은 의미인지 (정확일치 or 한쪽이 다른쪽을 포함)
+function tokenSimilar(a, b) {
     if (!a || !b) return false;
     if (a === b) return true;
-    if (a.length >= 4 && b.includes(a)) return true;
-    if (b.length >= 4 && a.includes(b)) return true;
+    if (a.length >= 2 && b.includes(a)) return true;
+    if (b.length >= 2 && a.includes(b)) return true;
     return false;
+}
+
+// 출하 품목 토큰들이 주문 품목 토큰들에 "모두 포함"되면 매칭
+function shipMatchesOrderItem(shipTokens, orderTokens) {
+    return shipTokens.every(st => orderTokens.some(ot => tokenSimilar(st, ot)));
 }
 
 /**
  * 주문 ↔ 출하 매칭 결과
- * @returns {
- *   shipped: bool,           // 출하 row가 하나라도 SHIPPED 인지
- *   itemMatched: bool,       // 모든 출하 품목이 주문에 매칭됐는지
- *   matchedItems: [],        // 매칭된 출하 품목
- *   wrongShipItems: [],      // 주문에 없는 출고 품목 (오배송 의심)
- *   missingOrderItems: []    // 주문했는데 안 나간 품목
- * }
  */
 function matchOrderShipments(order, shipments) {
-    const orderTokens = extractOrderTokens(order);
-    const shipPieces = [];
+    const orderItems = buildOrderItemSignatures(order);
+    const allShipPieces = [];
     shipments.forEach(s => {
-        extractShipmentTokens(s.product_text).forEach(tok => {
-            shipPieces.push({ token: tok, shipment: s });
+        extractShipmentPieces(s.product_text).forEach(piece => {
+            allShipPieces.push({ ...piece, shipment: s });
         });
     });
 
-    const remainingOrder = [...orderTokens];
+    // 그리디 매칭: 출하 품목 하나씩, 매칭되는 주문 아이템 찾기 (수량 차감)
+    const remaining = orderItems.map((it, idx) => ({ ...it, idx, remainingQty: it.quantity }));
     const matchedItems = [];
     const wrongShipItems = [];
 
-    shipPieces.forEach(({ token, shipment }) => {
-        const idx = remainingOrder.findIndex(ot => tokensMatch(ot, token));
-        if (idx >= 0) {
-            matchedItems.push({ token, raw: shipment.product_text, ship_status: shipment.ship_status });
-            remainingOrder.splice(idx, 1);
+    allShipPieces.forEach(piece => {
+        const matchIdx = remaining.findIndex(oi =>
+            oi.remainingQty > 0 && shipMatchesOrderItem(piece.tokens, oi.tokens)
+        );
+        if (matchIdx >= 0) {
+            remaining[matchIdx].remainingQty--;
+            matchedItems.push({
+                raw: piece.raw,
+                matched_to: remaining[matchIdx].raw,
+                ship_status: piece.shipment.ship_status
+            });
         } else {
-            wrongShipItems.push({ token, raw: shipment.product_text, ship_status: shipment.ship_status });
+            wrongShipItems.push({
+                raw: piece.raw,
+                ship_status: piece.shipment.ship_status
+            });
         }
     });
 
+    const missingOrderItems = remaining
+        .filter(oi => oi.remainingQty > 0)
+        .map(oi => ({ raw: oi.raw, qty: oi.remainingQty }));
+
+    const totalOrderQty = orderItems.reduce((s, oi) => s + oi.quantity, 0);
+
     return {
         shipped: shipments.some(s => s.ship_status === 'SHIPPED'),
-        itemMatched: wrongShipItems.length === 0 && remainingOrder.length === 0,
+        itemMatched: wrongShipItems.length === 0 && missingOrderItems.length === 0,
         matchedItems,
         wrongShipItems,
-        missingOrderItems: remainingOrder,
-        orderItemCount: orderTokens.length,
-        shipItemCount: shipPieces.length
+        missingOrderItems,
+        orderItemCount: totalOrderQty,
+        shipItemCount: allShipPieces.length
     };
 }
 
@@ -1833,19 +1852,25 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                     daysSinceShipped = Math.floor((Date.now() - latest.getTime()) / 86400000);
                 }
 
-                if (anyHold && !anyShipped) {
+                // 🔥 MISMATCHED 판정은 "주문에 없는 상품이 출고된 경우"만 해당
+                //    주문 수량이 남아있어도 출고된 게 모두 주문과 일치하면 PARTIAL (정상 부분출하)
+                const hasWrong   = match.wrongShipItems.length > 0;
+                const hasMissing = match.missingOrderItems.length > 0;
+
+                if (hasWrong) {
+                    shipStatus = 'MISMATCHED';       // 진짜 오배송 (주문에 없는 상품이 나감)
+                } else if (anyHold && !anyShipped) {
                     shipStatus = 'HOLD';             // 모두 출고보류
-                } else if (allShipped) {
-                    if (!match.itemMatched) {
-                        shipStatus = 'MISMATCHED';
-                    } else if (daysSinceShipped !== null && daysSinceShipped >= DELIVERY_ESTIMATE_DAYS) {
-                        shipStatus = 'DELIVERED';    // 🆕 출하 3일+ 경과 → 배달완료(추정)
+                } else if (allShipped && !hasMissing) {
+                    // 모든 출하 완료 + 주문 완전 일치
+                    if (daysSinceShipped !== null && daysSinceShipped >= DELIVERY_ESTIMATE_DAYS) {
+                        shipStatus = 'DELIVERED';    // 출하 3일+ → 배달완료(추정)
                     } else {
                         shipStatus = 'SHIPPED';      // 출하완료 (배송중)
                     }
                 } else if (anyShipped) {
-                    // 일부만 출하됨
-                    shipStatus = match.wrongShipItems.length > 0 ? 'MISMATCHED' : 'PARTIAL';
+                    // 출하된 건 모두 정상 매칭이지만 미출하 항목 존재
+                    shipStatus = 'PARTIAL';
                 } else {
                     shipStatus = 'PENDING';          // 기타 (OTHER, EMPTY 등)
                 }
@@ -1860,12 +1885,14 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                     ship_item_count: match.shipItemCount,
                     matched_count: match.matchedItems.length,
                     wrong_ship_items: match.wrongShipItems.map(w => w.raw),
-                    missing_order_items: match.missingOrderItems
+                    missing_order_items: match.missingOrderItems.map(m => ({ raw: m.raw, qty: m.qty }))
                 },
                 shipments: ships.map(s => {
                     // 이 출하 row의 모든 품목이 주문에 매칭됐는지
-                    const myTokens = extractShipmentTokens(s.product_text);
-                    const isWrong = myTokens.some(t => match.wrongShipItems.some(w => w.token === t));
+                    const myPieces = extractShipmentPieces(s.product_text);
+                    const isWrong = myPieces.some(p =>
+                        match.wrongShipItems.some(w => w.raw === p.raw)
+                    );
                     return {
                         tracking_no: s.tracking_no,
                         courier: s.courier,
