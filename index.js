@@ -51,6 +51,9 @@ const COLLECTION_AUTH = "authSettings";
 const COLLECTION_COUPON_MAP = "couponProductMap";
 const COLLECTION_DELIVERIES = "deliveryShipments";  // 🚚 출하 매핑용
 
+// 🚚 배달완료 추정 일수 (출하 후 N일 경과 시 자동 '배달완료'로 표시)
+const DELIVERY_ESTIMATE_DAYS = 3;
+
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
 const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
 const CAFE24_CLIENT_SECRET = process.env.CAFE24_CLIENT_SECRET;
@@ -1458,6 +1461,11 @@ function normalizeName(s) {
     return String(s || '').replace(/\s+/g, '').trim();
 }
 
+// 전화번호 정규화: 숫자만 추출 (동명인 구분용)
+function normalizePhone(s) {
+    return String(s || '').replace(/\D/g, '');
+}
+
 function classifyShipDate(raw) {
     if (raw === null || raw === undefined || raw === '') {
         return { status: 'EMPTY', shipDate: null, raw: '' };
@@ -1475,10 +1483,104 @@ function classifyShipDate(raw) {
     return { status: 'OTHER', shipDate: null, raw: s };
 }
 
+// ==========================================
+// 🔍 상품명 매칭 헬퍼 (주문 vs 출하 품명 비교)
+// ==========================================
+function normProdToken(s) {
+    return String(s || '')
+        .toLowerCase()
+        .replace(/\s+/g, '')
+        .replace(/[#\(\)\[\]\-\+.,]/g, '');
+}
+
+// 출하 품명 파싱: "롤맥스프리미엄_아보카도그린/코지보트래블_아쿠아블루_#3"
+//   → ["롤맥스프리미엄_아보카도그린", "코지보트래블_아쿠아블루"]
+function extractShipmentTokens(shipmentText) {
+    let text = String(shipmentText || '').trim();
+    if (!text) return [];
+    // 끝에 붙은 _#수량 제거
+    text = text.replace(/_#\d+\s*$/, '');
+    // 슬래시로 다중 품목 분리
+    return text.split('/')
+        .map(p => normProdToken(p))
+        .filter(Boolean);
+}
+
+// 주문 아이템에서 매칭용 토큰 추출
+function extractOrderTokens(order) {
+    const items = Array.isArray(order.items) && order.items.length > 0
+        ? order.items
+        : [{ product_name: order.product_name, option_name: order.option_name }];
+
+    const tokens = [];
+    items.forEach(it => {
+        const opt = it.option_name && it.option_name !== '.' ? `_${it.option_name}` : '';
+        const qty = Math.max(1, Number(it.quantity) || 1);
+        const tok = normProdToken(`${it.product_name || ''}${opt}`);
+        if (!tok) return;
+        // 수량만큼 토큰 반복 (1주문 다수량 출하 대응)
+        for (let i = 0; i < qty; i++) tokens.push(tok);
+    });
+    return tokens;
+}
+
+// 토큰 유사도: 양방향 포함 검사 (정규화된 텍스트 기준)
+function tokensMatch(a, b) {
+    if (!a || !b) return false;
+    if (a === b) return true;
+    if (a.length >= 4 && b.includes(a)) return true;
+    if (b.length >= 4 && a.includes(b)) return true;
+    return false;
+}
+
+/**
+ * 주문 ↔ 출하 매칭 결과
+ * @returns {
+ *   shipped: bool,           // 출하 row가 하나라도 SHIPPED 인지
+ *   itemMatched: bool,       // 모든 출하 품목이 주문에 매칭됐는지
+ *   matchedItems: [],        // 매칭된 출하 품목
+ *   wrongShipItems: [],      // 주문에 없는 출고 품목 (오배송 의심)
+ *   missingOrderItems: []    // 주문했는데 안 나간 품목
+ * }
+ */
+function matchOrderShipments(order, shipments) {
+    const orderTokens = extractOrderTokens(order);
+    const shipPieces = [];
+    shipments.forEach(s => {
+        extractShipmentTokens(s.product_text).forEach(tok => {
+            shipPieces.push({ token: tok, shipment: s });
+        });
+    });
+
+    const remainingOrder = [...orderTokens];
+    const matchedItems = [];
+    const wrongShipItems = [];
+
+    shipPieces.forEach(({ token, shipment }) => {
+        const idx = remainingOrder.findIndex(ot => tokensMatch(ot, token));
+        if (idx >= 0) {
+            matchedItems.push({ token, raw: shipment.product_text, ship_status: shipment.ship_status });
+            remainingOrder.splice(idx, 1);
+        } else {
+            wrongShipItems.push({ token, raw: shipment.product_text, ship_status: shipment.ship_status });
+        }
+    });
+
+    return {
+        shipped: shipments.some(s => s.ship_status === 'SHIPPED'),
+        itemMatched: wrongShipItems.length === 0 && remainingOrder.length === 0,
+        matchedItems,
+        wrongShipItems,
+        missingOrderItems: remainingOrder,
+        orderItemCount: orderTokens.length,
+        shipItemCount: shipPieces.length
+    };
+}
+
 async function ensureDeliveryIndexes() {
     try {
         const col = db.collection(COLLECTION_DELIVERIES);
-        await col.createIndex({ store_name: 1, customer_name: 1 });
+        await col.createIndex({ store_name_norm: 1, customer_name_norm: 1, customer_phone_norm: 1 });
         await col.createIndex({ tracking_no: 1 });
         await col.createIndex({ order_no: 1 });
         await col.createIndex({ uploaded_at: -1 });
@@ -1538,6 +1640,7 @@ app.post('/api/deliveries/bulk-upload', async (req, res) => {
             if (!store || !name) { skipped++; continue; }
 
             const shipInfo = classifyShipDate(r['출하일자']);
+            const phone = String(r['연락처'] || '').trim();
 
             docs.push({
                 store_name: store,
@@ -1550,6 +1653,8 @@ app.post('/api/deliveries/bulk-upload', async (req, res) => {
                 ship_status: shipInfo.status,
                 customer_name: name,
                 customer_name_norm: normalizeName(name),
+                customer_phone: phone,
+                customer_phone_norm: normalizePhone(phone),  // 🆕 동명인 구분
                 product_text: String(r['품명'] || '').trim(),
                 batch_id: batchId,
                 source_file: fileName || null,
@@ -1621,9 +1726,13 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword, status } = req.query;
 
-        // 1) CONFIRMED 주문 조회 (등록 완료)
+        // 1) CONFIRMED 주문 조회 (등록 완료) — 픽업/매장직판(고객정보 없음) 제외
+        //    \S = 비공백 문자 1개 이상 (빈값/공백/null/undefined 모두 거름)
+        //    이름과 전화번호 둘 다 있어야 '배송 주문'으로 간주 (픽업은 보통 둘 중 하나 이상 비어있음)
         const orderQuery = {
             is_deleted: { $ne: true },
+            customer_name:  { $type: 'string', $regex: /\S/ },   // 🆕 빈/공백/없음 모두 제외
+            customer_phone: { $type: 'string', $regex: /\S/ },   // 🆕 전화 없으면 픽업으로 판단
             $or: [
                 { status: ORDER_STATUS.CONFIRMED },
                 { status: { $exists: false }, is_synced: true }
@@ -1661,55 +1770,127 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
             .find({ _meta: { $exists: false } })
             .toArray();
 
-        // 매장+고객명 기준 인덱싱
-        const shipMap = new Map();
+        // 매장+고객명+전화번호 기준 인덱싱 (동명인 구분)
+        // 전화번호가 양쪽 모두 있을 때만 strict 매칭, 한 쪽이라도 없으면 매장+이름으로 fallback
+        const shipMapStrict = new Map();   // store+name+phone
+        const shipMapLoose  = new Map();   // store+name (전화 없는 출하용 fallback)
         for (const s of allShipments) {
-            const key = `${s.store_name_norm}||${s.customer_name_norm}`;
-            if (!shipMap.has(key)) shipMap.set(key, []);
-            shipMap.get(key).push(s);
+            const storeKey = s.store_name_norm || normalizeName(s.store_name);
+            const nameKey  = s.customer_name_norm || normalizeName(s.customer_name);
+            const phoneKey = s.customer_phone_norm || normalizePhone(s.customer_phone);
+
+            const looseKey  = `${storeKey}||${nameKey}`;
+            const strictKey = `${looseKey}||${phoneKey}`;
+
+            if (phoneKey) {
+                if (!shipMapStrict.has(strictKey)) shipMapStrict.set(strictKey, []);
+                shipMapStrict.get(strictKey).push(s);
+            } else {
+                // 출하에 전화 없으면 loose에만 등록
+                if (!shipMapLoose.has(looseKey)) shipMapLoose.set(looseKey, []);
+                shipMapLoose.get(looseKey).push(s);
+            }
         }
 
-        // 3) 주문에 출하정보 조인
+        // 3) 주문에 출하정보 조인 + 상품명 매칭 검증
+        //    매칭 키: 매장 + 고객명 + 전화번호 (동명인 구분)
+        //    검증 키: 주문 items 상품명 vs 출하 품명 (오배송 판정)
         const enriched = orders.map(o => {
-            const key = `${normalizeName(o.store_name)}||${normalizeName(o.customer_name)}`;
-            const ships = shipMap.get(key) || [];
+            const storeKey = normalizeName(o.store_name);
+            const nameKey  = normalizeName(o.customer_name);
+            const phoneKey = normalizePhone(o.customer_phone);
 
-            // 출하상태 종합
-            let shipStatus = 'UNMATCHED';
-            if (ships.length > 0) {
-                const hasShipped = ships.some(s => s.ship_status === 'SHIPPED');
-                const hasHold    = ships.some(s => s.ship_status === 'HOLD');
+            let ships = [];
+            if (phoneKey) {
+                // 전화번호 strict 매칭 우선
+                ships = shipMapStrict.get(`${storeKey}||${nameKey}||${phoneKey}`) || [];
+            }
+            // 전화번호 없거나 strict 매칭 실패 시 → loose (전화 없는 출하 row와 매칭)
+            if (ships.length === 0) {
+                ships = shipMapLoose.get(`${storeKey}||${nameKey}`) || [];
+            }
+
+            // 상품 매칭 분석
+            const match = matchOrderShipments(o, ships);
+
+            // 최종 상태 판정
+            let shipStatus;
+            let daysSinceShipped = null;
+
+            if (ships.length === 0) {
+                shipStatus = 'NOT_SHIPPED';          // 출하 기록 없음
+            } else {
                 const allShipped = ships.every(s => s.ship_status === 'SHIPPED');
-                if (allShipped) shipStatus = 'SHIPPED';
-                else if (hasShipped) shipStatus = 'PARTIAL';
-                else if (hasHold) shipStatus = 'HOLD';
-                else shipStatus = 'PENDING';
+                const anyHold    = ships.some(s => s.ship_status === 'HOLD');
+                const anyShipped = ships.some(s => s.ship_status === 'SHIPPED');
+
+                // 가장 최근 출하일 계산 (가장 늦게 나간 화물 기준으로 배달완료 판정)
+                const shipDates = ships
+                    .filter(s => s.ship_status === 'SHIPPED' && s.ship_date)
+                    .map(s => new Date(s.ship_date));
+                if (shipDates.length > 0) {
+                    const latest = new Date(Math.max(...shipDates.map(d => d.getTime())));
+                    daysSinceShipped = Math.floor((Date.now() - latest.getTime()) / 86400000);
+                }
+
+                if (anyHold && !anyShipped) {
+                    shipStatus = 'HOLD';             // 모두 출고보류
+                } else if (allShipped) {
+                    if (!match.itemMatched) {
+                        shipStatus = 'MISMATCHED';
+                    } else if (daysSinceShipped !== null && daysSinceShipped >= DELIVERY_ESTIMATE_DAYS) {
+                        shipStatus = 'DELIVERED';    // 🆕 출하 3일+ 경과 → 배달완료(추정)
+                    } else {
+                        shipStatus = 'SHIPPED';      // 출하완료 (배송중)
+                    }
+                } else if (anyShipped) {
+                    // 일부만 출하됨
+                    shipStatus = match.wrongShipItems.length > 0 ? 'MISMATCHED' : 'PARTIAL';
+                } else {
+                    shipStatus = 'PENDING';          // 기타 (OTHER, EMPTY 등)
+                }
             }
 
             return {
                 ...o,
                 ship_status_overall: shipStatus,
-                shipments: ships.map(s => ({
-                    tracking_no: s.tracking_no,
-                    courier: s.courier,
-                    order_no: s.order_no,
-                    ship_date_raw: s.ship_date_raw,
-                    ship_date: s.ship_date,
-                    ship_status: s.ship_status,
-                    product_text: s.product_text
-                }))
+                days_since_shipped: daysSinceShipped,
+                match_info: {
+                    order_item_count: match.orderItemCount,
+                    ship_item_count: match.shipItemCount,
+                    matched_count: match.matchedItems.length,
+                    wrong_ship_items: match.wrongShipItems.map(w => w.raw),
+                    missing_order_items: match.missingOrderItems
+                },
+                shipments: ships.map(s => {
+                    // 이 출하 row의 모든 품목이 주문에 매칭됐는지
+                    const myTokens = extractShipmentTokens(s.product_text);
+                    const isWrong = myTokens.some(t => match.wrongShipItems.some(w => w.token === t));
+                    return {
+                        tracking_no: s.tracking_no,
+                        courier: s.courier,
+                        order_no: s.order_no,
+                        ship_date_raw: s.ship_date_raw,
+                        ship_date: s.ship_date,
+                        ship_status: s.ship_status,
+                        product_text: s.product_text,
+                        is_wrong_product: isWrong  // ⚠️ 오배송 의심
+                    };
+                })
             };
         });
 
-        // 4) status 필터
+        // 4) status 필터 (신규 상태값)
         let filtered = enriched;
         if (status && status !== 'all') {
             const filterMap = {
-                shipped: 'SHIPPED',
-                partial: 'PARTIAL',
-                pending: 'PENDING',
-                hold: 'HOLD',
-                unmatched: 'UNMATCHED'
+                delivered:   'DELIVERED',    // 배달완료(3일+ 경과 추정)
+                shipped:     'SHIPPED',      // 출하완료(배송중)
+                mismatched:  'MISMATCHED',   // 오배송 의심
+                hold:        'HOLD',
+                partial:     'PARTIAL',
+                pending:     'PENDING',
+                not_shipped: 'NOT_SHIPPED'
             };
             const target = filterMap[status];
             if (target) filtered = enriched.filter(e => e.ship_status_overall === target);
@@ -1718,11 +1899,18 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
         // 5) 요약 카운트
         const summary = enriched.reduce((acc, e) => {
             acc.total++;
-            acc[e.ship_status_overall.toLowerCase()] = (acc[e.ship_status_overall.toLowerCase()] || 0) + 1;
+            const k = e.ship_status_overall.toLowerCase();
+            acc[k] = (acc[k] || 0) + 1;
             return acc;
-        }, { total: 0, shipped: 0, partial: 0, pending: 0, hold: 0, unmatched: 0 });
+        }, { total: 0, delivered: 0, shipped: 0, mismatched: 0, hold: 0, partial: 0, pending: 0, not_shipped: 0 });
 
-        res.json({ success: true, count: filtered.length, summary, data: filtered });
+        res.json({
+            success: true,
+            count: filtered.length,
+            summary,
+            data: filtered,
+            delivery_estimate_days: DELIVERY_ESTIMATE_DAYS
+        });
     } catch (e) {
         console.error("🔥 출하상황 조회 오류:", e);
         res.status(500).json({ success: false, message: e.message });
