@@ -1745,13 +1745,15 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword, status } = req.query;
 
-        // 1) CONFIRMED 주문 조회 (등록 완료) — 픽업/매장직판(고객정보 없음) 제외
-        //    \S = 비공백 문자 1개 이상 (빈값/공백/null/undefined 모두 거름)
-        //    이름과 전화번호 둘 다 있어야 '배송 주문'으로 간주 (픽업은 보통 둘 중 하나 이상 비어있음)
+        // 1) CONFIRMED 주문 조회 (등록 완료) — 픽업/매장직판 제외
+        //    sales_type '0003' = 출고(픽업) — 출하 매핑 대상 아님
+        //    sales_type '0001' = 출고(택배) — 매핑 대상
+        //    + 고객정보(이름/전화) 빈값/공백 추가 거름
         const orderQuery = {
             is_deleted: { $ne: true },
-            customer_name:  { $type: 'string', $regex: /\S/ },   // 🆕 빈/공백/없음 모두 제외
-            customer_phone: { $type: 'string', $regex: /\S/ },   // 🆕 전화 없으면 픽업으로 판단
+            sales_type:     { $ne: '0003' },                     // 🆕 픽업 주문 제외 (핵심)
+            customer_name:  { $type: 'string', $regex: /\S/ },   // 빈/공백/없음 모두 제외
+            customer_phone: { $type: 'string', $regex: /\S/ },   // 전화 없는 건도 보조 제외
             $or: [
                 { status: ORDER_STATUS.CONFIRMED },
                 { status: { $exists: false }, is_synced: true }
