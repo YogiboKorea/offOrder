@@ -1278,21 +1278,47 @@ app.put('/api/ecount-warehouses', async (req, res) => {
 
 app.get('/api/cs-memos/:orderId', async (req, res) => {
     try {
-        const memos = await db.collection(COLLECTION_CS_MEMOS).find({ order_id: req.params.orderId }).sort({ created_at: -1 }).toArray();
+        // 시간순(오래된 것부터)으로 정렬해 스레드 구성 용이
+        const memos = await db.collection(COLLECTION_CS_MEMOS)
+            .find({ order_id: req.params.orderId })
+            .sort({ created_at: 1 })
+            .toArray();
         res.json({ success: true, data: memos });
     } catch (e) { res.status(500).json({ success: false }); }
 });
+
+// 🆕 댓글/대댓글 등록 — parent_id 있으면 대댓글
 app.post('/api/cs-memos', async (req, res) => {
     try {
-        const { orderId, content, writer } = req.body;
-        await db.collection(COLLECTION_CS_MEMOS).insertOne({ order_id: orderId, content, writer: writer || '관리자', created_at: new Date() });
-        res.json({ success: true });
-    } catch (e) { res.status(500).json({ success: false }); }
+        const { orderId, content, writer, parent_id } = req.body;
+        if (!orderId || !content || !String(content).trim()) {
+            return res.status(400).json({ success: false, message: 'orderId / content 필수' });
+        }
+        const doc = {
+            order_id: orderId,
+            content: String(content).trim(),
+            writer: writer || '관리자',
+            parent_id: parent_id || null,           // 🆕 대댓글이면 부모 메모 id
+            created_at: new Date()
+        };
+        const r = await db.collection(COLLECTION_CS_MEMOS).insertOne(doc);
+        res.json({ success: true, insertedId: r.insertedId, data: { ...doc, _id: r.insertedId } });
+    } catch (e) {
+        console.error('🔥 cs-memos POST 오류:', e);
+        res.status(500).json({ success: false });
+    }
 });
+
+// 댓글 삭제 — 부모 삭제 시 대댓글도 함께 삭제
 app.delete('/api/cs-memos/:id', async (req, res) => {
     try {
-        await db.collection(COLLECTION_CS_MEMOS).deleteOne({ _id: new ObjectId(req.params.id) });
-        res.json({ success: true });
+        if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
+        const id = new ObjectId(req.params.id);
+        // 부모 + 자식 모두 삭제
+        const r = await db.collection(COLLECTION_CS_MEMOS).deleteMany({
+            $or: [{ _id: id }, { parent_id: req.params.id }]
+        });
+        res.json({ success: true, deletedCount: r.deletedCount });
     } catch (e) { res.status(500).json({ success: false }); }
 });
 
