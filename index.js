@@ -50,9 +50,14 @@ const COLLECTION_PIN_DATA = "OFFPINDATA";
 const COLLECTION_AUTH = "authSettings";   
 const COLLECTION_COUPON_MAP = "couponProductMap";
 const COLLECTION_DELIVERIES = "deliveryShipments";  // 🚚 출하 매핑용
+const COLLECTION_WORK_HOURS = "workHours";          // 🕐 매니저 근무·시차 관리
 
 // 🚚 배송완료 추정 일수 (출하 후 N일 경과 시 자동 '배송완료'로 표시)
 const DELIVERY_ESTIMATE_DAYS = 3;
+
+// 🕐 근무 관리 정책
+const WORK_STANDARD_HOURS  = 8;    // 일 표준 근무시간
+const WORK_BREAK_MINUTES   = 60;   // 점심시간 자동 차감
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
 const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
@@ -115,6 +120,7 @@ async function startServer() {
         // 🆕 인덱스 생성 (성능)
         await ensureOrderIndexes();
         await ensureDeliveryIndexes();
+        await ensureWorkHoursIndexes();
 
         app.listen(PORT, () => {
             console.log(`🚀 Server running on port ${PORT}`);
@@ -1638,16 +1644,18 @@ function matchOrderShipments(order, shipments) {
         });
 
         // 운송장 단위 묶음 판정
+        // 🆕 manually_verified가 true면 wrong으로 분류하지 않고 bundleCompanions로 처리 (정상 출고로 간주)
+        const isManuallyVerified = !!s.manually_verified;
         localUnmatched.forEach(p => {
             const item = {
                 raw: p.raw,
                 ship_status: s.ship_status,
                 tracking_no: s.tracking_no || ''
             };
-            if (localMatchCount > 0) {
-                bundleCompanions.push(item);  // 같은 운송장에 매칭 있음 → 묶음 동봉
+            if (isManuallyVerified || localMatchCount > 0) {
+                bundleCompanions.push(item);  // 수동 정상처리 OR 같은 운송장에 매칭 있음
             } else {
-                wrongShipItems.push(item);    // 운송장 전체가 unmatch → 진짜 잘못된 출고
+                wrongShipItems.push(item);
             }
         });
     });
@@ -1794,6 +1802,34 @@ app.get('/api/deliveries/last-upload', async (req, res) => {
         res.json({ success: true, data: meta || null, totalRecords: total });
     } catch (e) {
         res.status(500).json({ success: false });
+    }
+});
+
+// 🆕 출하 수동 정상 처리 토글 (관리자가 오배송 오인 케이스를 정리)
+app.post('/api/deliveries/verify', async (req, res) => {
+    try {
+        const { tracking_no, verified = true, note = '' } = req.body;
+        if (!tracking_no) return res.status(400).json({ success: false, message: 'tracking_no 필요' });
+
+        const filter = { tracking_no: String(tracking_no).trim() };
+        if (verified) {
+            const r = await db.collection(COLLECTION_DELIVERIES).updateMany(filter, {
+                $set: {
+                    manually_verified: true,
+                    verified_at: new Date(),
+                    verified_note: String(note || '')
+                }
+            });
+            res.json({ success: true, modifiedCount: r.modifiedCount, verified: true });
+        } else {
+            const r = await db.collection(COLLECTION_DELIVERIES).updateMany(filter, {
+                $unset: { manually_verified: '', verified_at: '', verified_note: '' }
+            });
+            res.json({ success: true, modifiedCount: r.modifiedCount, verified: false });
+        }
+    } catch (e) {
+        console.error('🔥 verify 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
     }
 });
 
@@ -1992,7 +2028,9 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                         ship_status: s.ship_status,
                         product_text: s.product_text,
                         is_wrong_product: isWrong,            // ⚠️ 운송장 통째로 안 맞음 → 오배송/픽업 후보
-                        is_bundle_companion: isBundleCompanion // 📦 묶음 동봉 (정상)
+                        is_bundle_companion: isBundleCompanion, // 📦 묶음 동봉 (정상)
+                        manually_verified: !!s.manually_verified, // 🆕 수동 정상 처리
+                        verified_note: s.verified_note || ''
                     };
                 })
             };
@@ -2033,6 +2071,269 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
     } catch (e) {
         console.error("🔥 출하상황 조회 오류:", e);
         res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// ==========================================
+// 🕐 [7-3] 매니저 근무·시차 관리 (workHours)
+// ==========================================
+// - 카테고리: WORK(정상근무) / FLEX_USE(시차사용) / LEAVE(휴가) / HOLIDAY(휴일)
+// - WORK: 출퇴근 시간으로 work_hours 계산 → 표준(8h) 초과 시 flex_delta 적립
+// - FLEX_USE: flex_use_hours만큼 잔여에서 차감
+// - 잔여 = SUM(flex_delta of WORK) - SUM(flex_use_hours of FLEX_USE)
+
+async function ensureWorkHoursIndexes() {
+    try {
+        const col = db.collection(COLLECTION_WORK_HOURS);
+        await col.createIndex({ manager_id: 1, work_date: 1 }, { unique: false });
+        await col.createIndex({ manager_id: 1, year_month: 1 });
+        console.log("✅ workHours 인덱스 확인 완료");
+    } catch (e) {
+        console.error("⚠️ workHours 인덱스 오류:", e.message);
+    }
+}
+
+// 시:분 문자열 → 분 단위 환산
+function hhmmToMinutes(s) {
+    if (!s || typeof s !== 'string') return null;
+    const [h, m] = s.split(':').map(Number);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+}
+
+// 근무 시간 계산: 출퇴근 + 점심시간 차감
+function calcWorkHours(clockIn, clockOut, breakMinutes) {
+    const inMin = hhmmToMinutes(clockIn);
+    const outMin = hhmmToMinutes(clockOut);
+    if (inMin === null || outMin === null) return null;
+    let diff = outMin - inMin;
+    if (diff < 0) diff += 24 * 60; // 자정 넘김 보정
+    const breakMin = Math.max(0, Number(breakMinutes ?? WORK_BREAK_MINUTES));
+    const netMin = Math.max(0, diff - breakMin);
+    return Math.round((netMin / 60) * 100) / 100;
+}
+
+// 카테고리별 잔여 영향 계산
+//   WORK(근무)      : work_hours - 표준 (+/-)
+//   FLEX_USE(시차)  : -flex_use_hours
+//   HALF_DAY(반차)  : -4 (표준의 절반)
+//   WEEKLY_OFF(주휴)/SUBSTITUTE_OFF(대휴)/ANNUAL_LEAVE(연차)/LEAVE/HOLIDAY : 0
+const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','HALF_DAY','LEAVE','HOLIDAY'];
+
+function buildScheduleDoc(input) {
+    const {
+        manager_id, manager_name, store_name,
+        work_date, categories, category,
+        clock_in, clock_out, flex_use_hours, note
+    } = input;
+
+    // 단일 또는 배열 모두 수용
+    let cats = Array.isArray(categories) ? categories : (category ? [category] : []);
+    cats = cats.filter(c => VALID_CATEGORIES.includes(c));
+    if (cats.length === 0) return { error: 'category 필수' };
+
+    if (!manager_id || !work_date) return { error: 'manager_id / work_date 필수' };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(work_date)) return { error: 'work_date 형식 오류 (YYYY-MM-DD)' };
+
+    let work_hours = 0;
+    if (cats.includes('WORK')) {
+        const w = calcWorkHours(clock_in, clock_out, WORK_BREAK_MINUTES);
+        if (w === null) return { error: '출퇴근 시간 형식 오류 (HH:MM)' };
+        work_hours = w;
+    }
+
+    const flexUse = cats.includes('FLEX_USE') ? Number(flex_use_hours || 0) : 0;
+
+    let flex_delta = 0;
+    if (cats.includes('WORK')) flex_delta += work_hours - WORK_STANDARD_HOURS;
+    if (cats.includes('FLEX_USE')) flex_delta -= flexUse;
+    if (cats.includes('HALF_DAY')) flex_delta -= 4;
+
+    return {
+        doc: {
+            manager_id: String(manager_id),
+            manager_name: String(manager_name || ''),
+            store_name: String(store_name || ''),
+            work_date,
+            year_month: work_date.slice(0, 7),
+            categories: cats,
+            category: cats[0], // backward compat
+            clock_in: cats.includes('WORK') ? (clock_in || null) : null,
+            clock_out: cats.includes('WORK') ? (clock_out || null) : null,
+            break_minutes: cats.includes('WORK') ? WORK_BREAK_MINUTES : 0,
+            work_hours: Math.round(work_hours * 100) / 100,
+            flex_use_hours: flexUse,
+            flex_delta: Math.round(flex_delta * 100) / 100,
+            note: String(note || ''),
+            updated_at: new Date()
+        }
+    };
+}
+
+// 단일 (manager + date) upsert
+app.post('/api/work-hours', async (req, res) => {
+    try {
+        const result = buildScheduleDoc(req.body);
+        if (result.error) return res.status(400).json({ success: false, message: result.error });
+
+        const filter = { manager_id: result.doc.manager_id, work_date: result.doc.work_date };
+        const r = await db.collection(COLLECTION_WORK_HOURS).updateOne(
+            filter,
+            { $set: result.doc, $setOnInsert: { created_at: new Date() } },
+            { upsert: true }
+        );
+        const balance = await computeFlexBalance(result.doc.manager_id);
+        res.json({ success: true, upserted: !!r.upsertedId, modifiedCount: r.modifiedCount, balance });
+    } catch (e) {
+        console.error('🔥 work-hours POST 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 벌크 입력: dates[] × managers[] 매트릭스로 한꺼번에 적용
+app.post('/api/work-hours/bulk', async (req, res) => {
+    try {
+        const {
+            dates,            // ['YYYY-MM-DD', ...]
+            managers,         // [{id, name, store_name}, ...]
+            categories,       // ['WORK', ...]
+            clock_in, clock_out, flex_use_hours, note,
+            overwrite = true  // 기존 입력 덮어쓰기 여부 (false면 skip)
+        } = req.body;
+
+        if (!Array.isArray(dates) || dates.length === 0) return res.status(400).json({ success: false, message: 'dates 필수' });
+        if (!Array.isArray(managers) || managers.length === 0) return res.status(400).json({ success: false, message: 'managers 필수' });
+        if (!Array.isArray(categories) || categories.length === 0) return res.status(400).json({ success: false, message: 'categories 필수' });
+
+        let inserted = 0, modified = 0, skipped = 0, errors = [];
+        const now = new Date();
+
+        for (const d of dates) {
+            for (const m of managers) {
+                const built = buildScheduleDoc({
+                    manager_id: m.id, manager_name: m.name, store_name: m.store_name,
+                    work_date: d, categories, clock_in, clock_out, flex_use_hours, note
+                });
+                if (built.error) { errors.push({ date: d, manager: m.name, msg: built.error }); continue; }
+
+                const filter = { manager_id: built.doc.manager_id, work_date: d };
+                if (!overwrite) {
+                    const exists = await db.collection(COLLECTION_WORK_HOURS).findOne(filter);
+                    if (exists) { skipped++; continue; }
+                }
+                const r = await db.collection(COLLECTION_WORK_HOURS).updateOne(
+                    filter,
+                    { $set: built.doc, $setOnInsert: { created_at: now } },
+                    { upsert: true }
+                );
+                if (r.upsertedId) inserted++; else modified++;
+            }
+        }
+
+        res.json({
+            success: true,
+            totalRequested: dates.length * managers.length,
+            inserted, modified, skipped,
+            errors: errors.slice(0, 20) // 최대 20개만 노출
+        });
+    } catch (e) {
+        console.error('🔥 work-hours bulk 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 월별 조회 (캘린더용)
+app.get('/api/work-hours', async (req, res) => {
+    try {
+        const { manager_id, month, store_name } = req.query;
+        const q = {};
+        if (manager_id) q.manager_id = String(manager_id);
+        if (month && /^\d{4}-\d{2}$/.test(month)) q.year_month = month;
+        if (store_name) q.store_name = String(store_name);
+
+        const data = await db.collection(COLLECTION_WORK_HOURS).find(q).sort({ work_date: 1 }).toArray();
+        res.json({ success: true, count: data.length, data });
+    } catch (e) {
+        console.error('🔥 work-hours GET 오류:', e);
+        res.status(500).json({ success: false });
+    }
+});
+
+// 단일 삭제 (해당 매니저+날짜 입력 취소)
+app.delete('/api/work-hours/:id', async (req, res) => {
+    try {
+        if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
+        const before = await db.collection(COLLECTION_WORK_HOURS).findOne({ _id: new ObjectId(req.params.id) });
+        await db.collection(COLLECTION_WORK_HOURS).deleteOne({ _id: new ObjectId(req.params.id) });
+        const balance = before ? await computeFlexBalance(before.manager_id) : null;
+        res.json({ success: true, balance });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// 매니저별 시차 잔여 계산 (모든 기간 합산)
+async function computeFlexBalance(managerId) {
+    try {
+        const agg = await db.collection(COLLECTION_WORK_HOURS).aggregate([
+            { $match: { manager_id: String(managerId) } },
+            { $group: {
+                _id: null,
+                total_work_hours: { $sum: '$work_hours' },
+                total_flex_earned: { $sum: { $cond: [{ $gt: ['$flex_delta', 0] }, '$flex_delta', 0] } },
+                total_flex_used: { $sum: { $cond: [{ $lt: ['$flex_delta', 0] }, { $abs: '$flex_delta' }, 0] } },
+                net_flex_delta: { $sum: '$flex_delta' }
+            }}
+        ]).toArray();
+        const r = agg[0] || {};
+        return {
+            balance_hours: Math.round((r.net_flex_delta || 0) * 100) / 100,   // 잔여 (음수면 빚진 시간)
+            total_work_hours: Math.round((r.total_work_hours || 0) * 100) / 100,
+            total_flex_earned: Math.round((r.total_flex_earned || 0) * 100) / 100,
+            total_flex_used: Math.round((r.total_flex_used || 0) * 100) / 100
+        };
+    } catch (e) {
+        return { balance_hours: 0, total_work_hours: 0, total_flex_earned: 0, total_flex_used: 0 };
+    }
+}
+
+app.get('/api/work-hours/balance', async (req, res) => {
+    try {
+        const { manager_id } = req.query;
+        if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
+        const balance = await computeFlexBalance(manager_id);
+        res.json({ success: true, balance });
+    } catch (e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// 월별 요약 (이번 달 근무·시차 통계)
+app.get('/api/work-hours/monthly-summary', async (req, res) => {
+    try {
+        const { manager_id, month } = req.query;
+        if (!manager_id || !month) return res.status(400).json({ success: false, message: 'manager_id, month 필수' });
+        const agg = await db.collection(COLLECTION_WORK_HOURS).aggregate([
+            { $match: { manager_id: String(manager_id), year_month: month } },
+            { $group: {
+                _id: null,
+                workDays: { $sum: { $cond: [{ $eq: ['$category', 'WORK'] }, 1, 0] } },
+                leaveDays: { $sum: { $cond: [{ $eq: ['$category', 'LEAVE'] }, 1, 0] } },
+                flexUseDays: { $sum: { $cond: [{ $eq: ['$category', 'FLEX_USE'] }, 1, 0] } },
+                holidayDays: { $sum: { $cond: [{ $eq: ['$category', 'HOLIDAY'] }, 1, 0] } },
+                total_work_hours: { $sum: '$work_hours' },
+                total_flex_used: { $sum: { $cond: [{ $eq: ['$category', 'FLEX_USE'] }, '$flex_use_hours', 0] } },
+                month_flex_delta: { $sum: '$flex_delta' }
+            }}
+        ]).toArray();
+        const balance = await computeFlexBalance(manager_id);
+        res.json({
+            success: true,
+            month_summary: agg[0] || { workDays:0, leaveDays:0, flexUseDays:0, holidayDays:0, total_work_hours:0, total_flex_used:0, month_flex_delta:0 },
+            balance
+        });
+    } catch (e) {
+        res.status(500).json({ success: false });
     }
 });
 
