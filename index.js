@@ -684,6 +684,18 @@ app.get('/api/ordersOffData', async (req, res) => {
         }
         
         const orders = await db.collection(COLLECTION_ORDERS).find(query).sort({ created_at: -1 }).toArray();
+
+        // 🆕 각 주문의 메모(댓글) 카운트 집계 → 메모 있는 행 시각 강조용
+        if (orders.length > 0) {
+            const orderIds = orders.map(o => String(o._id));
+            const memoAgg = await db.collection(COLLECTION_CS_MEMOS).aggregate([
+                { $match: { order_id: { $in: orderIds } } },
+                { $group: { _id: '$order_id', count: { $sum: 1 } } }
+            ]).toArray();
+            const memoMap = new Map(memoAgg.map(m => [m._id, m.count]));
+            orders.forEach(o => { o.memo_count = memoMap.get(String(o._id)) || 0; });
+        }
+
         res.json({ success: true, count: orders.length, data: orders });
     } catch (error) {
         console.error("🔥 주문 조회 오류:", error);
@@ -2170,11 +2182,39 @@ function buildScheduleDoc(input) {
     };
 }
 
+// 사용 가능 시차 검증 — FLEX_USE 카테고리 포함 시 호출
+async function validateFlexUse(managerId, workDate, requestedFlexHours) {
+    const balanceInfo = await computeFlexBalance(managerId);
+    // 같은 날짜에 기존 FLEX_USE 입력이 있으면 그 차감분은 복구 후 비교
+    const existing = await db.collection(COLLECTION_WORK_HOURS).findOne({ manager_id: String(managerId), work_date: workDate });
+    let restoredBalance = balanceInfo.balance_hours;
+    if (existing && Array.isArray(existing.categories) && existing.categories.includes('FLEX_USE')) {
+        restoredBalance += Number(existing.flex_use_hours || 0);
+    } else if (existing && existing.category === 'FLEX_USE') {
+        restoredBalance += Number(existing.flex_use_hours || 0);
+    }
+    if (requestedFlexHours > restoredBalance + 0.001) {
+        return { ok: false, available: restoredBalance, requested: requestedFlexHours };
+    }
+    return { ok: true, available: restoredBalance };
+}
+
 // 단일 (manager + date) upsert
 app.post('/api/work-hours', async (req, res) => {
     try {
         const result = buildScheduleDoc(req.body);
         if (result.error) return res.status(400).json({ success: false, message: result.error });
+
+        // 🆕 FLEX_USE 한도 검증
+        if (result.doc.categories.includes('FLEX_USE')) {
+            const v = await validateFlexUse(result.doc.manager_id, result.doc.work_date, result.doc.flex_use_hours);
+            if (!v.ok) {
+                return res.status(400).json({
+                    success: false,
+                    message: `사용 가능 시차(${v.available.toFixed(1)}h)를 초과합니다. 요청: ${v.requested}h`
+                });
+            }
+        }
 
         const filter = { manager_id: result.doc.manager_id, work_date: result.doc.work_date };
         const r = await db.collection(COLLECTION_WORK_HOURS).updateOne(
@@ -2207,6 +2247,25 @@ app.post('/api/work-hours/bulk', async (req, res) => {
 
         let inserted = 0, modified = 0, skipped = 0, errors = [];
         const now = new Date();
+
+        // 🆕 FLEX_USE 한도 사전 검증 (매니저별)
+        if (categories.includes('FLEX_USE')) {
+            const requestedTotal = Number(flex_use_hours || 0) * dates.length;
+            const blocked = [];
+            for (const m of managers) {
+                const bal = await computeFlexBalance(m.id);
+                if (bal.balance_hours < requestedTotal - 0.001) {
+                    blocked.push({ name: m.name, avail: bal.balance_hours, need: requestedTotal });
+                }
+            }
+            if (blocked.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: '사용 가능 시차를 초과한 직원이 있습니다.',
+                    blocked
+                });
+            }
+        }
 
         for (const d of dates) {
             for (const m of managers) {
