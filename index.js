@@ -368,6 +368,7 @@ function normalizeCafe24ProductName(name) {
 }
 
 // 🆕 "프리미엄" 포함 상품은 EPP 복사본 추가
+//   - 단, "프리미엄 플러스"는 제외 (Plus 라인은 EPP 옵션 없음)
 //   - 같은 product_no 유지 (옵션 조회는 동일 Cafe24 상품에서 가져옴)
 //   - product_name 끝에 " EPP" 부착
 //   - is_epp 플래그로 구분 가능
@@ -376,10 +377,13 @@ function expandPremiumWithEPP(products) {
     const out = [];
     products.forEach(p => {
         out.push(p);
-        if (p && p.product_name && /프리미엄/.test(p.product_name) && !/EPP/i.test(p.product_name)) {
+        if (!p || !p.product_name) return;
+        const name = p.product_name;
+        // 프리미엄 포함 + 플러스 미포함 + 이미 EPP 아님
+        if (/프리미엄/.test(name) && !/플러스/.test(name) && !/EPP/i.test(name)) {
             out.push({
                 ...p,
-                product_name: `${p.product_name} EPP`,
+                product_name: `${name} EPP`,
                 is_epp: true
             });
         }
