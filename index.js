@@ -367,6 +367,26 @@ function normalizeCafe24ProductName(name) {
     return r;
 }
 
+// 🆕 "프리미엄" 포함 상품은 EPP 복사본 추가
+//   - 같은 product_no 유지 (옵션 조회는 동일 Cafe24 상품에서 가져옴)
+//   - product_name 끝에 " EPP" 부착
+//   - is_epp 플래그로 구분 가능
+function expandPremiumWithEPP(products) {
+    if (!Array.isArray(products)) return products;
+    const out = [];
+    products.forEach(p => {
+        out.push(p);
+        if (p && p.product_name && /프리미엄/.test(p.product_name) && !/EPP/i.test(p.product_name)) {
+            out.push({
+                ...p,
+                product_name: `${p.product_name} EPP`,
+                is_epp: true
+            });
+        }
+    });
+    return out;
+}
+
 app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
     try {
         const { categoryNo } = req.params;
@@ -389,11 +409,12 @@ app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
         };
 
         const response = await fetchFromCafe24();
-        // 🆕 상품명 매핑 룰 적용
-        const products = (response.data.products || []).map(p => ({
+        // 🆕 상품명 매핑 룰 적용 + 프리미엄 EPP 복사본 추가
+        let products = (response.data.products || []).map(p => ({
             ...p,
             product_name: normalizeCafe24ProductName(p.product_name)
         }));
+        products = expandPremiumWithEPP(products);
         res.json({ success: true, data: products });
     } catch (error) {
         console.error("🔥 Cafe24 카테고리별 상품 조회 에러:", error.message);
@@ -426,7 +447,7 @@ app.get('/api/cafe24/products', async (req, res) => {
 
         const response = await fetchFromCafe24();
         const products = response.data.products || [];
-        const cleanData = products.map(item => {
+        let cleanData = products.map(item => {
             let myOptions = [];
             let rawOptionList = item.options ? (Array.isArray(item.options) ? item.options : item.options.options) : [];
             
@@ -450,6 +471,8 @@ app.get('/api/cafe24/products', async (req, res) => {
                 detail_image: img
             };
         });
+        // 🆕 프리미엄 EPP 복사본 추가
+        cleanData = expandPremiumWithEPP(cleanData);
         res.json({ success: true, count: cleanData.length, data: cleanData });
     } catch (error) { res.status(500).json({ success: false, message: "Cafe24 API Error" }); }
 });
@@ -485,7 +508,12 @@ app.get('/api/cafe24/products/:productNo/options', async (req, res) => {
                 }));
             }
         }
-        res.json({ success: true, product_no: product.product_no, product_name: product.product_name, options: myOptions });
+        res.json({
+            success: true,
+            product_no: product.product_no,
+            product_name: normalizeCafe24ProductName(product.product_name), // 🆕 상품명 매핑 적용
+            options: myOptions
+        });
     } catch (error) { res.status(500).json({ success: false, message: "Cafe24 API Error" }); }
 });
 
