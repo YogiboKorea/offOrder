@@ -354,6 +354,19 @@ app.get('/api/cafe24/categories', async (req, res) => {
     }
 });
 
+// 🆕 Cafe24 상품명 → 내부 매핑명 치환 룰
+//    오프라인 주문서에서 가져오는 모든 상품명에 적용됨 (검색/카테고리 공통)
+//    추가 룰: 아래 배열에 [정규식, 치환문자열] 추가
+const CAFE24_PRODUCT_NAME_RULES = [
+    [/더블\s*맥스/g, '더블'],
+];
+function normalizeCafe24ProductName(name) {
+    if (!name) return name;
+    let r = String(name);
+    CAFE24_PRODUCT_NAME_RULES.forEach(([re, to]) => { r = r.replace(re, to); });
+    return r;
+}
+
 app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
     try {
         const { categoryNo } = req.params;
@@ -376,13 +389,18 @@ app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
         };
 
         const response = await fetchFromCafe24();
-        res.json({ success: true, data: response.data.products });
+        // 🆕 상품명 매핑 룰 적용
+        const products = (response.data.products || []).map(p => ({
+            ...p,
+            product_name: normalizeCafe24ProductName(p.product_name)
+        }));
+        res.json({ success: true, data: products });
     } catch (error) {
         console.error("🔥 Cafe24 카테고리별 상품 조회 에러:", error.message);
         res.status(500).json({ success: false, message: "Cafe24 API Error" });
     }
 });
-  
+
 app.get('/api/cafe24/products', async (req, res) => {
     try {
         const { keyword } = req.query;
@@ -426,7 +444,8 @@ app.get('/api/cafe24/products', async (req, res) => {
             }
             let img = item.detail_image || item.list_image || item.small_image || (item.images && item.images[0] && item.images[0].big);
             return {
-                product_no: item.product_no, product_name: item.product_name,
+                product_no: item.product_no,
+                product_name: normalizeCafe24ProductName(item.product_name), // 🆕 상품명 매핑 적용
                 price: Math.floor(Number(item.price)), options: myOptions,
                 detail_image: img
             };
@@ -2128,15 +2147,16 @@ function calcWorkHours(clockIn, clockOut, breakMinutes) {
 // 카테고리별 잔여 영향 계산
 //   WORK(근무)      : work_hours - 표준 (+/-)
 //   FLEX_USE(시차)  : -flex_use_hours
-//   HALF_DAY(반차)  : -4 (표준의 절반)
 //   WEEKLY_OFF(주휴)/SUBSTITUTE_OFF(대휴)/ANNUAL_LEAVE(연차)/LEAVE/HOLIDAY : 0
-const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','HALF_DAY','LEAVE','HOLIDAY'];
+const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','LEAVE','HOLIDAY'];
 
 function buildScheduleDoc(input) {
     const {
         manager_id, manager_name, store_name,
         work_date, categories, category,
-        clock_in, clock_out, flex_use_hours, note
+        clock_in, clock_out, flex_use_hours,
+        annual_leave_type,   // 🆕 'FULL' | 'HALF' (ANNUAL_LEAVE 서브타입)
+        note
     } = input;
 
     // 단일 또는 배열 모두 수용
@@ -2159,7 +2179,7 @@ function buildScheduleDoc(input) {
     let flex_delta = 0;
     if (cats.includes('WORK')) flex_delta += work_hours - WORK_STANDARD_HOURS;
     if (cats.includes('FLEX_USE')) flex_delta -= flexUse;
-    if (cats.includes('HALF_DAY')) flex_delta -= 4;
+    // (반차는 ANNUAL_LEAVE 서브타입으로 흡수 — 잔여 영향 없음)
 
     return {
         doc: {
@@ -2176,6 +2196,8 @@ function buildScheduleDoc(input) {
             work_hours: Math.round(work_hours * 100) / 100,
             flex_use_hours: flexUse,
             flex_delta: Math.round(flex_delta * 100) / 100,
+            // 🆕 연차 서브타입 (FULL=연차 / HALF=반차)
+            annual_leave_type: cats.includes('ANNUAL_LEAVE') ? (annual_leave_type === 'HALF' ? 'HALF' : 'FULL') : null,
             note: String(note || ''),
             updated_at: new Date()
         }
@@ -2237,7 +2259,9 @@ app.post('/api/work-hours/bulk', async (req, res) => {
             dates,            // ['YYYY-MM-DD', ...]
             managers,         // [{id, name, store_name}, ...]
             categories,       // ['WORK', ...]
-            clock_in, clock_out, flex_use_hours, note,
+            clock_in, clock_out, flex_use_hours,
+            annual_leave_type,   // 🆕 'FULL' | 'HALF'
+            note,
             overwrite = true  // 기존 입력 덮어쓰기 여부 (false면 skip)
         } = req.body;
 
@@ -2271,7 +2295,8 @@ app.post('/api/work-hours/bulk', async (req, res) => {
             for (const m of managers) {
                 const built = buildScheduleDoc({
                     manager_id: m.id, manager_name: m.name, store_name: m.store_name,
-                    work_date: d, categories, clock_in, clock_out, flex_use_hours, note
+                    work_date: d, categories, clock_in, clock_out, flex_use_hours,
+                    annual_leave_type, note
                 });
                 if (built.error) { errors.push({ date: d, manager: m.name, msg: built.error }); continue; }
 
