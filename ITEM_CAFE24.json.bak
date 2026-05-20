@@ -40,11 +40,6 @@
     "spec": ""
   },
   {
-    "name": "우파루파 롤 메이트 프리미엄 EPP",
-    "spec": "",
-    "is_epp_variant": true
-  },
-  {
     "name": "우파루파 롤 메이트",
     "spec": ""
   },
@@ -77,36 +72,16 @@
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "메가 문 필로우 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "메가 문 필로우 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "메가 문 필로우 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "메가 문 필로우 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "메가 문 필로우 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "메가 문 필로우 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "메가 문 필로우 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미니 커버",
@@ -161,20 +136,10 @@
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "믹스 롤 맥스 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 롤 맥스 프리미엄",
     "spec": "뉴트럴 / Neutral"
   },
   {
-    "name": "믹스 롤 맥스 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 롤 맥스 프리미엄 플러스",
     "spec": "레인보우 / Rainbow"
   },
@@ -227,20 +192,10 @@
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "믹스 맥스 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 맥스 프리미엄",
     "spec": "뉴트럴 / Neutral"
   },
   {
-    "name": "믹스 맥스 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 맥스 프리미엄 플러스",
     "spec": "레인보우 / Rainbow"
   },
@@ -261,18 +216,8 @@
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "믹스 슬림 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 슬림 프리미엄",
     "spec": "뉴트럴 / Neutral"
-  },
-  {
-    "name": "믹스 슬림 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
   },
   {
     "name": "믹스 슬림 프리미엄 플러스",
@@ -303,36 +248,16 @@
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "믹스 라운저 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 라운저 프리미엄",
     "spec": "뉴트럴 / Neutral"
-  },
-  {
-    "name": "믹스 라운저 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
   },
   {
     "name": "믹스 드롭 프리미엄",
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "믹스 드롭 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "믹스 드롭 프리미엄",
     "spec": "뉴트럴 / Neutral"
-  },
-  {
-    "name": "믹스 드롭 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
   },
   {
     "name": "믹스 라운저 프리미엄 플러스",
@@ -431,18 +356,8 @@
     "spec": ""
   },
   {
-    "name": "프리미엄 비즈 0.35kg EPP",
-    "spec": "",
-    "is_epp_variant": true
-  },
-  {
     "name": "프리미엄 비즈 0.65kg",
     "spec": ""
-  },
-  {
-    "name": "프리미엄 비즈 0.65kg EPP",
-    "spec": "",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 오토만 커버",
@@ -753,36 +668,16 @@
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 오토만 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 오토만 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 오토만 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 오토만 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 오토만 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 오토만 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 오토만 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 오토만",
@@ -2105,54 +2000,24 @@
     "spec": "스노우 / Snow"
   },
   {
-    "name": "럭스 롤 맥스 프리미엄 EPP",
-    "spec": "스노우 / Snow",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 롤 맥스 프리미엄",
     "spec": "블랙펄 / Black Pearl"
   },
   {
-    "name": "럭스 롤 맥스 프리미엄 EPP",
-    "spec": "블랙펄 / Black Pearl",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 오토만 프리미엄",
     "spec": "스노우 / Snow"
-  },
-  {
-    "name": "럭스 오토만 프리미엄 EPP",
-    "spec": "스노우 / Snow",
-    "is_epp_variant": true
   },
   {
     "name": "럭스 오토만 프리미엄",
     "spec": "블랙펄 / Black Pearl"
   },
   {
-    "name": "럭스 오토만 프리미엄 EPP",
-    "spec": "블랙펄 / Black Pearl",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 맥스 프리미엄",
     "spec": "스노우 / Snow"
   },
   {
-    "name": "럭스 맥스 프리미엄 EPP",
-    "spec": "스노우 / Snow",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 맥스 프리미엄",
     "spec": "블랙펄 / Black Pearl"
-  },
-  {
-    "name": "럭스 맥스 프리미엄 EPP",
-    "spec": "블랙펄 / Black Pearl",
-    "is_epp_variant": true
   },
   {
     "name": "럭스 롤 맥스",
@@ -2183,47 +2048,22 @@
     "spec": ""
   },
   {
-    "name": "유니콘 롤 메이트 프리미엄 EPP",
-    "spec": "",
-    "is_epp_variant": true
-  },
-  {
     "name": "팍스 롤 메이트 프리미엄",
     "spec": ""
-  },
-  {
-    "name": "팍스 롤 메이트 프리미엄 EPP",
-    "spec": "",
-    "is_epp_variant": true
   },
   {
     "name": "도그 롤 메이트 프리미엄",
     "spec": ""
   },
   {
-    "name": "도그 롤 메이트 프리미엄 EPP",
-    "spec": "",
-    "is_epp_variant": true
-  },
-  {
     "name": "판다 롤 메이트 프리미엄",
     "spec": ""
-  },
-  {
-    "name": "판다 롤 메이트 프리미엄 EPP",
-    "spec": "",
-    "is_epp_variant": true
   },
   {
     "name": "앨리게이터 롤 메이트 프리미엄",
     "spec": ""
   },
   {
-    "name": "앨리게이터 롤 메이트 프리미엄 EPP",
-    "spec": "",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 피라미드 커버",
     "spec": "라이언 / Ryan"
   },
@@ -2276,108 +2116,48 @@
     "spec": "어피치 / Apeach"
   },
   {
-    "name": "요기보 카카오프렌즈 드롭 프리미엄 EPP",
-    "spec": "어피치 / Apeach",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 드롭 프리미엄",
     "spec": "라이언 / Ryan"
-  },
-  {
-    "name": "요기보 카카오프렌즈 드롭 프리미엄 EPP",
-    "spec": "라이언 / Ryan",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 카카오프렌즈 드롭 프리미엄",
     "spec": "네오 / Neo"
   },
   {
-    "name": "요기보 카카오프렌즈 드롭 프리미엄 EPP",
-    "spec": "네오 / Neo",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 슬림 프리미엄",
     "spec": "라이언 / Ryan"
-  },
-  {
-    "name": "요기보 카카오프렌즈 슬림 프리미엄 EPP",
-    "spec": "라이언 / Ryan",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 카카오프렌즈 슬림 프리미엄",
     "spec": "어피치 / Apeach"
   },
   {
-    "name": "요기보 카카오프렌즈 슬림 프리미엄 EPP",
-    "spec": "어피치 / Apeach",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "라이언 / Ryan"
-  },
-  {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "라이언 / Ryan",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "튜브 / Tube"
   },
   {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "튜브 / Tube",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "어피치 / Apeach"
-  },
-  {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "어피치 / Apeach",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "무지-콘 / Muzi-Con"
   },
   {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "무지-콘 / Muzi-Con",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "제이지 / Jay-G"
-  },
-  {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "제이지 / Jay-G",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "프로도 / Prodo"
   },
   {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "프로도 / Prodo",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 카카오프렌즈 피라미드 프리미엄",
     "spec": "네오 / Neo"
-  },
-  {
-    "name": "요기보 카카오프렌즈 피라미드 프리미엄 EPP",
-    "spec": "네오 / Neo",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 카카오프렌즈 피라미드",
@@ -2488,155 +2268,70 @@
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미니 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
-  },
-  {
-    "name": "요기보 롤 미니 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
   },
   {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 미디 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 롤 미디 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "카터필러 롤 미디 프리미엄",
     "spec": "뉴트럴 / Neutral"
-  },
-  {
-    "name": "카터필러 롤 미디 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
   },
   {
     "name": "카터필러 롤 미디 프리미엄",
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "카터필러 롤 미디 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 슬림 커버",
     "spec": "스노우 / Snow"
   },
@@ -2657,54 +2352,24 @@
     "spec": "스노우 / Snow"
   },
   {
-    "name": "럭스 슬림 프리미엄 EPP",
-    "spec": "스노우 / Snow",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 슬림 프리미엄",
     "spec": "블랙펄 / Black Pearl"
   },
   {
-    "name": "럭스 슬림 프리미엄 EPP",
-    "spec": "블랙펄 / Black Pearl",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 라운저 프리미엄",
     "spec": "스노우 / Snow"
-  },
-  {
-    "name": "럭스 라운저 프리미엄 EPP",
-    "spec": "스노우 / Snow",
-    "is_epp_variant": true
   },
   {
     "name": "럭스 라운저 프리미엄",
     "spec": "블랙펄 / Black Pearl"
   },
   {
-    "name": "럭스 라운저 프리미엄 EPP",
-    "spec": "블랙펄 / Black Pearl",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 서포트 프리미엄",
     "spec": "스노우 / Snow"
   },
   {
-    "name": "럭스 서포트 프리미엄 EPP",
-    "spec": "스노우 / Snow",
-    "is_epp_variant": true
-  },
-  {
     "name": "럭스 서포트 프리미엄",
     "spec": "블랙펄 / Black Pearl"
-  },
-  {
-    "name": "럭스 서포트 프리미엄 EPP",
-    "spec": "블랙펄 / Black Pearl",
-    "is_epp_variant": true
   },
   {
     "name": "럭스 서포트",
@@ -2839,36 +2504,16 @@
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 프라임 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 프라임 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 프라임 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 프라임 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "요기보 프라임 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 프라임 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 프라임 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 프라임",
@@ -2995,450 +2640,200 @@
     "spec": "스톤 / Stone"
   },
   {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 서포트 프리미엄",
     "spec": "그라스 / Grass"
-  },
-  {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 서포트 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 서포트 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 서포트 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 서포트 프리미엄",
     "spec": "오닉스 / Onyx"
-  },
-  {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 서포트 프리미엄",
     "spec": "마린 / Marine"
   },
   {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 서포트 프리미엄",
     "spec": "썸머 / Summer"
-  },
-  {
-    "name": "줄라 서포트 프리미엄 EPP",
-    "spec": "썸머 / Summer",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 서포트 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
   },
   {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 서포트 프리미엄",
     "spec": "체리 레드 / Cherry Red"
-  },
-  {
-    "name": "요기보 서포트 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "체리 레드 / Cherry Red"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "레인보우+30000원 / Rainbow"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "레인보우+30000원 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "뉴트럴+30000원 / Neutral"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "뉴트럴+30000원 / Neutral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
-  },
-  {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 롤 맥스 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
   },
   {
-    "name": "요기보 롤 맥스 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
-  },
-  {
     "name": "카터필러 롤 맥스 프리미엄",
     "spec": "레인보우 / Rainbow"
   },
   {
-    "name": "카터필러 롤 맥스 프리미엄 EPP",
-    "spec": "레인보우 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "카터필러 롤 맥스 프리미엄",
     "spec": "뉴트럴 / Neutral"
-  },
-  {
-    "name": "카터필러 롤 맥스 프리미엄 EPP",
-    "spec": "뉴트럴 / Neutral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 메이트 라쿤",
@@ -3453,189 +2848,84 @@
     "spec": "스톤 / Stone"
   },
   {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 슬림 프리미엄",
     "spec": "그라스 / Grass"
-  },
-  {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 슬림 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 슬림 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 슬림 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 슬림 프리미엄",
     "spec": "오닉스 / Onyx"
   },
   {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 슬림 프리미엄",
     "spec": "마린 / Marine"
-  },
-  {
-    "name": "줄라 슬림 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 라운저 프리미엄",
     "spec": "스톤 / Stone"
   },
   {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 라운저 프리미엄",
     "spec": "그라스 / Grass"
-  },
-  {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 라운저 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 라운저 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 라운저 프리미엄",
     "spec": "오닉스 / Onyx"
   },
   {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 라운저 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 라운저 프리미엄",
     "spec": "마린 / Marine"
-  },
-  {
-    "name": "줄라 라운저 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 드롭 프리미엄",
     "spec": "스톤 / Stone"
   },
   {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 드롭 프리미엄",
     "spec": "그라스 / Grass"
-  },
-  {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 드롭 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 드롭 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 드롭 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 드롭 프리미엄",
     "spec": "오닉스 / Onyx"
   },
   {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 드롭 프리미엄",
     "spec": "마린 / Marine"
-  },
-  {
-    "name": "줄라 드롭 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 드롭",
@@ -3910,171 +3200,76 @@
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "체리 레드 / Cherry Red"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
   },
   {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 드롭 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
-  },
-  {
-    "name": "요기보 드롭 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 드롭",
@@ -4165,171 +3360,76 @@
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "체리 레드 / Cherry Red"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 라운저 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 라운저 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 라운저",
@@ -4412,567 +3512,252 @@
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "체리 레드 / Cherry Red"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
-  },
-  {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림 프리미엄",
     "spec": "뉴트럴+30000원 / Neutral"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "뉴트럴+30000원 / Neutral",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 슬림 프리미엄",
     "spec": "레인보우+30000원 / Rainbow"
   },
   {
-    "name": "요기보 슬림 프리미엄 EPP",
-    "spec": "레인보우+30000원 / Rainbow",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 피라미드 프리미엄",
     "spec": "스톤 / Stone"
-  },
-  {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 피라미드 프리미엄",
     "spec": "그라스 / Grass"
   },
   {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 피라미드 프리미엄",
     "spec": "시트러스 / Citrus"
-  },
-  {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 피라미드 프리미엄",
     "spec": "스카이 / Sky"
   },
   {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 피라미드 프리미엄",
     "spec": "썸머 / Summer"
-  },
-  {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "썸머 / Summer",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 피라미드 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 피라미드 프리미엄",
     "spec": "마린 / Marine"
-  },
-  {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 피라미드 프리미엄",
     "spec": "오닉스 / Onyx"
   },
   {
-    "name": "줄라 피라미드 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미디 프리미엄",
     "spec": "스톤 / Stone"
-  },
-  {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미디 프리미엄",
     "spec": "그라스 / Grass"
   },
   {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미디 프리미엄",
     "spec": "시트러스 / Citrus"
-  },
-  {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미디 프리미엄",
     "spec": "다이아몬드 / Diamond"
   },
   {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "다이아몬드 / Diamond",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미디 프리미엄",
     "spec": "썸머 / Summer"
   },
   {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "썸머 / Summer",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미디 프리미엄",
     "spec": "마린 / Marine"
   },
   {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미디 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미디 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미디 프리미엄",
     "spec": "오닉스 / Onyx"
-  },
-  {
-    "name": "줄라 미디 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 맥스 프리미엄",
     "spec": "스톤 / Stone"
   },
   {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 맥스 프리미엄",
     "spec": "그라스 / Grass"
-  },
-  {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 맥스 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 맥스 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 맥스 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 맥스 프리미엄",
     "spec": "오닉스 / Onyx"
-  },
-  {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 맥스 프리미엄",
     "spec": "마린 / Marine"
   },
   {
-    "name": "줄라 맥스 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 팟 프리미엄",
     "spec": "스톤 / Stone"
-  },
-  {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 팟 프리미엄",
     "spec": "그라스 / Grass"
   },
   {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 팟 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 팟 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 팟 프리미엄",
     "spec": "다이아몬드 / Diamond"
   },
   {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "다이아몬드 / Diamond",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 팟 프리미엄",
     "spec": "썸머 / Summer"
-  },
-  {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "썸머 / Summer",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 팟 프리미엄",
     "spec": "마린 / Marine"
   },
   {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 팟 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 팟 프리미엄",
     "spec": "오닉스 / Onyx"
-  },
-  {
-    "name": "줄라 팟 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미니 프리미엄",
     "spec": "스톤 / Stone"
   },
   {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "스톤 / Stone",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미니 프리미엄",
     "spec": "그라스 / Grass"
-  },
-  {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "그라스 / Grass",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미니 프리미엄",
     "spec": "시트러스 / Citrus"
   },
   {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "시트러스 / Citrus",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미니 프리미엄",
     "spec": "스카이 / Sky"
-  },
-  {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "스카이 / Sky",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미니 프리미엄",
     "spec": "오션 / Ocean"
   },
   {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "오션 / Ocean",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미니 프리미엄",
     "spec": "오닉스 / Onyx"
-  },
-  {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "오닉스 / Onyx",
-    "is_epp_variant": true
   },
   {
     "name": "줄라 미니 프리미엄",
     "spec": "마린 / Marine"
   },
   {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "마린 / Marine",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미니 프리미엄",
     "spec": "다이아몬드 / Diamond"
   },
   {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "다이아몬드 / Diamond",
-    "is_epp_variant": true
-  },
-  {
     "name": "줄라 미니 프리미엄",
     "spec": "썸머 / Summer"
-  },
-  {
-    "name": "줄라 미니 프리미엄 EPP",
-    "spec": "썸머 / Summer",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 슬림",
@@ -5159,1035 +3944,460 @@
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "체리 레드 / Cherry Red"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 피라미드 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 피라미드 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 피라미드 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "허기보 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "허기보 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "허기보 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "허기보 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "허기보 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "허기보 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 버블 프리미엄",
     "spec": "네이비 블루. 체리 레드 / Navy Blue. Cherry Red"
   },
   {
-    "name": "요기보 버블 프리미엄 EPP",
-    "spec": "네이비 블루. 체리 레드 / Navy Blue. Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 버블 프리미엄",
     "spec": "아쿠아 블루. 스위트 오렌지 / Aqua Blue. Sweet Orange"
-  },
-  {
-    "name": "요기보 버블 프리미엄 EPP",
-    "spec": "아쿠아 블루. 스위트 오렌지 / Aqua Blue. Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 버블 프리미엄",
     "spec": "다크 그레이. 라이트 그레이 / Dark Grey. Light Grey"
   },
   {
-    "name": "요기보 버블 프리미엄 EPP",
-    "spec": "다크 그레이. 라이트 그레이 / Dark Grey. Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "체리 레드 / Cherry Red"
   },
   {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
   },
   {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
   },
   {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
   },
   {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 더블 맥스 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
-  },
-  {
-    "name": "요기보 더블 맥스 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "블라썸 핑크 / Blossom Pink"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "체리 레드 / Cherry Red"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "올리브 그린 / Olive Green"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "다크 그레이 / Dark Gray"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Gray",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 팟 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 팟 프리미엄",
     "spec": "슈가 브라운 / Sugar Brown"
   },
   {
-    "name": "요기보 팟 프리미엄 EPP",
-    "spec": "슈가 브라운 / Sugar Brown",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "블라썸 핑크 / Blossom Pink"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "체리 레드 / Cherry Red"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미니 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미니 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 미니 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "체리 레드 / Cherry Red"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "블라썸 핑크 / Blossom Pink"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 미디 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
-  },
-  {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 미디 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
   },
   {
-    "name": "요기보 미디 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "블라썸 핑크 / Blossom Pink"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "블라썸 핑크 / Blossom Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "리빙 코랄 / Living Coral"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "리빙 코랄 / Living Coral",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "아보카도 그린 / Avocado Green"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "아보카도 그린 / Avocado Green",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "프레시 민트 / Fresh Mint"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "프레시 민트 / Fresh Mint",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "파스텔 블루 / Pastel Blue"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "파스텔 블루 / Pastel Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "라벤더 퍼플 / Lavender Purple"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "라벤더 퍼플 / Lavender Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "로즈 핑크 / Rose Pink"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "로즈 핑크 / Rose Pink",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "체리 레드 / Cherry Red"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "체리 레드 / Cherry Red",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "와인 버건디 / Wine Burgundy"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "와인 버건디 / Wine Burgundy",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "스위트 오렌지 / Sweet Orange"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "스위트 오렌지 / Sweet Orange",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "브라이트 옐로우 / Bright Yellow"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "브라이트 옐로우 / Bright Yellow",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "올리브 그린 / Olive Green"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "올리브 그린 / Olive Green",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "아쿠아 블루 / Aqua Blue"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "아쿠아 블루 / Aqua Blue",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "네이비 블루 / Navy Blue"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "네이비 블루 / Navy Blue",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "초코 브라운 / Choco Brown"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "초코 브라운 / Choco Brown",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "라이트 그레이 / Light Grey"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "라이트 그레이 / Light Grey",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "다크 그레이 / Dark Grey"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "다크 그레이 / Dark Grey",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 맥스 프리미엄",
     "spec": "브라이트 퍼플 / Bright Purple"
   },
   {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "브라이트 퍼플 / Bright Purple",
-    "is_epp_variant": true
-  },
-  {
     "name": "요기보 맥스 프리미엄",
     "spec": "딥 퍼플 / Deep Purple"
-  },
-  {
-    "name": "요기보 맥스 프리미엄 EPP",
-    "spec": "딥 퍼플 / Deep Purple",
-    "is_epp_variant": true
   },
   {
     "name": "요기보 메이트 퍼플 캣",

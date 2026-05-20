@@ -1308,6 +1308,53 @@ function startAutoRequeueCron() {
 // ==========================================
 // [7] 정적 데이터 (매장, 창고, 담당자 등)
 // ==========================================
+// 🆕 매핑 모듈 (예: matchItemCode) - 미리 require해서 다른 핸들러에서도 안전하게 사용
+const { matchItemCode: _matchItemCodeReq } = require('./utils/itemMatcher');
+
+// 🆕 ITEM_CAFE24.json 조회 (매핑 체크 페이지용)
+app.get('/api/item-cafe24', (req, res) => {
+    const filePath = path.join(__dirname, 'ITEM_CAFE24.json');
+    if (!fs.existsSync(filePath)) return res.json({ success: true, count: 0, data: [] });
+    try {
+        const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+        res.json({ success: true, count: data.length, data });
+    } catch (e) {
+        res.json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 매핑 체크: ITEM_CAFE24 × ITEM_CODES 전체 매칭 결과 일괄 계산
+app.get('/api/admin/mapping-check', (req, res) => {
+    const cafe24Path = path.join(__dirname, 'ITEM_CAFE24.json');
+    if (!fs.existsSync(cafe24Path)) return res.json({ success: false, message: 'ITEM_CAFE24.json 없음' });
+    try {
+        const cafe24Items = JSON.parse(fs.readFileSync(cafe24Path, 'utf-8'));
+        const results = cafe24Items.map(item => {
+            const m = _matchItemCodeReq(item.name, item.spec);
+            return {
+                cafe24_name: item.name,
+                cafe24_spec: item.spec || '',
+                is_epp_variant: !!item.is_epp_variant,
+                ecount_code: m.code,
+                score: m.score,
+                status: m.status
+            };
+        });
+        const summary = results.reduce((acc, r) => {
+            acc.total++;
+            acc[r.status.toLowerCase()] = (acc[r.status.toLowerCase()] || 0) + 1;
+            if (r.is_epp_variant) {
+                acc.epp_total++;
+                if (r.status === 'FAIL') acc.epp_fail++;
+            }
+            return acc;
+        }, { total:0, success:0, warning:0, fail:0, exception:0, epp_total:0, epp_fail:0 });
+        res.json({ success: true, summary, data: results });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
 app.get('/api/item-codes', (req, res) => {
     const filePath = path.join(__dirname, 'ITEM_CODES.json');
     if (!fs.existsSync(filePath)) return res.json({ success: true, count: 0, data: [] });
