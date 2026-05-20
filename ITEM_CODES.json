@@ -13464,4 +13464,60 @@
     "name": "줄라 미디 프리미엄 플러스 / ZOOLA MIDI PREMIUM PLUS",
     "spec": "마린 / Marine"
   }
+  ,
+{
+    "code": "R142069",
+    "name": "콜렉션 러그 라지 / Collection Rug Large",
+    "spec": "베를린 / Berlin"
+  },
+  {
+    "code": "R142091",
+    "name": "콜렉션 러그 라지 / Collection Rug Large",
+    "spec": "프라하 / Praha"
+  },
+  {
+    "code": "R142092",
+    "name": "콜렉션 러그 라지 / Collection Rug Large",
+    "spec": "헬싱키 / Helsinki"
+  },
+  {
+    "code": "R141006",
+    "name": "콜렉션 러그 스몰 / Collection Rug Small",
+    "spec": "피렌체 / Firenze"
+  },
+  {
+    "code": "R141069",
+    "name": "콜렉션 러그 스몰 / Collection Rug Small",
+    "spec": "베를린 / Berlin"
+  },
+  {
+    "code": "R141091",
+    "name": "콜렉션 러그 스몰 / Collection Rug Small",
+    "spec": "프라하 / Praha"
+  },
+  {
+    "code": "R141092",
+    "name": "콜렉션 러그 스몰 / Collection Rug Small",
+    "spec": "헬싱키 / Helsinki"
+  },
+  {
+    "code": "R140006",
+    "name": "콜렉션 러그 라운드 / Collection Rug Round",
+    "spec": "피렌체 / Firenze"
+  },
+  {
+    "code": "R140069",
+    "name": "콜렉션 러그 라운드 / Collection Rug Round",
+    "spec": "베를린 / Berlin"
+  },
+  {
+    "code": "R140091",
+    "name": "콜렉션 러그 라운드 / Collection Rug Round",
+    "spec": "프라하 / Praha"
+  },
+  {
+    "code": "R140092",
+    "name": "콜렉션 러그 라운드 / Collection Rug Round",
+    "spec": "헬싱키 / Helsinki"
+  }
 ]
