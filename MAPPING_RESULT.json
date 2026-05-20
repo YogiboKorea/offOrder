@@ -829,14 +829,6 @@
       "status": "SUCCESS"
     },
     {
-      "cafe24_name": "요기보를 찾습니다!",
-      "cafe24_spec": "",
-      "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
-    },
-    {
       "cafe24_name": "프리미엄 비즈 0.35kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
@@ -904,17 +896,17 @@
       "cafe24_name": "스탠다드 비즈 0.4kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "",
+      "ecount_code": "EFILL04",
       "score": 0,
-      "status": "FAIL"
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "프로 비즈 0.3kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "",
+      "ecount_code": "PFILL03",
       "score": 0,
-      "status": "FAIL"
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "카터필러 롤 미디 커버",
@@ -7192,9 +7184,9 @@
       "cafe24_name": "프로 비즈 0.5kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "",
+      "ecount_code": "PFILL05",
       "score": 0,
-      "status": "FAIL"
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 라운저 커버",
@@ -11712,9 +11704,9 @@
       "cafe24_name": "스탠다드 비즈 0.75kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "",
+      "ecount_code": "EFILL075",
       "score": 0,
-      "status": "FAIL"
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "패브릭 물감",
