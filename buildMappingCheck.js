@@ -16,6 +16,8 @@ const { matchItemCode } = require('./utils/itemMatcher');
 
 const CAFE24_PATH = path.join(__dirname, 'ITEM_CAFE24.json');
 const RESULT_PATH = path.join(__dirname, 'MAPPING_RESULT.json');
+// 매핑체크.html same-origin 접근용 — deliveryOFF 폴더에도 동시 출력
+const RESULT_PATH_STATIC = path.join(__dirname, '..', 'deliveryOFF', 'MAPPING_RESULT.json');
 
 function main() {
     console.log('========================================');
@@ -70,6 +72,12 @@ function main() {
     };
 
     fs.writeFileSync(RESULT_PATH, JSON.stringify(output, null, 2), 'utf-8');
+    try {
+        fs.writeFileSync(RESULT_PATH_STATIC, JSON.stringify(output, null, 2), 'utf-8');
+        console.log('📁 정적 복사:', RESULT_PATH_STATIC);
+    } catch (e) {
+        console.warn('⚠ deliveryOFF 복사 실패:', e.message);
+    }
 
     console.log('========================================');
     console.log(`✅ 완료 (${output.elapsed_ms}ms)`);
