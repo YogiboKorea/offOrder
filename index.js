@@ -1325,12 +1325,25 @@ app.get('/api/item-cafe24', (req, res) => {
 
 // 🆕 매핑 체크: ITEM_CAFE24 × ITEM_CODES 전체 매칭 결과 일괄 계산
 app.get('/api/admin/mapping-check', (req, res) => {
+    const t0 = Date.now();
+    console.log('[mapping-check] start');
     const cafe24Path = path.join(__dirname, 'ITEM_CAFE24.json');
-    if (!fs.existsSync(cafe24Path)) return res.json({ success: false, message: 'ITEM_CAFE24.json 없음' });
+    if (!fs.existsSync(cafe24Path)) {
+        console.warn('[mapping-check] ITEM_CAFE24.json 없음');
+        return res.json({ success: false, message: 'ITEM_CAFE24.json 없음 (서버에 업로드 필요)' });
+    }
     try {
         const cafe24Items = JSON.parse(fs.readFileSync(cafe24Path, 'utf-8'));
+        console.log(`[mapping-check] cafe24 items: ${cafe24Items.length}`);
+
+        if (typeof _matchItemCodeReq !== 'function') {
+            return res.status(500).json({ success: false, message: 'matchItemCode 모듈 로드 실패 (itemMatcher.js)' });
+        }
+
         const results = cafe24Items.map(item => {
-            const m = _matchItemCodeReq(item.name, item.spec);
+            let m = { code: '', score: 0, status: 'FAIL' };
+            try { m = _matchItemCodeReq(item.name, item.spec); }
+            catch (err) { console.error('[mapping-check] 개별 매칭 오류:', item.name, err.message); }
             return {
                 cafe24_name: item.name,
                 cafe24_spec: item.spec || '',
@@ -1349,8 +1362,11 @@ app.get('/api/admin/mapping-check', (req, res) => {
             }
             return acc;
         }, { total:0, success:0, warning:0, fail:0, exception:0, epp_total:0, epp_fail:0 });
-        res.json({ success: true, summary, data: results });
+
+        console.log(`[mapping-check] done in ${Date.now()-t0}ms`, summary);
+        res.json({ success: true, summary, data: results, elapsed_ms: Date.now()-t0 });
     } catch (e) {
+        console.error('[mapping-check] 치명 오류:', e);
         res.status(500).json({ success: false, message: e.message });
     }
 });
