@@ -95,12 +95,10 @@ function matchByHardcodedRules(orderFullText) {
         if (t.includes('라이트그레이')) return '130113-L';
     }
 
-    // ── 우파루파 롤메이트
-    if (t.includes('우파루파롤메이트')) {
-        if (t.includes('epp'))      return '231898SHPre'; // EPP 변형
-        if (t.includes('프리미엄')) return '231898SPre';  // 프리미엄
-        return '231898S';                                  // 일반
-    }
+    // ── 우파루파 롤메이트 (구체적인 룰이 먼저 매칭되어야 하므로 순서 중요)
+    if (t.includes('우파루파롤메이트프리미엄epp')) return '231898SHPre';
+    if (t.includes('우파루파롤메이트프리미엄'))    return '231898SPre';
+    if (t.includes('우파루파롤메이트'))             return '231898S';
 
     // ── 비즈 충전재 (스탠다드 / 프로 / 프리미엄 × 무게)
     if (t.includes('비즈')) {
