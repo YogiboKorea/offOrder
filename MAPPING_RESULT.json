@@ -1,13 +1,14 @@
 {
   "success": true,
-  "generated_at": "2026-05-20T03:19:34.841Z",
-  "elapsed_ms": 18510,
+  "generated_at": "2026-05-20T05:14:24.283Z",
+  "elapsed_ms": 17547,
   "summary": {
     "total": 2023,
-    "success": 2002,
-    "warning": 4,
-    "fail": 17,
+    "success": 1912,
+    "warning": 0,
+    "fail": 1,
     "exception": 0,
+    "hardcoded": 110,
     "epp_total": 358,
     "epp_fail": 0
   },
@@ -16,49 +17,49 @@
       "cafe24_name": "요기보 메이트 스프라우트",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "131161",
-      "score": 1445,
-      "status": "SUCCESS"
+      "ecount_code": "131183",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트 아로",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "601101",
-      "score": 1950,
-      "status": "SUCCESS"
+      "ecount_code": "131182",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트 써니",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "131161",
-      "score": 1445,
-      "status": "SUCCESS"
+      "ecount_code": "131180",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 플랜트 메이트",
       "cafe24_spec": "써니 / Sunny",
       "is_epp_variant": false,
       "ecount_code": "131180",
-      "score": 2050,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 플랜트 메이트",
       "cafe24_spec": "아로 / Arlo",
       "is_epp_variant": false,
       "ecount_code": "131182",
-      "score": 2050,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 플랜트 메이트",
       "cafe24_spec": "스프라우트 / Sprout",
       "is_epp_variant": false,
       "ecount_code": "131183",
-      "score": 2050,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 플랜트",
@@ -88,137 +89,137 @@
       "cafe24_name": "우파루파 롤 메이트 프리미엄",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "231898SPre",
-      "score": 3595,
-      "status": "SUCCESS"
+      "ecount_code": "231898SHPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "우파루파 롤 메이트 프리미엄 EPP",
       "cafe24_spec": "",
       "is_epp_variant": true,
       "ecount_code": "231898SHPre",
-      "score": 4095,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "우파루파 롤 메이트",
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "231898S",
-      "score": 2595,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트 우파루파",
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "131198",
-      "score": 1545,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트 나르왈",
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "131199",
-      "score": 1545,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메가 문 필로우 커버",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
       "ecount_code": "241104",
-      "score": 4700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메가 문 필로우 커버",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
       "ecount_code": "241108",
-      "score": 4700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메가 문 필로우 커버",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
       "ecount_code": "241112",
-      "score": 4700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메가 문 필로우 커버",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
       "ecount_code": "241113",
-      "score": 4700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
       "ecount_code": "241104SPre",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": true,
-      "ecount_code": "241104SHPre",
-      "score": 5200,
-      "status": "SUCCESS"
+      "ecount_code": "241104SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
       "ecount_code": "241108SPre",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": true,
-      "ecount_code": "241108SHPre",
-      "score": 5200,
-      "status": "SUCCESS"
+      "ecount_code": "241108SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
       "ecount_code": "241112SPre",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": true,
-      "ecount_code": "241112SHPre",
-      "score": 5200,
-      "status": "SUCCESS"
+      "ecount_code": "241112SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
       "ecount_code": "241113SPre",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": true,
-      "ecount_code": "241113SHPre",
-      "score": 5200,
-      "status": "SUCCESS"
+      "ecount_code": "241113SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미니 커버",
@@ -833,32 +834,32 @@
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "HFILL035",
-      "score": 190,
-      "status": "WARNING"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "프리미엄 비즈 0.35kg EPP",
       "cafe24_spec": "",
       "is_epp_variant": true,
       "ecount_code": "HFILL035",
-      "score": 185,
-      "status": "WARNING"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "프리미엄 비즈 0.65kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "HFILL065",
-      "score": 190,
-      "status": "WARNING"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "프리미엄 비즈 0.65kg EPP",
       "cafe24_spec": "",
       "is_epp_variant": true,
       "ecount_code": "HFILL065",
-      "score": 185,
-      "status": "WARNING"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 오토만 커버",
@@ -897,16 +898,16 @@
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "EFILL04",
-      "score": 0,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "프로 비즈 0.3kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "PFILL03",
-      "score": 0,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "카터필러 롤 미디 커버",
@@ -993,64 +994,64 @@
       "cafe24_spec": "테디 / Teddy",
       "is_epp_variant": false,
       "ecount_code": "131123",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "유니크 / Unique",
       "is_epp_variant": false,
       "ecount_code": "131117",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "오스왈드 / Oswald",
       "is_epp_variant": false,
       "ecount_code": "131116",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "딜라일라 / Delilah",
       "is_epp_variant": false,
       "ecount_code": "131121",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "버트랜드 / Bertrand",
       "is_epp_variant": false,
       "ecount_code": "131125",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "어니스트 / Ernest",
       "is_epp_variant": false,
       "ecount_code": "131104",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "오파 / Opa",
       "is_epp_variant": false,
       "ecount_code": "131191",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "조젯 / Georgette",
       "is_epp_variant": false,
       "ecount_code": "131111",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
@@ -1065,40 +1066,40 @@
       "cafe24_spec": "모리슨 / Morrison",
       "is_epp_variant": false,
       "ecount_code": "131141",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "데릭 / Derek",
       "is_epp_variant": false,
       "ecount_code": "131109",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "디오고 / Diogo",
       "is_epp_variant": false,
       "ecount_code": "131103",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "케빈 / Kevin",
       "is_epp_variant": false,
       "ecount_code": "131105",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "셸비 / Shelby",
       "is_epp_variant": false,
       "ecount_code": "131106",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
@@ -1113,88 +1114,88 @@
       "cafe24_spec": "지그프리트 / Siegfried",
       "is_epp_variant": false,
       "ecount_code": "131124",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "휴고 / Hugo",
       "is_epp_variant": false,
-      "ecount_code": "131122",
-      "score": 1550,
-      "status": "SUCCESS"
+      "ecount_code": "131171",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "로미 / Romy",
       "is_epp_variant": false,
       "ecount_code": "131129",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "다니엘 / Daniel",
       "is_epp_variant": false,
       "ecount_code": "131130",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "야머스 / Yarmouth",
       "is_epp_variant": false,
       "ecount_code": "131119NB",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "페스터스 / Festus",
       "is_epp_variant": false,
       "ecount_code": "131171",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "칼리스타 / Calista",
       "is_epp_variant": false,
       "ecount_code": "131114",
-      "score": 1500,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "코스모 / Cosmo",
       "is_epp_variant": false,
       "ecount_code": "131131",
-      "score": 1500,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "사울 / Saul",
       "is_epp_variant": false,
       "ecount_code": "131107",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "우파루파 / Axolotl",
       "is_epp_variant": false,
       "ecount_code": "131198",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 메이트",
       "cafe24_spec": "나르왈 / Narwhal",
       "is_epp_variant": false,
       "ecount_code": "131199",
-      "score": 1550,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "모듀 소파 베이스",
@@ -1569,32 +1570,32 @@
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
       "ecount_code": "241104S",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
       "ecount_code": "241108S",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
       "ecount_code": "241112S",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "메가 문 필로우",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
       "ecount_code": "241113S",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "카터필러 롤 맥스 프리미엄 플러스",
@@ -2840,9 +2841,9 @@
       "cafe24_name": "요기보 맥스 프리미엄 플러스",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
-      "ecount_code": "200104SPre+",
-      "score": 3700,
-      "status": "SUCCESS"
+      "ecount_code": "200104SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 맥스 프리미엄 플러스",
@@ -4777,112 +4778,112 @@
       "cafe24_spec": "로즈 핑크 / Rose Pink",
       "is_epp_variant": false,
       "ecount_code": "260205",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 커버",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
       "ecount_code": "260208",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 커버",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
       "ecount_code": "260204",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 커버",
       "cafe24_spec": "스위트 오렌지 / Sweet Orange",
       "is_epp_variant": false,
       "ecount_code": "260206",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 커버",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
       "ecount_code": "260212",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 커버",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
       "ecount_code": "260213",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 커버",
       "cafe24_spec": "브라이트 옐로우 / Bright Yellow",
       "is_epp_variant": false,
       "ecount_code": "260218",
-      "score": 3700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "로즈 핑크 / Rose Pink",
       "is_epp_variant": false,
       "ecount_code": "260205S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
       "ecount_code": "260208S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
       "ecount_code": "260204S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
       "ecount_code": "260212S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
       "ecount_code": "260213S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "스위트 오렌지 / Sweet Orange",
       "is_epp_variant": false,
       "ecount_code": "260206S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디",
       "cafe24_spec": "브라이트 옐로우 / Bright Yellow",
       "is_epp_variant": false,
       "ecount_code": "260218S",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미니 프리미엄",
@@ -5016,113 +5017,113 @@
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "로즈 핑크 / Rose Pink",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 3900,
-      "status": "SUCCESS"
+      "ecount_code": "260205SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "로즈 핑크 / Rose Pink",
       "is_epp_variant": true,
       "ecount_code": "260205SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 3900,
-      "status": "SUCCESS"
+      "ecount_code": "260208SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": true,
       "ecount_code": "260208SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 3900,
-      "status": "SUCCESS"
+      "ecount_code": "260204SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": true,
       "ecount_code": "260204SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 3900,
-      "status": "SUCCESS"
+      "ecount_code": "260212SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": true,
       "ecount_code": "260212SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "스위트 오렌지 / Sweet Orange",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 3900,
-      "status": "SUCCESS"
+      "ecount_code": "260206SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "스위트 오렌지 / Sweet Orange",
       "is_epp_variant": true,
       "ecount_code": "260206SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 4050,
-      "status": "SUCCESS"
+      "ecount_code": "260213SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": true,
       "ecount_code": "260213SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄",
       "cafe24_spec": "브라이트 옐로우 / Bright Yellow",
       "is_epp_variant": false,
-      "ecount_code": "260218SPre+",
-      "score": 4200,
-      "status": "SUCCESS"
+      "ecount_code": "260218SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 롤 미디 프리미엄 EPP",
       "cafe24_spec": "브라이트 옐로우 / Bright Yellow",
       "is_epp_variant": true,
       "ecount_code": "260218SHPre",
-      "score": 4200,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "카터필러 롤 미디 프리미엄",
@@ -5336,97 +5337,97 @@
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 스몰",
       "cafe24_spec": "피렌체 / Firenze",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R141006",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 스몰",
       "cafe24_spec": "베를린 / Berlin",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R141069",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 스몰",
       "cafe24_spec": "프라하 / Praha",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R141091",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 스몰",
       "cafe24_spec": "헬싱키 / Helsinki",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R141092",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 라운드",
       "cafe24_spec": "피렌체 / Firenze",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R140006",
+      "score": 3600,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 라운드",
       "cafe24_spec": "베를린 / Berlin",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R140069",
+      "score": 3600,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 라운드",
       "cafe24_spec": "프라하 / Praha",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R140091",
+      "score": 3600,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 라운드",
       "cafe24_spec": "헬싱키 / Helsinki",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R140092",
+      "score": 3600,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 라지",
       "cafe24_spec": "피렌체 / Firenze",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R142069",
+      "score": 2945,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 라지",
       "cafe24_spec": "베를린 / Berlin",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R142069",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 라지",
       "cafe24_spec": "프라하 / Praha",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R142091",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 콜렉션 러그 스퀘어 라지",
       "cafe24_spec": "헬싱키 / Helsinki",
       "is_epp_variant": false,
-      "ecount_code": "",
-      "score": 0,
-      "status": "FAIL"
+      "ecount_code": "R142092",
+      "score": 3095,
+      "status": "SUCCESS"
     },
     {
       "cafe24_name": "요기보 메이트 베어",
@@ -7185,8 +7186,8 @@
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "PFILL05",
-      "score": 0,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 라운저 커버",
@@ -11561,16 +11562,16 @@
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
       "ecount_code": "200104SPre",
-      "score": 2700,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 맥스 프리미엄 EPP",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": true,
-      "ecount_code": "200104SHPre",
-      "score": 3200,
-      "status": "SUCCESS"
+      "ecount_code": "200104SPre",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "요기보 맥스 프리미엄",
@@ -11705,8 +11706,8 @@
       "cafe24_spec": "",
       "is_epp_variant": false,
       "ecount_code": "EFILL075",
-      "score": 0,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "패브릭 물감",
@@ -14225,8 +14226,8 @@
       "cafe24_spec": "캣 / Cat",
       "is_epp_variant": false,
       "ecount_code": "121631",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 애니멀",
@@ -14241,16 +14242,16 @@
       "cafe24_spec": "도그 / Dog",
       "is_epp_variant": false,
       "ecount_code": "121601",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 애니멀",
       "cafe24_spec": "코알라 / Koala",
       "is_epp_variant": false,
       "ecount_code": "121605",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 애니멀",
@@ -14265,24 +14266,24 @@
       "cafe24_spec": "티렉스 / T-Rex",
       "is_epp_variant": false,
       "ecount_code": "121623",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 애니멀",
       "cafe24_spec": "유니콘 / Unicorn",
       "is_epp_variant": false,
       "ecount_code": "121617",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 애니멀",
       "cafe24_spec": "옥토푸스 / Octopus",
       "is_epp_variant": false,
       "ecount_code": "121616",
-      "score": 5000,
-      "status": "SUCCESS"
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "스퀴지보 애니멀",
@@ -14392,113 +14393,113 @@
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "네이비 블루 / Navy Blue",
       "is_epp_variant": false,
-      "ecount_code": "130110",
-      "score": 1545,
-      "status": "SUCCESS"
+      "ecount_code": "130203-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "로즈 핑크 / Rose Pink",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1395,
-      "status": "SUCCESS"
+      "ecount_code": "130205-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "스위트 오렌지 / Sweet Orange",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1395,
-      "status": "SUCCESS"
+      "ecount_code": "130206-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1395,
-      "status": "SUCCESS"
+      "ecount_code": "130208-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
-      "ecount_code": "130110",
-      "score": 1695,
-      "status": "SUCCESS"
+      "ecount_code": "130204-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1545,
-      "status": "SUCCESS"
+      "ecount_code": "130213-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1695,
-      "status": "SUCCESS"
+      "ecount_code": "130212-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅 엑스",
       "cafe24_spec": "브라이트 옐로우 / Bright Yellow",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1395,
-      "status": "SUCCESS"
+      "ecount_code": "130218-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1400,
-      "status": "SUCCESS"
+      "ecount_code": "130108-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 5000,
-      "status": "SUCCESS"
+      "ecount_code": "130112-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅",
       "cafe24_spec": "로즈 핑크 / Rose Pink",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1400,
-      "status": "SUCCESS"
+      "ecount_code": "130105-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": false,
-      "ecount_code": "130110",
-      "score": 5000,
-      "status": "SUCCESS"
+      "ecount_code": "130104-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1550,
-      "status": "SUCCESS"
+      "ecount_code": "130113-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "냅",
       "cafe24_spec": "스위트 오렌지 / Sweet Orange",
       "is_epp_variant": false,
-      "ecount_code": "130109",
-      "score": 1400,
-      "status": "SUCCESS"
+      "ecount_code": "130106-L",
+      "score": 9000,
+      "status": "HARDCODED"
     },
     {
       "cafe24_name": "하트 필로우",

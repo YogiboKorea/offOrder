@@ -61,7 +61,7 @@ function main() {
             if (r.status === 'FAIL') acc.epp_fail++;
         }
         return acc;
-    }, { total: 0, success: 0, warning: 0, fail: 0, exception: 0, epp_total: 0, epp_fail: 0 });
+    }, { total: 0, success: 0, warning: 0, fail: 0, exception: 0, hardcoded: 0, epp_total: 0, epp_fail: 0 });
 
     const output = {
         success: true,
@@ -87,6 +87,7 @@ function main() {
     console.log(`   • WARNING:  ${summary.warning.toLocaleString()}건`);
     console.log(`   • FAIL:     ${summary.fail.toLocaleString()}건`);
     console.log(`   • EXCEPTION:${summary.exception.toLocaleString()}건`);
+    console.log(`   • HARDCODED:${summary.hardcoded.toLocaleString()}건 (하드코딩 룰 적중)`);
     console.log(`   • EPP 변형: ${summary.epp_total.toLocaleString()}건 (FAIL ${summary.epp_fail}건)`);
     console.log(`📁 저장: ${RESULT_PATH}`);
     console.log('========================================');
