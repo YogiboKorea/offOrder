@@ -411,7 +411,7 @@ app.get('/api/cafe24/categories/:categoryNo/products', async (req, res) => {
                 throw err;
             }
         };
-
+//
         const response = await fetchFromCafe24();
         // 🆕 상품명 매핑 룰 적용 + 프리미엄 EPP 복사본 추가
         let products = (response.data.products || []).map(p => ({
