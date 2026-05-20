@@ -40,14 +40,21 @@ const EXCEPTION_MAP = {
 function matchByHardcodedRules(orderFullText) {
     const t = orderFullText;
 
-    // ── 메가문필로우 (커버 / 일반 / 프리미엄 × 4색)
+    // ── 메가문필로우 (커버 / 일반 / 프리미엄 / 프리미엄+EPP × 4색)
     if (t.includes('메가문필로우')) {
         const isPremium = t.includes('프리미엄');
         const isCover = t.includes('커버');
-        if (t.includes('아쿠아블루'))   return isCover ? '241104' : (isPremium ? '241104SPre' : '241104S');
-        if (t.includes('올리브그린'))   return isCover ? '241108' : (isPremium ? '241108SPre' : '241108S');
-        if (t.includes('다크그레이'))   return isCover ? '241112' : (isPremium ? '241112SPre' : '241112S');
-        if (t.includes('라이트그레이')) return isCover ? '241113' : (isPremium ? '241113SPre' : '241113S');
+        const isEPP = t.includes('epp');
+        const code = (base) => {
+            if (isCover) return base;                       // 커버: 접미사 없음
+            if (isPremium && isEPP) return base + 'SHPre';  // 프리미엄 + EPP
+            if (isPremium) return base + 'SPre';            // 프리미엄
+            return base + 'S';                              // 일반
+        };
+        if (t.includes('아쿠아블루'))   return code('241104');
+        if (t.includes('올리브그린'))   return code('241108');
+        if (t.includes('다크그레이'))   return code('241112');
+        if (t.includes('라이트그레이')) return code('241113');
     }
 
     // ── 요기보 롤 미디 (커버 / 일반 / 프리미엄 / EPP / 플러스 × 7색)
@@ -90,7 +97,9 @@ function matchByHardcodedRules(orderFullText) {
 
     // ── 우파루파 롤메이트
     if (t.includes('우파루파롤메이트')) {
-        return t.includes('프리미엄') ? '231898SHPre' : '231898S';
+        if (t.includes('epp'))      return '231898SHPre'; // EPP 변형
+        if (t.includes('프리미엄')) return '231898SPre';  // 프리미엄
+        return '231898S';                                  // 일반
     }
 
     // ── 비즈 충전재 (스탠다드 / 프로 / 프리미엄 × 무게)

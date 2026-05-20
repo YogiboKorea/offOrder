@@ -1,15 +1,15 @@
 {
   "success": true,
-  "generated_at": "2026-05-20T05:21:32.635Z",
-  "elapsed_ms": 17713,
+  "generated_at": "2026-05-20T05:36:03.236Z",
+  "elapsed_ms": 17017,
   "summary": {
-    "total": 2022,
+    "total": 2020,
     "success": 1912,
     "warning": 0,
     "fail": 0,
     "exception": 0,
-    "hardcoded": 110,
-    "epp_total": 358,
+    "hardcoded": 108,
+    "epp_total": 356,
     "epp_fail": 0
   },
   "data": [
@@ -107,8 +107,8 @@
       "cafe24_name": "우파루파 롤 메이트 프리미엄",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "231898SHPre",
-      "ecount_name": "롤 메이트 프리미엄(EPP) / Roll Mate Premium(EPP)",
+      "ecount_code": "231898SPre",
+      "ecount_name": "롤 메이트 프리미엄 / Roll Mate Premium",
       "ecount_spec": "우파루파 / Axolotl",
       "score": 9000,
       "status": "HARDCODED"
@@ -207,8 +207,8 @@
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "아쿠아 블루 / Aqua Blue",
       "is_epp_variant": true,
-      "ecount_code": "241104SPre",
-      "ecount_name": "메가 문 필로우 프리미엄 / MEGA MOON PILLOW PREMIUM",
+      "ecount_code": "241104SHPre",
+      "ecount_name": "메가 문 필로우 프리미엄(EPP) / Mega Moon Pillow Premium(EPP)",
       "ecount_spec": "아쿠아 블루 / Aqua Blue",
       "score": 9000,
       "status": "HARDCODED"
@@ -227,8 +227,8 @@
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "올리브 그린 / Olive Green",
       "is_epp_variant": true,
-      "ecount_code": "241108SPre",
-      "ecount_name": "메가 문 필로우 프리미엄 / MEGA MOON PILLOW PREMIUM",
+      "ecount_code": "241108SHPre",
+      "ecount_name": "메가 문 필로우 프리미엄(EPP) / Mega Moon Pillow Premium(EPP)",
       "ecount_spec": "올리브 그린 / Olive Green",
       "score": 9000,
       "status": "HARDCODED"
@@ -247,8 +247,8 @@
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "다크 그레이 / Dark Grey",
       "is_epp_variant": true,
-      "ecount_code": "241112SPre",
-      "ecount_name": "메가 문 필로우 프리미엄 / MEGA MOON PILLOW PREMIUM",
+      "ecount_code": "241112SHPre",
+      "ecount_name": "메가 문 필로우 프리미엄(EPP) / Mega Moon Pillow Premium(EPP)",
       "ecount_spec": "다크 그레이 / Dark Grey",
       "score": 9000,
       "status": "HARDCODED"
@@ -267,8 +267,8 @@
       "cafe24_name": "메가 문 필로우 프리미엄 EPP",
       "cafe24_spec": "라이트 그레이 / Light Grey",
       "is_epp_variant": true,
-      "ecount_code": "241113SPre",
-      "ecount_name": "메가 문 필로우 프리미엄 / MEGA MOON PILLOW PREMIUM",
+      "ecount_code": "241113SHPre",
+      "ecount_name": "메가 문 필로우 프리미엄(EPP) / Mega Moon Pillow Premium(EPP)",
       "ecount_spec": "라이트 그레이 / Light Grey",
       "score": 9000,
       "status": "HARDCODED"
@@ -1044,29 +1044,9 @@
       "status": "HARDCODED"
     },
     {
-      "cafe24_name": "프리미엄 비즈 0.35kg EPP",
-      "cafe24_spec": "",
-      "is_epp_variant": true,
-      "ecount_code": "HFILL035",
-      "ecount_name": "리필 비즈 프리미엄 / REFILL BEADS PREMIUM",
-      "ecount_spec": "0.35KG",
-      "score": 9000,
-      "status": "HARDCODED"
-    },
-    {
       "cafe24_name": "프리미엄 비즈 0.65kg",
       "cafe24_spec": "",
       "is_epp_variant": false,
-      "ecount_code": "HFILL065",
-      "ecount_name": "리필 비즈 프리미엄 / REFILL BEADS PREMIUM",
-      "ecount_spec": "0.65KG",
-      "score": 9000,
-      "status": "HARDCODED"
-    },
-    {
-      "cafe24_name": "프리미엄 비즈 0.65kg EPP",
-      "cafe24_spec": "",
-      "is_epp_variant": true,
       "ecount_code": "HFILL065",
       "ecount_name": "리필 비즈 프리미엄 / REFILL BEADS PREMIUM",
       "ecount_spec": "0.65KG",
