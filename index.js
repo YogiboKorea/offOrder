@@ -1324,88 +1324,22 @@ app.get('/api/item-cafe24', (req, res) => {
 });
 
 // 🆕 매핑 체크: ITEM_CAFE24 × ITEM_CODES 전체 매칭 결과 일괄 계산
-// 🆕 매핑체크 결과 인메모리 캐싱 (서버 시작 시 미리 계산)
-let _mappingCheckCache = null;
-let _mappingCheckCacheTime = 0;
-let _mappingCheckBuilding = false;
-
-function computeMappingCheck() {
-    const t0 = Date.now();
-    const cafe24Path = path.join(__dirname, 'ITEM_CAFE24.json');
-    if (!fs.existsSync(cafe24Path)) {
-        throw new Error('ITEM_CAFE24.json 없음 (서버에 업로드 필요)');
-    }
-    if (typeof _matchItemCodeReq !== 'function') {
-        throw new Error('matchItemCode 모듈 로드 실패');
-    }
-    const cafe24Items = JSON.parse(fs.readFileSync(cafe24Path, 'utf-8'));
-    console.log(`[mapping-check] cafe24 items: ${cafe24Items.length}, 매칭 시작...`);
-
-    const results = cafe24Items.map(item => {
-        let m = { code: '', score: 0, status: 'FAIL' };
-        try { m = _matchItemCodeReq(item.name, item.spec); }
-        catch (err) { console.error('[mapping-check] 개별 매칭 오류:', item.name, err.message); }
-        return {
-            cafe24_name: item.name,
-            cafe24_spec: item.spec || '',
-            is_epp_variant: !!item.is_epp_variant,
-            ecount_code: m.code,
-            score: m.score,
-            status: m.status
-        };
-    });
-    const summary = results.reduce((acc, r) => {
-        acc.total++;
-        acc[r.status.toLowerCase()] = (acc[r.status.toLowerCase()] || 0) + 1;
-        if (r.is_epp_variant) {
-            acc.epp_total++;
-            if (r.status === 'FAIL') acc.epp_fail++;
-        }
-        return acc;
-    }, { total:0, success:0, warning:0, fail:0, exception:0, epp_total:0, epp_fail:0 });
-
-    const elapsed = Date.now() - t0;
-    console.log(`[mapping-check] 완료 (${elapsed}ms)`, summary);
-    return { success: true, summary, data: results, elapsed_ms: elapsed };
-}
-
-function refreshMappingCheckCache() {
-    if (_mappingCheckBuilding) return;
-    _mappingCheckBuilding = true;
-    try {
-        _mappingCheckCache = computeMappingCheck();
-        _mappingCheckCacheTime = Date.now();
-    } catch (e) {
-        console.error('[mapping-check] 캐시 갱신 실패:', e.message);
-        _mappingCheckCache = null;
-    } finally {
-        _mappingCheckBuilding = false;
-    }
-}
-
-// 서버 시작 후 10초 뒤 백그라운드에서 미리 계산
-setTimeout(() => {
-    console.log('[mapping-check] 서버 시작 후 사전 캐싱...');
-    refreshMappingCheckCache();
-}, 10000);
-
+// 🆕 매핑체크 — 사전 계산된 MAPPING_RESULT.json 정적 서빙 (런타임 계산 X)
+//    JSON 갱신 방법: `node buildMappingCheck.js` 실행 후 서버에 푸시
 app.get('/api/admin/mapping-check', (req, res) => {
-    const force = req.query.refresh === '1';
-    if (force || !_mappingCheckCache) {
-        // 캐시 없거나 강제 새로고침 → 즉시 계산 (Block, 응답 시간 길 수 있음)
-        try {
-            _mappingCheckCache = computeMappingCheck();
-            _mappingCheckCacheTime = Date.now();
-        } catch (e) {
-            return res.status(500).json({ success: false, message: e.message });
-        }
+    const resultPath = path.join(__dirname, 'MAPPING_RESULT.json');
+    if (!fs.existsSync(resultPath)) {
+        return res.status(404).json({
+            success: false,
+            message: 'MAPPING_RESULT.json 없음. 로컬에서 `node buildMappingCheck.js` 실행 후 서버에 푸시하세요.'
+        });
     }
-    const ageSec = Math.floor((Date.now() - _mappingCheckCacheTime) / 1000);
-    res.json({
-        ..._mappingCheckCache,
-        cached: !force,
-        cache_age_seconds: ageSec
-    });
+    try {
+        const data = JSON.parse(fs.readFileSync(resultPath, 'utf-8'));
+        res.json(data);
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
 });
 
 app.get('/api/item-codes', (req, res) => {
