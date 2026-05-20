@@ -15,9 +15,17 @@ const path = require('path');
 const { matchItemCode } = require('./utils/itemMatcher');
 
 const CAFE24_PATH = path.join(__dirname, 'ITEM_CAFE24.json');
+const CODES_PATH = path.join(__dirname, 'ITEM_CODES.json');
 const RESULT_PATH = path.join(__dirname, 'MAPPING_RESULT.json');
 // 매핑체크.html same-origin 접근용 — deliveryOFF 폴더에도 동시 출력
 const RESULT_PATH_STATIC = path.join(__dirname, '..', 'deliveryOFF', 'MAPPING_RESULT.json');
+
+// 매핑 대상이 아닌 더미/안내성 상품 (이카운트 코드 매칭 불필요)
+// 신규 더미 추가 시 이 배열에만 넣으면 매핑체크에서 자동 제외됨
+const SKIP_NAMES = [
+    '요기보를 찾습니다!'
+];
+const shouldSkip = (name) => SKIP_NAMES.some(s => (name || '').includes(s));
 
 function main() {
     console.log('========================================');
@@ -30,8 +38,28 @@ function main() {
         process.exit(1);
     }
 
-    const cafe24Items = JSON.parse(fs.readFileSync(CAFE24_PATH, 'utf-8'));
-    console.log(`📦 ITEM_CAFE24 항목: ${cafe24Items.length.toLocaleString()}건`);
+    // ITEM_CODES → code→{name,spec} 인덱스 (이카운트 코드 옆에 상품명/옵션 표시용)
+    let codeIndex = new Map();
+    if (fs.existsSync(CODES_PATH)) {
+        const codes = JSON.parse(fs.readFileSync(CODES_PATH, 'utf-8'));
+        codes.forEach(c => {
+            if (c.code && !codeIndex.has(c.code)) {
+                codeIndex.set(c.code, { name: c.name || '', spec: c.spec || '' });
+            }
+        });
+        console.log(`📚 ITEM_CODES 인덱스: ${codeIndex.size.toLocaleString()}개`);
+    } else {
+        console.warn('⚠ ITEM_CODES.json 없음 — 이카운트 상품명/옵션 표시는 비어있음');
+    }
+
+    const cafe24ItemsRaw = JSON.parse(fs.readFileSync(CAFE24_PATH, 'utf-8'));
+    const cafe24Items = cafe24ItemsRaw.filter(item => !shouldSkip(item.name));
+    const skippedCount = cafe24ItemsRaw.length - cafe24Items.length;
+    console.log(`📦 ITEM_CAFE24 항목: ${cafe24Items.length.toLocaleString()}건 (제외 ${skippedCount}건)`);
+    if (skippedCount > 0) {
+        cafe24ItemsRaw.filter(item => shouldSkip(item.name))
+            .forEach(item => console.log(`   ⏭  매핑 제외: ${item.name}`));
+    }
 
     const results = cafe24Items.map((item, idx) => {
         let m = { code: '', score: 0, status: 'FAIL' };
@@ -42,11 +70,14 @@ function main() {
             process.stdout.write(`\r  진행: ${idx + 1}/${cafe24Items.length}`);
         }
 
+        const eInfo = m.code ? codeIndex.get(m.code) : null;
         return {
             cafe24_name: item.name,
             cafe24_spec: item.spec || '',
             is_epp_variant: !!item.is_epp_variant,
             ecount_code: m.code,
+            ecount_name: eInfo ? eInfo.name : '',
+            ecount_spec: eInfo ? eInfo.spec : '',
             score: m.score,
             status: m.status
         };
