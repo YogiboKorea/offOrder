@@ -1297,10 +1297,10 @@ app.get('/api/ordersOffData/auto-requeue/check', async (req, res) => {
 });
 
 /**
- * 🆕 자동 복구 cron (10분 간격, setInterval 사용)
+ * 🆕 자동 복구 cron (1분 간격, setInterval 사용)
  */
 function startAutoRequeueCron() {
-    const INTERVAL_MS = 10 * 60 * 1000; // 10분
+    const INTERVAL_MS = 60 * 1000; // 1분
 
     setInterval(async () => {
         const result = await performAutoRequeue();
@@ -1309,7 +1309,7 @@ function startAutoRequeueCron() {
         }
     }, INTERVAL_MS);
 
-    console.log(`✅ Auto-Requeue Cron 등록 완료 (10분 간격, ${AUTO_REQUEUE_STALE_MINUTES}분 이상 미처리 건 대상)`);
+    console.log(`✅ Auto-Requeue Cron 등록 완료 (1분 간격, ${AUTO_REQUEUE_STALE_MINUTES}분 이상 미처리 건 대상)`);
 }
 
 // ==========================================
