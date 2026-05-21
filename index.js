@@ -2221,7 +2221,7 @@ function calcWorkHours(clockIn, clockOut, breakMinutes) {
 //   WORK(근무)      : work_hours - 표준 (+/-)
 //   FLEX_USE(시차)  : -flex_use_hours
 //   WEEKLY_OFF(주휴)/SUBSTITUTE_OFF(대휴)/ANNUAL_LEAVE(연차)/LEAVE/HOLIDAY : 0
-const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','LEAVE','HOLIDAY'];
+const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','LEAVE','HOLIDAY','FLEX_ADJUSTMENT'];
 
 function buildScheduleDoc(input) {
     const {
@@ -2477,6 +2477,51 @@ app.get('/api/work-hours/balance', async (req, res) => {
         res.json({ success: true, balance });
     } catch (e) {
         res.status(500).json({ success: false });
+    }
+});
+
+// 🆕 관리자 전용: 시차 잔여 수동 조정 (이월/오프셋)
+// 별도 work_date 없이 카테고리 FLEX_ADJUSTMENT 로 누적 → flex_delta 합산에 자연 포함
+app.post('/api/work-hours/flex-adjustment', async (req, res) => {
+    try {
+        const { manager_id, manager_name, store_name, amount, note } = req.body;
+        if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
+        const amt = Number(amount);
+        if (!amt || isNaN(amt)) return res.status(400).json({ success: false, message: 'amount(0이 아닌 숫자) 필수' });
+
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+
+        const doc = {
+            manager_id: String(manager_id),
+            manager_name: String(manager_name || ''),
+            store_name: String(store_name || ''),
+            work_date: todayStr,
+            year_month: todayStr.slice(0, 7),
+            categories: ['FLEX_ADJUSTMENT'],
+            category: 'FLEX_ADJUSTMENT',
+            clock_in: null,
+            clock_out: null,
+            break_minutes: 0,
+            work_hours: 0,
+            flex_use_hours: 0,
+            flex_use_position: null,
+            flex_delta: Math.round(amt * 100) / 100,
+            standard_hours: 0,
+            annual_leave_type: null,
+            note: String(note || ''),
+            is_manual_adjustment: true,   // 표시용 플래그
+            created_at: now,
+            updated_at: now
+        };
+
+        // 같은 매니저+이번달의 기존 조정 row가 있어도 누적 가능하도록 별도 _id로 insert
+        await db.collection(COLLECTION_WORK_HOURS).insertOne(doc);
+        const balance = await computeFlexBalance(doc.manager_id);
+        res.json({ success: true, balance });
+    } catch (e) {
+        console.error('🔥 flex-adjustment 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
     }
 });
 
