@@ -2218,6 +2218,104 @@ function calcWorkHours(clockIn, clockOut, breakMinutes) {
     return Math.round((netMin / 60) * 100) / 100;
 }
 
+// 🆕 휴게시간 차감 없는 순수 체류 시간 (gross hours)
+function calcGrossHours(clockIn, clockOut) {
+    const inMin = hhmmToMinutes(clockIn);
+    const outMin = hhmmToMinutes(clockOut);
+    if (inMin === null || outMin === null) return 0;
+    let diff = outMin - inMin;
+    if (diff < 0) diff += 24 * 60;
+    return Math.round((diff / 60) * 100) / 100;
+}
+
+// 🆕 휴게시간 자동 차감 기준 (근로기준법 — 실근무 시간 기준 역산)
+//
+//   법 기준: 실근무 4시간 이상 → 30분 휴게, 실근무 8시간 이상 → 60분 휴게
+//   따라서 체류(gross) 시간으로 환산하면:
+//   - 체류 ≥ 9h  → 60분 차감 (실근무 ≥ 8h)   예) 09:00~18:00 = 9h → 8h 실근무
+//   - 체류 ≥ 4.5h → 30분 차감 (실근무 ≥ 4h)  예) 13:00~17:30 = 4.5h → 4h 실근무
+//   - 체류 < 4.5h → 휴게 없음 (실근무 < 4h, 휴게 의무 없음)
+//
+//   ※ 체류 정확히 4h(휴게 미사용)는 차감 X — 그대로 4h 실근무로 인정
+function getBreakMinutesForGrossHours(grossHours) {
+    if (grossHours >= 9) return 60;
+    if (grossHours >= 4.5) return 30;
+    return 0;
+}
+
+// 🆕 (manager_id, work_date) 단위로 모든 entry 재계산
+//   - 같은 날 여러 WORK 이 있으면 gross 합산 → 한국 노동법 휴게시간 적용 → 표준 대비 delta 계산
+//   - 각 entry 에 비례 분배해서 저장
+//   - FLEX_USE 는 별도로 -flex_use_hours 추가
+//   - 일급제는 항상 flex_delta = 0
+async function recomputeDailyFlex(manager_id, work_date) {
+    if (!manager_id || !work_date) return;
+    const dayEntries = await db.collection(COLLECTION_WORK_HOURS)
+        .find({ manager_id: String(manager_id), work_date })
+        .toArray();
+    if (dayEntries.length === 0) return;
+
+    const isDailyWage = dayEntries.some(e => String(e.manager_role || '').trim() === '일급제');
+    const stdHours = getStandardHoursByDate(work_date);
+
+    // WORK entries gross 합산
+    let totalGross = 0;
+    const grossById = new Map();
+    dayEntries.forEach(e => {
+        const cats = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
+        if (cats.includes('WORK') && e.clock_in && e.clock_out) {
+            const g = calcGrossHours(e.clock_in, e.clock_out);
+            grossById.set(String(e._id), g);
+            totalGross += g;
+        }
+    });
+
+    const hasWork = totalGross > 0;
+    const breakMin = hasWork ? getBreakMinutesForGrossHours(totalGross) : 0;
+    const breakH = breakMin / 60;
+    const totalNetWork = Math.max(0, totalGross - breakH);
+    // 🆕 표준 미달 근무(예: 8h 기준에 5h만 일함)는 시차 잔여에서 차감하지 않음 (음수 시차 방지)
+    //    초과 근무한 만큼만 시차로 적립, 미달은 0 처리. FLEX_USE 만 잔여 차감.
+    const rawDelta = totalNetWork - stdHours;
+    const dayWorkDelta = (hasWork && !isDailyWage) ? Math.max(0, rawDelta) : 0;
+
+    // 각 entry 별 분배 + flex_use 차감
+    const ops = [];
+    for (const e of dayEntries) {
+        const cats = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
+        // FLEX_ADJUSTMENT 는 그대로 유지 (관리자 이월 입력, flex_delta 이미 저장됨)
+        if (cats.includes('FLEX_ADJUSTMENT')) continue;
+
+        let entryFlexDelta = 0;
+        let entryWorkHours = 0;
+        let entryBreak = 0;
+
+        const myGross = grossById.get(String(e._id)) || 0;
+        if (cats.includes('WORK') && myGross > 0) {
+            const share = totalGross > 0 ? (myGross / totalGross) : 0;
+            entryFlexDelta += dayWorkDelta * share;
+            entryWorkHours = totalNetWork * share;
+            entryBreak = Math.round(breakMin * share);
+        }
+        if (cats.includes('FLEX_USE') && !isDailyWage) {
+            entryFlexDelta -= Number(e.flex_use_hours || 0);
+        }
+
+        ops.push(db.collection(COLLECTION_WORK_HOURS).updateOne(
+            { _id: e._id },
+            { $set: {
+                flex_delta: Math.round(entryFlexDelta * 100) / 100,
+                work_hours: Math.round(entryWorkHours * 100) / 100,
+                standard_hours: stdHours,
+                break_minutes: entryBreak,
+                day_total_gross: Math.round(totalGross * 100) / 100,
+                day_total_work: Math.round(totalNetWork * 100) / 100
+            }}
+        ));
+    }
+    await Promise.all(ops);
+}
+
 // 카테고리별 잔여 영향 계산
 //   WORK(근무)      : work_hours - 표준 (+/-)
 //   FLEX_USE(시차)  : -flex_use_hours
@@ -2335,7 +2433,11 @@ app.post('/api/work-hours', async (req, res) => {
         }
 
         let upserted = false, modifiedCount = 0;
+        let prevDate = null;
         if (_id && ObjectId.isValid(_id)) {
+            // 수정 전 날짜 기록 (날짜가 바뀐 경우 옛 날짜도 재계산해야 함)
+            const old = await db.collection(COLLECTION_WORK_HOURS).findOne({ _id: new ObjectId(_id) });
+            prevDate = old?.work_date || null;
             const r = await db.collection(COLLECTION_WORK_HOURS).updateOne(
                 { _id: new ObjectId(_id) },
                 { $set: result.doc }
@@ -2347,6 +2449,11 @@ app.post('/api/work-hours', async (req, res) => {
                 created_at: new Date()
             });
             upserted = !!r.insertedId;
+        }
+        // 🆕 하루 단위 재계산 (같은 날 여러 entry 합산 + 한국 노동법 휴게시간 적용)
+        await recomputeDailyFlex(result.doc.manager_id, result.doc.work_date);
+        if (prevDate && prevDate !== result.doc.work_date) {
+            await recomputeDailyFlex(result.doc.manager_id, prevDate);
         }
         const balance = await computeFlexBalance(result.doc.manager_id);
         res.json({ success: true, upserted, modifiedCount, balance });
@@ -2436,6 +2543,15 @@ app.post('/api/work-hours/bulk', async (req, res) => {
             }
         }
 
+        // 🆕 각 (매니저 × 날짜) 페어에 대해 일별 재계산
+        const recomputeOps = [];
+        for (const d of dates) {
+            for (const m of managers) {
+                recomputeOps.push(recomputeDailyFlex(m.id, d));
+            }
+        }
+        await Promise.all(recomputeOps);
+
         res.json({
             success: true,
             totalRequested: dates.length * managers.length,
@@ -2471,6 +2587,10 @@ app.delete('/api/work-hours/:id', async (req, res) => {
         if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false });
         const before = await db.collection(COLLECTION_WORK_HOURS).findOne({ _id: new ObjectId(req.params.id) });
         await db.collection(COLLECTION_WORK_HOURS).deleteOne({ _id: new ObjectId(req.params.id) });
+        // 🆕 같은 날짜 다른 entry들 재계산 (남은 entry들의 비례 분배 갱신)
+        if (before?.manager_id && before?.work_date) {
+            await recomputeDailyFlex(before.manager_id, before.work_date);
+        }
         const balance = before ? await computeFlexBalance(before.manager_id) : null;
         res.json({ success: true, balance });
     } catch (e) {
