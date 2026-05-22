@@ -2231,6 +2231,7 @@ function buildScheduleDoc(input) {
         clock_in, clock_out, flex_use_hours,
         flex_use_position,   // 🆕 'FRONT'(늦은출근) | 'BACK'(일찍퇴근) — 기본 BACK
         annual_leave_type,   // 🆕 'FULL' | 'HALF_AM' | 'HALF_PM' (옛 'HALF' 호환)
+        manager_role,        // 🆕 직급 ('일급제'이면 시차 발생/사용 미적용)
         note
     } = input;
 
@@ -2253,9 +2254,13 @@ function buildScheduleDoc(input) {
 
     // 🆕 평일 8h / 주말 9h 기준 근무시간으로 flex_delta 계산
     const stdHours = getStandardHoursByDate(work_date);
+    const isDailyWage = String(manager_role || '').trim() === '일급제';
     let flex_delta = 0;
-    if (cats.includes('WORK')) flex_delta += work_hours - stdHours;
-    if (cats.includes('FLEX_USE')) flex_delta -= flexUse;
+    if (!isDailyWage) {
+        // 🆕 일급제는 시차 발생/사용 모두 미반영 (delta = 0)
+        if (cats.includes('WORK')) flex_delta += work_hours - stdHours;
+        if (cats.includes('FLEX_USE')) flex_delta -= flexUse;
+    }
     // (반차는 ANNUAL_LEAVE 서브타입으로 흡수 — 잔여 영향 없음)
 
     // 🆕 연차 서브타입 정규화 (옛 'HALF' → 'HALF_AM' 호환)
@@ -2286,6 +2291,8 @@ function buildScheduleDoc(input) {
             standard_hours: stdHours, // 디버깅/확인용
             // 🆕 연차 서브타입
             annual_leave_type: normAnnual,
+            // 🆕 직급 기록 (일급제 여부 추적용)
+            manager_role: String(manager_role || ''),
             note: String(note || ''),
             updated_at: new Date()
         }
@@ -2309,15 +2316,16 @@ async function validateFlexUse(managerId, workDate, requestedFlexHours) {
     return { ok: true, available: restoredBalance };
 }
 
-// 단일 (manager + date) upsert
+// 🆕 _id 가 있으면 그 row 수정, 없으면 항상 insert (같은 날짜 여러 입력 허용)
 app.post('/api/work-hours', async (req, res) => {
     try {
-        const result = buildScheduleDoc(req.body);
+        const { _id, ...input } = req.body;
+        const result = buildScheduleDoc(input);
         if (result.error) return res.status(400).json({ success: false, message: result.error });
 
-        // 🆕 FLEX_USE 한도 검증
+        // 🆕 FLEX_USE 한도 검증 (수정 모드일 땐 자기 기존 차감분은 복구해서 비교)
         if (result.doc.categories.includes('FLEX_USE')) {
-            const v = await validateFlexUse(result.doc.manager_id, result.doc.work_date, result.doc.flex_use_hours);
+            const v = await validateFlexUseById(result.doc.manager_id, _id, result.doc.flex_use_hours);
             if (!v.ok) {
                 return res.status(400).json({
                     success: false,
@@ -2326,19 +2334,43 @@ app.post('/api/work-hours', async (req, res) => {
             }
         }
 
-        const filter = { manager_id: result.doc.manager_id, work_date: result.doc.work_date };
-        const r = await db.collection(COLLECTION_WORK_HOURS).updateOne(
-            filter,
-            { $set: result.doc, $setOnInsert: { created_at: new Date() } },
-            { upsert: true }
-        );
+        let upserted = false, modifiedCount = 0;
+        if (_id && ObjectId.isValid(_id)) {
+            const r = await db.collection(COLLECTION_WORK_HOURS).updateOne(
+                { _id: new ObjectId(_id) },
+                { $set: result.doc }
+            );
+            modifiedCount = r.modifiedCount;
+        } else {
+            const r = await db.collection(COLLECTION_WORK_HOURS).insertOne({
+                ...result.doc,
+                created_at: new Date()
+            });
+            upserted = !!r.insertedId;
+        }
         const balance = await computeFlexBalance(result.doc.manager_id);
-        res.json({ success: true, upserted: !!r.upsertedId, modifiedCount: r.modifiedCount, balance });
+        res.json({ success: true, upserted, modifiedCount, balance });
     } catch (e) {
         console.error('🔥 work-hours POST 오류:', e);
         res.status(500).json({ success: false, message: e.message });
     }
 });
+
+// 🆕 _id 기반 시차 한도 검증 (수정 모드: 자기 자신은 잔액에서 복구)
+async function validateFlexUseById(managerId, editingId, requestedFlexHours) {
+    const balanceInfo = await computeFlexBalance(managerId);
+    let restoredBalance = balanceInfo.balance_hours;
+    if (editingId && ObjectId.isValid(editingId)) {
+        const existing = await db.collection(COLLECTION_WORK_HOURS).findOne({ _id: new ObjectId(editingId) });
+        if (existing && Array.isArray(existing.categories) && existing.categories.includes('FLEX_USE')) {
+            restoredBalance += Number(existing.flex_use_hours || 0);
+        }
+    }
+    if (requestedFlexHours > restoredBalance + 0.001) {
+        return { ok: false, available: restoredBalance, requested: requestedFlexHours };
+    }
+    return { ok: true, available: restoredBalance };
+}
 
 // 🆕 벌크 입력: dates[] × managers[] 매트릭스로 한꺼번에 적용
 app.post('/api/work-hours/bulk', async (req, res) => {
@@ -2384,6 +2416,7 @@ app.post('/api/work-hours/bulk', async (req, res) => {
             for (const m of managers) {
                 const built = buildScheduleDoc({
                     manager_id: m.id, manager_name: m.name, store_name: m.store_name,
+                    manager_role: m.role || '',
                     work_date: d, categories, clock_in, clock_out, flex_use_hours,
                     flex_use_position, annual_leave_type, note
                 });
@@ -2478,6 +2511,36 @@ app.get('/api/work-hours/balance', async (req, res) => {
         res.json({ success: true, balance });
     } catch (e) {
         res.status(500).json({ success: false });
+    }
+});
+
+// 🆕 매니저별 이월 시차 조정 내역 조회 (최신순)
+app.get('/api/work-hours/flex-adjustments', async (req, res) => {
+    try {
+        const { manager_id } = req.query;
+        if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
+        const rows = await db.collection(COLLECTION_WORK_HOURS)
+            .find({ manager_id: String(manager_id), categories: 'FLEX_ADJUSTMENT' })
+            .sort({ created_at: -1 })
+            .toArray();
+        res.json({ success: true, data: rows });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 이월 시차 항목 삭제 (잔여 자동 환원)
+app.delete('/api/work-hours/flex-adjustment/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: '잘못된 id' });
+        const doc = await db.collection(COLLECTION_WORK_HOURS).findOne({ _id: new ObjectId(id) });
+        if (!doc) return res.status(404).json({ success: false, message: '존재하지 않는 항목' });
+        await db.collection(COLLECTION_WORK_HOURS).deleteOne({ _id: new ObjectId(id) });
+        const balance = doc.manager_id ? await computeFlexBalance(doc.manager_id) : null;
+        res.json({ success: true, balance });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
     }
 });
 
