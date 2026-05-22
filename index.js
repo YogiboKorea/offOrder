@@ -1759,6 +1759,13 @@ function matchOrderShipments(order, shipments) {
             };
             if (isManuallyVerified || localMatchCount > 0) {
                 bundleCompanions.push(item);  // 수동 정상처리 OR 같은 운송장에 매칭 있음
+                return;
+            }
+            // 🆕 폴백: 잔여 수량은 0이지만 토큰이 주문 항목과 일치 → 중복/스플릿 출고로 묶음 동봉 처리
+            //         (예: 한 주문에 같은 상품 출하가 두 운송장으로 나뉘었을 때 1개는 wrong 처리되는 문제 해결)
+            const tokenMatchesAnyOrderItem = orderItems.some(oi => shipMatchesOrderItem(p.tokens, oi.tokens));
+            if (tokenMatchesAnyOrderItem) {
+                bundleCompanions.push(item);
             } else {
                 wrongShipItems.push(item);
             }
@@ -2140,6 +2147,58 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                 })
             };
         });
+
+        // 🆕 3.5) Pass 2: 운송장 교차 검증 — 같은 운송장이 다른 주문에서 정상 매칭됐다면
+        //        이 주문에서도 오배송이 아닌 묶음 동봉으로 강등 처리
+        //        (e.g. 고객 X의 주문 O1=[A], O2=[B]. 운송장 T1=[A,C] → O2에서 A·C가 wrong 처리되는 문제 해결)
+        const trackingHasGoodMatch = new Set();
+        enriched.forEach(o => {
+            (o.shipments || []).forEach(s => {
+                if (s.tracking_no && !s.is_wrong_product && !s.is_bundle_companion) {
+                    // 이 shipment 가 이 주문 기준으로 정상 매칭 (전부 matched)
+                    trackingHasGoodMatch.add(s.tracking_no);
+                }
+                // 이 주문에서 bundle 처리된 운송장도 다른 곳에서는 매칭됐다는 신호 → 신뢰 가능
+                if (s.tracking_no && s.is_bundle_companion) {
+                    trackingHasGoodMatch.add(s.tracking_no);
+                }
+            });
+        });
+
+        let downgradedShipmentCount = 0;
+        let recoveredOrderCount = 0;
+        enriched.forEach(o => {
+            let downgradedAny = false;
+            (o.shipments || []).forEach(s => {
+                if (s.is_wrong_product && s.tracking_no && trackingHasGoodMatch.has(s.tracking_no)) {
+                    s.is_wrong_product = false;
+                    s.is_bundle_companion = true;
+                    s.auto_bundle_downgraded = true; // 디버깅용 플래그
+                    downgradedAny = true;
+                    downgradedShipmentCount++;
+                }
+            });
+            if (!downgradedAny) return;
+
+            // 모든 wrong이 해소되면 ship_status_overall 재분류
+            const stillWrong = (o.shipments || []).some(s => s.is_wrong_product);
+            if (!stillWrong && o.ship_status_overall === 'MISMATCHED') {
+                const allShipped = (o.shipments || []).every(s => s.ship_status === 'SHIPPED');
+                const hasMissing = (o.match_info?.missing_order_items || []).length > 0;
+                if (allShipped && !hasMissing) {
+                    o.ship_status_overall = (o.days_since_shipped !== null && o.days_since_shipped >= DELIVERY_ESTIMATE_DAYS)
+                        ? 'DELIVERED' : 'SHIPPED';
+                } else if (allShipped) {
+                    o.ship_status_overall = 'SHIPPED';
+                } else {
+                    o.ship_status_overall = 'PARTIAL';
+                }
+                recoveredOrderCount++;
+            }
+        });
+        if (downgradedShipmentCount > 0) {
+            console.log(`[SHIPPING] 🔁 운송장 교차 검증: ${downgradedShipmentCount}건 묶음으로 강등, ${recoveredOrderCount}건 주문 상태 회복`);
+        }
 
         // 4) status 필터 (신규 상태값)
         let filtered = enriched;
