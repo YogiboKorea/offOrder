@@ -91,7 +91,8 @@ const ORDER_STATUS = {
 };
 
 // 🆕 자동 복구 설정: EXPORTED 상태로 N분 이상 방치 시 PENDING으로 자동 복구
-const AUTO_REQUEUE_STALE_MINUTES = 5;
+// (매크로 최대 재시도 4분 + 버퍼 4분 = 8분, 매크로 진행 중 잘못 복구되는 중복 등록 방지)
+const AUTO_REQUEUE_STALE_MINUTES = 8;
 
 // ==========================================
 // [3] 서버 시작
