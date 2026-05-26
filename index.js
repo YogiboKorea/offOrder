@@ -2417,9 +2417,10 @@ function buildScheduleDoc(input) {
     }
     // (반차는 ANNUAL_LEAVE 서브타입으로 흡수 — 잔여 영향 없음)
 
-    // 🆕 연차 서브타입 정규화 (옛 'HALF' → 'HALF_AM' 호환)
+    // 🆕 연차/대체휴무 서브타입 정규화 (옛 'HALF' → 'HALF_AM' 호환)
+    //   ANNUAL_LEAVE 와 SUBSTITUTE_OFF 모두 종일/오전/오후 구분이 필요해서 둘 다 보존
     let normAnnual = null;
-    if (cats.includes('ANNUAL_LEAVE')) {
+    if (cats.includes('ANNUAL_LEAVE') || cats.includes('SUBSTITUTE_OFF')) {
         if (annual_leave_type === 'HALF_AM' || annual_leave_type === 'HALF_PM') normAnnual = annual_leave_type;
         else if (annual_leave_type === 'HALF') normAnnual = 'HALF_AM';
         else normAnnual = 'FULL';
