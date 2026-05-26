@@ -58,12 +58,9 @@ const DELIVERY_ESTIMATE_DAYS = 3;
 // 🕐 근무 관리 정책
 const WORK_STANDARD_HOURS  = 8;    // 일 표준 근무시간 (평일 기준, 호환용)
 const WORK_BREAK_MINUTES   = 60;   // 점심시간 자동 차감
-// 🆕 평일 8h / 주말 9h 기준 근무시간
-function getStandardHoursByDate(dateStr) {
-    if (!dateStr || !/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return WORK_STANDARD_HOURS;
-    const [y, m, d] = dateStr.split('-').map(Number);
-    const dow = new Date(y, m - 1, d).getDay();   // 0=일, 6=토
-    return (dow === 0 || dow === 6) ? 9 : 8;
+// 🆕 기준 근무시간 — 평일·주말 무관 8h 고정
+function getStandardHoursByDate(/* dateStr */) {
+    return WORK_STANDARD_HOURS;
 }
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
