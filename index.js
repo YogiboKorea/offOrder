@@ -2284,18 +2284,14 @@ function calcGrossHours(clockIn, clockOut) {
     return Math.round((diff / 60) * 100) / 100;
 }
 
-// 🆕 휴게시간 자동 차감 기준 (근로기준법 — 실근무 시간 기준 역산)
+// 🆕 휴게시간 자동 차감 기준 (간소화)
+//   - 체류 ≥ 9h  → 60분 자동 차감 (실근무 ≥ 8h 풀근무)
+//   - 그 외       → 자동 차감 없음 (수동 +휴게시간 입력으로 관리자가 입력)
 //
-//   법 기준: 실근무 4시간 이상 → 30분 휴게, 실근무 8시간 이상 → 60분 휴게
-//   따라서 체류(gross) 시간으로 환산하면:
-//   - 체류 ≥ 9h  → 60분 차감 (실근무 ≥ 8h)   예) 09:00~18:00 = 9h → 8h 실근무
-//   - 체류 ≥ 4.5h → 30분 차감 (실근무 ≥ 4h)  예) 13:00~17:30 = 4.5h → 4h 실근무
-//   - 체류 < 4.5h → 휴게 없음 (실근무 < 4h, 휴게 의무 없음)
-//
-//   ※ 체류 정확히 4h(휴게 미사용)는 차감 X — 그대로 4h 실근무로 인정
+//   ※ 4~8h 사이 30분 자동 차감은 제거됨 (직원마다 휴게시간이 다른 케이스 대응)
+//      이 구간의 휴게가 필요하면 관리자가 BREAK_ADJUSTMENT 로 수동 입력
 function getBreakMinutesForGrossHours(grossHours) {
     if (grossHours >= 9) return 60;
-    if (grossHours >= 4.5) return 30;
     return 0;
 }
 
@@ -2327,7 +2323,16 @@ async function recomputeDailyFlex(manager_id, work_date) {
     });
 
     const hasWork = totalGross > 0;
-    const breakMin = hasWork ? getBreakMinutesForGrossHours(totalGross) : 0;
+    // 🆕 수동 휴게시간 입력(BREAK_ADJUSTMENT)이 있으면 우선 적용, 없으면 자동 계산
+    const breakAdj = dayEntries.find(e => {
+        const c = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
+        return c.includes('BREAK_ADJUSTMENT');
+    });
+    const manualBreakMin = breakAdj && breakAdj.manual_break_minutes != null
+        ? Math.max(0, Number(breakAdj.manual_break_minutes))
+        : null;
+    const breakMin = !hasWork ? 0
+        : (manualBreakMin !== null ? manualBreakMin : getBreakMinutesForGrossHours(totalGross));
     const breakH = breakMin / 60;
     const totalNetWork = Math.max(0, totalGross - breakH);
     // 🆕 표준 미달 근무(예: 8h 기준에 5h만 일함)는 시차 잔여에서 차감하지 않음 (음수 시차 방지)
@@ -2339,8 +2344,9 @@ async function recomputeDailyFlex(manager_id, work_date) {
     const ops = [];
     for (const e of dayEntries) {
         const cats = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
-        // FLEX_ADJUSTMENT 는 그대로 유지 (관리자 이월 입력, flex_delta 이미 저장됨)
+        // FLEX_ADJUSTMENT/BREAK_ADJUSTMENT 는 메타데이터 entry — 분배·근무시간 계산에서 제외
         if (cats.includes('FLEX_ADJUSTMENT')) continue;
+        if (cats.includes('BREAK_ADJUSTMENT')) continue;
 
         let entryFlexDelta = 0;
         let entryWorkHours = 0;
@@ -2376,7 +2382,7 @@ async function recomputeDailyFlex(manager_id, work_date) {
 //   WORK(근무)      : work_hours - 표준 (+/-)
 //   FLEX_USE(시차)  : -flex_use_hours
 //   WEEKLY_OFF(주휴)/SUBSTITUTE_OFF(대휴)/ANNUAL_LEAVE(연차)/LEAVE/HOLIDAY : 0
-const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','LEAVE','HOLIDAY','FLEX_ADJUSTMENT'];
+const VALID_CATEGORIES = ['WORK','FLEX_USE','WEEKLY_OFF','SUBSTITUTE_OFF','ANNUAL_LEAVE','LEAVE','HOLIDAY','FLEX_ADJUSTMENT','BREAK_ADJUSTMENT'];
 
 function buildScheduleDoc(input) {
     const {
@@ -2762,6 +2768,82 @@ app.post('/api/work-hours/flex-adjustment', async (req, res) => {
         res.json({ success: true, balance });
     } catch (e) {
         console.error('🔥 flex-adjustment 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 관리자 전용: 휴게시간 수동 입력 (특정 매니저 × 특정 날짜)
+//   - 자동 휴게시간(9h+ 60분)이 아닌 직원별·날짜별 다른 휴게시간을 적용할 때 사용
+//   - 카테고리 BREAK_ADJUSTMENT 로 (manager_id, work_date) 단위로 upsert
+//   - recomputeDailyFlex 가 이 값을 우선 반영해 work_hours/flex_delta 재계산
+app.post('/api/work-hours/break-adjustment', async (req, res) => {
+    try {
+        const { manager_id, manager_name, store_name, work_date, break_minutes, note } = req.body;
+        if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
+        if (!work_date || !/^\d{4}-\d{2}-\d{2}$/.test(work_date))
+            return res.status(400).json({ success: false, message: 'work_date(YYYY-MM-DD) 필수' });
+        const bm = Math.max(0, Math.round(Number(break_minutes || 0)));
+
+        const filter = {
+            manager_id: String(manager_id),
+            work_date,
+            categories: 'BREAK_ADJUSTMENT'
+        };
+        const doc = {
+            manager_id: String(manager_id),
+            manager_name: String(manager_name || ''),
+            store_name: String(store_name || ''),
+            work_date,
+            year_month: work_date.slice(0, 7),
+            categories: ['BREAK_ADJUSTMENT'],
+            category: 'BREAK_ADJUSTMENT',
+            manual_break_minutes: bm,
+            note: String(note || ''),
+            is_manual_adjustment: true,
+            updated_at: new Date()
+        };
+        await db.collection(COLLECTION_WORK_HOURS).updateOne(
+            filter,
+            { $set: doc, $setOnInsert: { created_at: new Date() } },
+            { upsert: true }
+        );
+        // 해당 날짜 재계산 (work_hours/flex_delta 갱신)
+        await recomputeDailyFlex(doc.manager_id, work_date);
+        const balance = await computeFlexBalance(doc.manager_id);
+        res.json({ success: true, balance, break_minutes: bm });
+    } catch (e) {
+        console.error('🔥 break-adjustment POST 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 매니저별 휴게시간 조정 내역 조회 (월별 필터 가능)
+app.get('/api/work-hours/break-adjustments', async (req, res) => {
+    try {
+        const { manager_id, month } = req.query;
+        if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
+        const q = { manager_id: String(manager_id), categories: 'BREAK_ADJUSTMENT' };
+        if (month && /^\d{4}-\d{2}$/.test(month)) q.year_month = month;
+        const rows = await db.collection(COLLECTION_WORK_HOURS)
+            .find(q).sort({ work_date: -1 }).toArray();
+        res.json({ success: true, data: rows });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 휴게시간 조정 항목 삭제 (자동값으로 복원)
+app.delete('/api/work-hours/break-adjustment/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        if (!ObjectId.isValid(id)) return res.status(400).json({ success: false, message: '잘못된 id' });
+        const doc = await db.collection(COLLECTION_WORK_HOURS).findOne({ _id: new ObjectId(id) });
+        if (!doc) return res.status(404).json({ success: false, message: '존재하지 않는 항목' });
+        await db.collection(COLLECTION_WORK_HOURS).deleteOne({ _id: new ObjectId(id) });
+        if (doc.manager_id && doc.work_date) await recomputeDailyFlex(doc.manager_id, doc.work_date);
+        const balance = doc.manager_id ? await computeFlexBalance(doc.manager_id) : null;
+        res.json({ success: true, balance });
+    } catch (e) {
         res.status(500).json({ success: false, message: e.message });
     }
 });
