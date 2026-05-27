@@ -2288,10 +2288,10 @@ function calcGrossHours(clockIn, clockOut) {
 //   - 체류 ≥ 9h  → 60분 자동 차감 (실근무 ≥ 8h 풀근무)
 //   - 그 외       → 자동 차감 없음 (수동 +휴게시간 입력으로 관리자가 입력)
 //
-//   ※ 4~8h 사이 30분 자동 차감은 제거됨 (직원마다 휴게시간이 다른 케이스 대응)
+//   ※ 8h 미만 구간 자동 차감 없음 (직원마다 휴게시간이 다른 케이스 대응)
 //      이 구간의 휴게가 필요하면 관리자가 BREAK_ADJUSTMENT 로 수동 입력
 function getBreakMinutesForGrossHours(grossHours) {
-    if (grossHours >= 9) return 60;
+    if (grossHours >= 8) return 60;
     return 0;
 }
 
