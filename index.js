@@ -2778,11 +2778,13 @@ app.post('/api/work-hours/flex-adjustment', async (req, res) => {
 //   - recomputeDailyFlex 가 이 값을 우선 반영해 work_hours/flex_delta 재계산
 app.post('/api/work-hours/break-adjustment', async (req, res) => {
     try {
-        const { manager_id, manager_name, store_name, work_date, break_minutes, note } = req.body;
+        const { manager_id, manager_name, store_name, work_date, break_minutes, manual_break_minutes, note } = req.body;
         if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
         if (!work_date || !/^\d{4}-\d{2}-\d{2}$/.test(work_date))
             return res.status(400).json({ success: false, message: 'work_date(YYYY-MM-DD) 필수' });
-        const bm = Math.max(0, Math.round(Number(break_minutes || 0)));
+        // 🆕 프론트가 manual_break_minutes 로 보내므로 두 키 모두 허용 (호환성)
+        const rawBm = (manual_break_minutes != null ? manual_break_minutes : break_minutes);
+        const bm = Math.max(0, Math.round(Number(rawBm || 0)));
 
         const filter = {
             manager_id: String(manager_id),
