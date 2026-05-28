@@ -2567,14 +2567,15 @@ app.post('/api/work-hours/bulk', async (req, res) => {
         let inserted = 0, modified = 0, skipped = 0, errors = [];
         const now = new Date();
 
-        // 🆕 FLEX_USE 한도 사전 검증 (매니저별)
+        // 🆕 FLEX_USE 한도 사전 검증 (매니저별) — 오늘까지 발생한 available_balance 기준
         if (categories.includes('FLEX_USE')) {
             const requestedTotal = Number(flex_use_hours || 0) * dates.length;
             const blocked = [];
             for (const m of managers) {
                 const bal = await computeFlexBalance(m.id);
-                if (bal.balance_hours < requestedTotal - 0.001) {
-                    blocked.push({ name: m.name, avail: bal.balance_hours, need: requestedTotal });
+                const usable = bal.available_balance != null ? bal.available_balance : bal.balance_hours;
+                if (usable < requestedTotal - 0.001) {
+                    blocked.push({ name: m.name, avail: usable, need: requestedTotal });
                 }
             }
             if (blocked.length > 0) {
@@ -2665,9 +2666,19 @@ app.delete('/api/work-hours/:id', async (req, res) => {
     }
 });
 
+// 🆕 한국시간(KST) 기준 오늘 날짜 'YYYY-MM-DD'
+function getKSTTodayStr() {
+    // en-CA 로케일은 YYYY-MM-DD 형식 반환
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Seoul' });
+}
+
 // 매니저별 시차 잔여 계산 (모든 기간 합산)
+//   - available_balance: work_date <= 오늘(KST) 까지 발생한 시차 (실제 사용 가능)
+//   - pending_balance:   work_date >  오늘(KST) — 미래 근무로 발생 예정 (사용 불가)
+//   - balance_hours:     전체 합 (available + pending) — 하위호환용
 async function computeFlexBalance(managerId) {
     try {
+        const today = getKSTTodayStr();
         const agg = await db.collection(COLLECTION_WORK_HOURS).aggregate([
             { $match: { manager_id: String(managerId) } },
             { $group: {
@@ -2675,18 +2686,24 @@ async function computeFlexBalance(managerId) {
                 total_work_hours: { $sum: '$work_hours' },
                 total_flex_earned: { $sum: { $cond: [{ $gt: ['$flex_delta', 0] }, '$flex_delta', 0] } },
                 total_flex_used: { $sum: { $cond: [{ $lt: ['$flex_delta', 0] }, { $abs: '$flex_delta' }, 0] } },
-                net_flex_delta: { $sum: '$flex_delta' }
+                net_flex_delta: { $sum: '$flex_delta' },
+                // 🆕 오늘까지 발생분 (work_date 없으면 과거로 간주해 available 포함)
+                available_delta: { $sum: { $cond: [{ $gt: ['$work_date', today] }, 0, '$flex_delta'] } },
+                pending_delta:   { $sum: { $cond: [{ $gt: ['$work_date', today] }, '$flex_delta', 0] } }
             }}
         ]).toArray();
         const r = agg[0] || {};
+        const round = v => Math.round((v || 0) * 100) / 100;
         return {
-            balance_hours: Math.round((r.net_flex_delta || 0) * 100) / 100,   // 잔여 (음수면 빚진 시간)
-            total_work_hours: Math.round((r.total_work_hours || 0) * 100) / 100,
-            total_flex_earned: Math.round((r.total_flex_earned || 0) * 100) / 100,
-            total_flex_used: Math.round((r.total_flex_used || 0) * 100) / 100
+            balance_hours: round(r.net_flex_delta),          // 전체 잔여 (하위호환)
+            available_balance: round(r.available_delta),     // 🆕 오늘까지 발생 (사용 가능)
+            pending_balance: round(r.pending_delta),         // 🆕 미래 근무 발생 예정 (사용 불가)
+            total_work_hours: round(r.total_work_hours),
+            total_flex_earned: round(r.total_flex_earned),
+            total_flex_used: round(r.total_flex_used)
         };
     } catch (e) {
-        return { balance_hours: 0, total_work_hours: 0, total_flex_earned: 0, total_flex_used: 0 };
+        return { balance_hours: 0, available_balance: 0, pending_balance: 0, total_work_hours: 0, total_flex_earned: 0, total_flex_used: 0 };
     }
 }
 
