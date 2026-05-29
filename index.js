@@ -2363,6 +2363,12 @@ async function recomputeDailyFlex(manager_id, work_date) {
             entryWorkHours = totalNetWork * share;
             entryBreak = Math.round(breakMin * share);
         }
+        // 🆕 반차(연차반차/대휴반차, 오전·오후)는 근무시간 4h 자동 인정 (시차 영향 없음)
+        const isHalfLeave = (cats.includes('ANNUAL_LEAVE') || cats.includes('SUBSTITUTE_OFF'))
+            && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
+        if (isHalfLeave) {
+            entryWorkHours = 4;
+        }
         if (cats.includes('FLEX_USE') && !isDailyWage) {
             entryFlexDelta -= Number(e.flex_use_hours || 0);
         }
