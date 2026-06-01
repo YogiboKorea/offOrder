@@ -2363,18 +2363,7 @@ async function recomputeDailyFlex(manager_id, work_date) {
             entryWorkHours = totalNetWork * share;
             entryBreak = Math.round(breakMin * share);
         }
-        // 🆕 반차(연차반차/대휴반차)에 출퇴근 시간이 입력된 경우 — 그 시간으로 work_hours 계산
-        //    예) 오후반차 + 10:00~14:00 입력 → gross 4h, 휴게 0분(>4 아님), work_hours = 4h
-        //         10:00~14:01 입력 → gross 4h 1분, 휴게 30분, work_hours = 약 3.5h
-        //    시간 미입력 시 work_hours = 0
-        const isHalfLeave = (cats.includes('ANNUAL_LEAVE') || cats.includes('SUBSTITUTE_OFF'))
-            && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
-        if (isHalfLeave && e.clock_in && e.clock_out) {
-            const hlGross = calcGrossHours(e.clock_in, e.clock_out);
-            const hlBreakMin = getBreakMinutesForGrossHours(hlGross);
-            entryWorkHours = Math.max(0, hlGross - hlBreakMin / 60);
-            entryBreak = hlBreakMin;
-        }
+        // 🆕 반차는 무조건 work_hours = 0 (자동 인정 없음) — 실제 근무는 별도 WORK 항목으로 등록
         if (cats.includes('FLEX_USE') && !isDailyWage) {
             entryFlexDelta -= Number(e.flex_use_hours || 0);
         }
@@ -2457,10 +2446,9 @@ function buildScheduleDoc(input) {
             year_month: work_date.slice(0, 7),
             categories: cats,
             category: cats[0], // backward compat
-            // 🆕 WORK 또는 반차(연차반차/대휴반차)일 때 clock_in/clock_out 저장
-            //    반차에 시간 입력 시 그 시간이 work_hours 로 환산됨 (recomputeDailyFlex 에서 처리)
-            clock_in: (cats.includes('WORK') || (normAnnual === 'HALF_AM' || normAnnual === 'HALF_PM')) ? (clock_in || null) : null,
-            clock_out: (cats.includes('WORK') || (normAnnual === 'HALF_AM' || normAnnual === 'HALF_PM')) ? (clock_out || null) : null,
+            // 🆕 WORK 만 clock_in/clock_out 저장 — 반차/주휴/대휴 등 휴무는 시간 영향 없음 (work_hours = 0)
+            clock_in: cats.includes('WORK') ? (clock_in || null) : null,
+            clock_out: cats.includes('WORK') ? (clock_out || null) : null,
             break_minutes: cats.includes('WORK') ? WORK_BREAK_MINUTES : 0,
             work_hours: Math.round(work_hours * 100) / 100,
             flex_use_hours: flexUse,
