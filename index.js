@@ -2886,6 +2886,78 @@ app.delete('/api/work-hours/break-adjustment/:id', async (req, res) => {
     }
 });
 
+// 🆕 일회성 마이그레이션 — 모든 기존 반차(연차반차/대휴반차) 항목을 새 규칙(반차 4h)으로 재계산
+//    이전에 입력해 둔 데이터는 recomputeDailyFlex 가 자동 호출되지 않아 옛 값(0h)으로 남아있음
+//    이 엔드포인트는 반차가 포함된 (manager_id, work_date) 페어를 전부 찾아 한 번씩 재계산
+//    GET /api/work-hours/migrate-half-leave?dryRun=1   → 영향 받을 건수만 미리 보기
+//    POST /api/work-hours/migrate-half-leave           → 실제 재계산 수행
+async function listHalfLeavePairs() {
+    const cursor = db.collection(COLLECTION_WORK_HOURS).find({
+        $or: [
+            { categories: { $in: ['ANNUAL_LEAVE', 'SUBSTITUTE_OFF'] } },
+            { category:   { $in: ['ANNUAL_LEAVE', 'SUBSTITUTE_OFF'] } }
+        ],
+        annual_leave_type: { $in: ['HALF_AM', 'HALF_PM'] }
+    }, { projection: { manager_id: 1, manager_name: 1, work_date: 1, annual_leave_type: 1, work_hours: 1 } });
+    const rows = await cursor.toArray();
+    // (manager_id, work_date) 중복 제거 (같은 날 두 항목 있을 수 있음 — 거의 없지만 안전하게)
+    const seen = new Set();
+    const pairs = [];
+    for (const r of rows) {
+        const key = `${r.manager_id}__${r.work_date}`;
+        if (seen.has(key)) continue;
+        seen.add(key);
+        pairs.push(r);
+    }
+    return pairs;
+}
+
+app.get('/api/work-hours/migrate-half-leave', async (req, res) => {
+    try {
+        const pairs = await listHalfLeavePairs();
+        const stale = pairs.filter(p => Number(p.work_hours || 0) !== 4); // 4h가 아닌 것만 (이미 갱신된 건 제외)
+        res.json({
+            success: true,
+            mode: 'preview',
+            total_half_leave_rows: pairs.length,
+            need_recompute: stale.length,
+            sample: stale.slice(0, 10).map(r => ({
+                manager: r.manager_name, date: r.work_date, type: r.annual_leave_type, work_hours: r.work_hours
+            }))
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+app.post('/api/work-hours/migrate-half-leave', async (req, res) => {
+    try {
+        const pairs = await listHalfLeavePairs();
+        let recomputed = 0, failed = 0;
+        const errors = [];
+        // 순차 실행 (병렬 시 같은 (mgr,date) 충돌 방지 — 이미 unique 하지만 보수적으로)
+        for (const p of pairs) {
+            try {
+                await recomputeDailyFlex(p.manager_id, p.work_date);
+                recomputed++;
+            } catch (e) {
+                failed++;
+                if (errors.length < 20) errors.push({ manager: p.manager_name, date: p.work_date, msg: e.message });
+            }
+        }
+        res.json({
+            success: true,
+            mode: 'apply',
+            scanned_pairs: pairs.length,
+            recomputed,
+            failed,
+            errors
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
 // 월별 요약 (이번 달 근무·시차 통계)
 app.get('/api/work-hours/monthly-summary', async (req, res) => {
     try {
