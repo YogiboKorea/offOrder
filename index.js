@@ -2339,10 +2339,11 @@ async function recomputeDailyFlex(manager_id, work_date) {
         : (manualBreakMin !== null ? manualBreakMin : getBreakMinutesForGrossHours(totalGross));
     const breakH = breakMin / 60;
     const totalNetWork = Math.max(0, totalGross - breakH);
-    // 🆕 표준 미달 근무(예: 8h 기준에 5h만 일함)는 시차 잔여에서 차감하지 않음 (음수 시차 방지)
-    //    초과 근무한 만큼만 시차로 적립, 미달은 0 처리. FLEX_USE 만 잔여 차감.
+    // 🆕 표준 대비 차이 그대로 적용 — 초과근무는 +, 미달근무는 − 로 시차 잔여에 반영
+    //    예) 5h 만 일하면 −3h 차감 (debt) → 추후 초과근무로 0 까지 회복
+    //    일급제는 항상 0 (시차 미적용)
     const rawDelta = totalNetWork - stdHours;
-    const dayWorkDelta = (hasWork && !isDailyWage) ? Math.max(0, rawDelta) : 0;
+    const dayWorkDelta = (hasWork && !isDailyWage) ? rawDelta : 0;
 
     // 각 entry 별 분배 + flex_use 차감
     const ops = [];
