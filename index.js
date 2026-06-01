@@ -2327,6 +2327,12 @@ async function recomputeDailyFlex(manager_id, work_date) {
     });
 
     const hasWork = totalGross > 0;
+    // 🆕 그 날 반차(연차반차/대휴반차, 오전·오후)가 있는지 확인 — 있으면 휴게 차감 전체 면제
+    const hasHalfLeave = dayEntries.some(e => {
+        const c = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
+        return (c.includes('ANNUAL_LEAVE') || c.includes('SUBSTITUTE_OFF'))
+            && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
+    });
     // 🆕 수동 휴게시간 입력(BREAK_ADJUSTMENT)이 있으면 우선 적용, 없으면 자동 계산
     const breakAdj = dayEntries.find(e => {
         const c = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
@@ -2335,7 +2341,9 @@ async function recomputeDailyFlex(manager_id, work_date) {
     const manualBreakMin = breakAdj && breakAdj.manual_break_minutes != null
         ? Math.max(0, Number(breakAdj.manual_break_minutes))
         : null;
+    // 휴게 우선순위: 반차 있는 날 → 0 / 수동 입력 → 그 값 / 그 외 → 자동
     const breakMin = !hasWork ? 0
+        : hasHalfLeave ? 0
         : (manualBreakMin !== null ? manualBreakMin : getBreakMinutesForGrossHours(totalGross));
     const breakH = breakMin / 60;
     const totalNetWork = Math.max(0, totalGross - breakH);
@@ -2363,7 +2371,8 @@ async function recomputeDailyFlex(manager_id, work_date) {
             entryWorkHours = totalNetWork * share;
             entryBreak = Math.round(breakMin * share);
         }
-        // 🆕 반차(연차반차/대휴반차, 오전·오후)는 근무시간 4h 자동 인정 (시차 영향 없음)
+        // 🆕 반차(연차반차/대휴반차, 오전·오후)는 무조건 4h 인정 (휴게 차감 없음)
+        //    같은 날 WORK 가 있어도 반차 본인은 항상 4h — 일별 합계 cap 없음
         const isHalfLeave = (cats.includes('ANNUAL_LEAVE') || cats.includes('SUBSTITUTE_OFF'))
             && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
         if (isHalfLeave) {
