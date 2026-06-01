@@ -2327,12 +2327,6 @@ async function recomputeDailyFlex(manager_id, work_date) {
     });
 
     const hasWork = totalGross > 0;
-    // 🆕 그 날 반차(연차반차/대휴반차, 오전·오후)가 있는지 확인 — 있으면 휴게 차감 전체 면제
-    const hasHalfLeave = dayEntries.some(e => {
-        const c = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
-        return (c.includes('ANNUAL_LEAVE') || c.includes('SUBSTITUTE_OFF'))
-            && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
-    });
     // 🆕 수동 휴게시간 입력(BREAK_ADJUSTMENT)이 있으면 우선 적용, 없으면 자동 계산
     const breakAdj = dayEntries.find(e => {
         const c = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
@@ -2341,9 +2335,7 @@ async function recomputeDailyFlex(manager_id, work_date) {
     const manualBreakMin = breakAdj && breakAdj.manual_break_minutes != null
         ? Math.max(0, Number(breakAdj.manual_break_minutes))
         : null;
-    // 휴게 우선순위: 반차 있는 날 → 0 / 수동 입력 → 그 값 / 그 외 → 자동
     const breakMin = !hasWork ? 0
-        : hasHalfLeave ? 0
         : (manualBreakMin !== null ? manualBreakMin : getBreakMinutesForGrossHours(totalGross));
     const breakH = breakMin / 60;
     const totalNetWork = Math.max(0, totalGross - breakH);
@@ -2371,12 +2363,17 @@ async function recomputeDailyFlex(manager_id, work_date) {
             entryWorkHours = totalNetWork * share;
             entryBreak = Math.round(breakMin * share);
         }
-        // 🆕 반차(연차반차/대휴반차, 오전·오후)는 무조건 4h 인정 (휴게 차감 없음)
-        //    같은 날 WORK 가 있어도 반차 본인은 항상 4h — 일별 합계 cap 없음
+        // 🆕 반차(연차반차/대휴반차)에 출퇴근 시간이 입력된 경우 — 그 시간으로 work_hours 계산
+        //    예) 오후반차 + 10:00~14:00 입력 → gross 4h, 휴게 0분(>4 아님), work_hours = 4h
+        //         10:00~14:01 입력 → gross 4h 1분, 휴게 30분, work_hours = 약 3.5h
+        //    시간 미입력 시 work_hours = 0
         const isHalfLeave = (cats.includes('ANNUAL_LEAVE') || cats.includes('SUBSTITUTE_OFF'))
             && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
-        if (isHalfLeave) {
-            entryWorkHours = 4;
+        if (isHalfLeave && e.clock_in && e.clock_out) {
+            const hlGross = calcGrossHours(e.clock_in, e.clock_out);
+            const hlBreakMin = getBreakMinutesForGrossHours(hlGross);
+            entryWorkHours = Math.max(0, hlGross - hlBreakMin / 60);
+            entryBreak = hlBreakMin;
         }
         if (cats.includes('FLEX_USE') && !isDailyWage) {
             entryFlexDelta -= Number(e.flex_use_hours || 0);
@@ -2460,8 +2457,10 @@ function buildScheduleDoc(input) {
             year_month: work_date.slice(0, 7),
             categories: cats,
             category: cats[0], // backward compat
-            clock_in: cats.includes('WORK') ? (clock_in || null) : null,
-            clock_out: cats.includes('WORK') ? (clock_out || null) : null,
+            // 🆕 WORK 또는 반차(연차반차/대휴반차)일 때 clock_in/clock_out 저장
+            //    반차에 시간 입력 시 그 시간이 work_hours 로 환산됨 (recomputeDailyFlex 에서 처리)
+            clock_in: (cats.includes('WORK') || (normAnnual === 'HALF_AM' || normAnnual === 'HALF_PM')) ? (clock_in || null) : null,
+            clock_out: (cats.includes('WORK') || (normAnnual === 'HALF_AM' || normAnnual === 'HALF_PM')) ? (clock_out || null) : null,
             break_minutes: cats.includes('WORK') ? WORK_BREAK_MINUTES : 0,
             work_hours: Math.round(work_hours * 100) / 100,
             flex_use_hours: flexUse,
@@ -2688,12 +2687,27 @@ function getKSTTodayStr() {
 }
 
 // 매니저별 시차 잔여 계산 (모든 기간 합산)
-//   - available_balance: work_date <= 오늘(KST) 까지 발생한 시차 (실제 사용 가능)
-//   - pending_balance:   work_date >  오늘(KST) — 미래 근무로 발생 예정 (사용 불가)
+//   - available_balance: work_date < cutoff 까지 발생한 시차 (실제 사용 가능)
+//     · cutoff 미지정 시 → 오늘(KST) 내일 자정 = today 포함까지 발생분
+//     · cutoff 지정 시   → cutoff 미만 (예: 6/6 입력 시 → 6/5까지 발생분만)
+//   - pending_balance:   cutoff 이상 — 미래 근무로 발생 예정 (사용 불가)
 //   - balance_hours:     전체 합 (available + pending) — 하위호환용
-async function computeFlexBalance(managerId) {
+async function computeFlexBalance(managerId, options) {
     try {
-        const today = getKSTTodayStr();
+        const opts = options || {};
+        // cutoff: 이 날짜 미만(< cutoff)의 work_date 만 available 로 산정
+        //   asofBefore 지정 시 그 날짜를 cutoff 로 사용 (해당 날짜 클릭 시 그 전일까지의 누적)
+        //   미지정 시: 오늘(KST) 의 "다음 날" 을 cutoff → 오늘 포함된 항목까지 available
+        let cutoff;
+        if (opts.asofBefore && /^\d{4}-\d{2}-\d{2}$/.test(opts.asofBefore)) {
+            cutoff = opts.asofBefore;
+        } else {
+            // KST 오늘 + 1일 (= 내일) 을 cutoff 로 잡아 오늘까지 발생한 시차를 available 에 포함
+            const todayStr = getKSTTodayStr();
+            const d = new Date(todayStr + 'T00:00:00');
+            d.setDate(d.getDate() + 1);
+            cutoff = d.toISOString().slice(0, 10);
+        }
         const agg = await db.collection(COLLECTION_WORK_HOURS).aggregate([
             { $match: { manager_id: String(managerId) } },
             { $group: {
@@ -2702,20 +2716,21 @@ async function computeFlexBalance(managerId) {
                 total_flex_earned: { $sum: { $cond: [{ $gt: ['$flex_delta', 0] }, '$flex_delta', 0] } },
                 total_flex_used: { $sum: { $cond: [{ $lt: ['$flex_delta', 0] }, { $abs: '$flex_delta' }, 0] } },
                 net_flex_delta: { $sum: '$flex_delta' },
-                // 🆕 오늘까지 발생분 (work_date 없으면 과거로 간주해 available 포함)
-                available_delta: { $sum: { $cond: [{ $gt: ['$work_date', today] }, 0, '$flex_delta'] } },
-                pending_delta:   { $sum: { $cond: [{ $gt: ['$work_date', today] }, '$flex_delta', 0] } }
+                // 🆕 cutoff 미만 (< cutoff) 까지 발생분
+                available_delta: { $sum: { $cond: [{ $lt: ['$work_date', cutoff] }, '$flex_delta', 0] } },
+                pending_delta:   { $sum: { $cond: [{ $lt: ['$work_date', cutoff] }, 0, '$flex_delta'] } }
             }}
         ]).toArray();
         const r = agg[0] || {};
         const round = v => Math.round((v || 0) * 100) / 100;
         return {
-            balance_hours: round(r.net_flex_delta),          // 전체 잔여 (하위호환)
-            available_balance: round(r.available_delta),     // 🆕 오늘까지 발생 (사용 가능)
-            pending_balance: round(r.pending_delta),         // 🆕 미래 근무 발생 예정 (사용 불가)
+            balance_hours: round(r.net_flex_delta),
+            available_balance: round(r.available_delta),
+            pending_balance: round(r.pending_delta),
             total_work_hours: round(r.total_work_hours),
             total_flex_earned: round(r.total_flex_earned),
-            total_flex_used: round(r.total_flex_used)
+            total_flex_used: round(r.total_flex_used),
+            cutoff_used: cutoff
         };
     } catch (e) {
         return { balance_hours: 0, available_balance: 0, pending_balance: 0, total_work_hours: 0, total_flex_earned: 0, total_flex_used: 0 };
@@ -2724,9 +2739,11 @@ async function computeFlexBalance(managerId) {
 
 app.get('/api/work-hours/balance', async (req, res) => {
     try {
-        const { manager_id } = req.query;
+        const { manager_id, asof_before } = req.query;
         if (!manager_id) return res.status(400).json({ success: false, message: 'manager_id 필수' });
-        const balance = await computeFlexBalance(manager_id);
+        // 🆕 asof_before='YYYY-MM-DD' → 그 날짜 미만(< asof_before)까지 누적된 시차만 available
+        //    예) asof_before='2026-06-06' → 6/5 까지 발생한 시차만 사용 가능으로 산정
+        const balance = await computeFlexBalance(manager_id, asof_before ? { asofBefore: String(asof_before) } : undefined);
         res.json({ success: true, balance });
     } catch (e) {
         res.status(500).json({ success: false });
