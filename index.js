@@ -2339,10 +2339,21 @@ async function recomputeDailyFlex(manager_id, work_date) {
         : (manualBreakMin !== null ? manualBreakMin : getBreakMinutesForGrossHours(totalGross));
     const breakH = breakMin / 60;
     const totalNetWork = Math.max(0, totalGross - breakH);
+
+    // 🆕 그 날 반차(연차반차/대휴반차, 오전·오후)가 있으면 표준 근무를 4h 줄여서 비교
+    //    예) 오전 대휴반차 + 오후 4h 근무 → 표준 8h 가 아니라 4h(반차가 4h 커버) 기준
+    //         → 4h - 4h = 0 (시차 변동 없음). 표준 풀근무로 비교해 −4h 빚지던 오류 수정
+    const hasHalfLeave = dayEntries.some(e => {
+        const c = Array.isArray(e.categories) ? e.categories : (e.category ? [e.category] : []);
+        return (c.includes('ANNUAL_LEAVE') || c.includes('SUBSTITUTE_OFF'))
+            && (e.annual_leave_type === 'HALF_AM' || e.annual_leave_type === 'HALF_PM');
+    });
+    const effectiveStd = hasHalfLeave ? Math.max(0, stdHours - 4) : stdHours;
+
     // 🆕 표준 대비 차이 그대로 적용 — 초과근무는 +, 미달근무는 − 로 시차 잔여에 반영
     //    예) 5h 만 일하면 −3h 차감 (debt) → 추후 초과근무로 0 까지 회복
     //    일급제는 항상 0 (시차 미적용)
-    const rawDelta = totalNetWork - stdHours;
+    const rawDelta = totalNetWork - effectiveStd;
     const dayWorkDelta = (hasWork && !isDailyWage) ? rawDelta : 0;
 
     // 각 entry 별 분배 + flex_use 차감
