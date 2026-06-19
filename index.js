@@ -2718,7 +2718,14 @@ async function computeFlexBalance(managerId, options) {
                 net_flex_delta: { $sum: '$flex_delta' },
                 // 🆕 cutoff 미만 (< cutoff) 까지 발생분
                 available_delta: { $sum: { $cond: [{ $lt: ['$work_date', cutoff] }, '$flex_delta', 0] } },
-                pending_delta:   { $sum: { $cond: [{ $lt: ['$work_date', cutoff] }, 0, '$flex_delta'] } }
+                pending_delta:   { $sum: { $cond: [{ $lt: ['$work_date', cutoff] }, 0, '$flex_delta'] } },
+                // 🆕 미래(cutoff 이상) 분을 발생(+)과 사용(−)으로 분리
+                //   pending_earned: 미래 초과근무로 발생할 시차 (양수만 합산)
+                //   pending_used:   미래 시차 사용 예약 (음수만 합산, 음수 유지)
+                pending_earned: { $sum: { $cond: [
+                    { $and: [{ $gte: ['$work_date', cutoff] }, { $gt: ['$flex_delta', 0] }] }, '$flex_delta', 0 ] } },
+                pending_used:   { $sum: { $cond: [
+                    { $and: [{ $gte: ['$work_date', cutoff] }, { $lt: ['$flex_delta', 0] }] }, '$flex_delta', 0 ] } }
             }}
         ]).toArray();
         const r = agg[0] || {};
@@ -2727,6 +2734,8 @@ async function computeFlexBalance(managerId, options) {
             balance_hours: round(r.net_flex_delta),
             available_balance: round(r.available_delta),
             pending_balance: round(r.pending_delta),
+            pending_earned: round(r.pending_earned),   // 🆕 미래 발생(+)
+            pending_used: round(r.pending_used),       // 🆕 미래 사용(−)
             total_work_hours: round(r.total_work_hours),
             total_flex_earned: round(r.total_flex_earned),
             total_flex_used: round(r.total_flex_used),
