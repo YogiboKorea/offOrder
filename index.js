@@ -51,6 +51,10 @@ const COLLECTION_AUTH = "authSettings";
 const COLLECTION_COUPON_MAP = "couponProductMap";
 const COLLECTION_DELIVERIES = "deliveryShipments";  // 🚚 출하 매핑용
 const COLLECTION_WORK_HOURS = "workHours";          // 🕐 매니저 근무·시차 관리
+const COLLECTION_STOCK_SNAPSHOT = "stockDailySnapshot"; // 📦 일일 재고 스냅샷 (매일 00시 KST)
+
+// 📦 재고 데이터 원본 서버 (realtime) — 매일 스냅샷 시 여기서 /api/stock/전체 조회
+const REALTIME_URL = process.env.REALTIME_URL || 'https://port-0-realtime-lzgmwhc4d9883c97.sel4.cloudtype.app';
 
 // 🚚 배송완료 추정 일수 (출하 후 N일 경과 시 자동 '배송완료'로 표시)
 const DELIVERY_ESTIMATE_DAYS = 3;
@@ -137,6 +141,17 @@ async function startServer() {
             // 서버 시작 직후 한 번 즉시 실행 (혹시 다운타임 동안 쌓인 건 처리)
             performAutoRequeue();
         }, 5000);
+
+        // 📦 일일 재고 스냅샷 스케줄러 시작 (매일 KST 00:05)
+        startStockSnapshotCron();
+        // 서버 시작 시 오늘 스냅샷이 없으면 즉시 1회 생성 (다운타임 대비)
+        setTimeout(async () => {
+            try {
+                const today = getKSTTodayStr();
+                const exists = await db.collection(COLLECTION_STOCK_SNAPSHOT).findOne({ snapshot_date: today });
+                if (!exists) await takeStockSnapshot();
+            } catch (e) { console.error('재고 스냅샷 초기 점검 오류:', e.message); }
+        }, 8000);
 
     } catch (err) {
         console.error("🔥 Server Error:", err);
@@ -3092,8 +3107,113 @@ ${productListText}
         });
 
         res.json({ success: true, result: response.data });
-    } catch (error) { 
+    } catch (error) {
         console.error("🔥 비즈엠 알림톡 발송 에러:", error.response ? error.response.data : error.message);
-        res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.' }); 
+        res.status(500).json({ success: false, message: '알림톡 발송 중 서버 에러가 발생했습니다.' });
+    }
+});
+
+// ==========================================
+// [📦] 일일 재고 스냅샷 (매일 00시 KST 저장 + 일자별 엑셀 다운로드)
+// ==========================================
+
+// 🆕 현재 재고를 realtime 서버에서 조회해 그 날짜(KST)로 1건 upsert 저장
+async function takeStockSnapshot(forDate) {
+    const snapshotDate = forDate || getKSTTodayStr();   // 'YYYY-MM-DD'
+    try {
+        const res = await axios.get(`${REALTIME_URL}/api/stock/전체`, { timeout: 30000 });
+        const raw = Array.isArray(res.data) ? res.data : [];
+        // 필요한 필드만 정규화 저장 (category, code, name, spec, qty)
+        const items = raw.map(it => ({
+            category: String(it.category || ''),
+            code: String(it.code || ''),
+            name: String(it.name || ''),
+            spec: String(it.spec || ''),
+            qty: Number(it.qty || 0)
+        }));
+        await db.collection(COLLECTION_STOCK_SNAPSHOT).updateOne(
+            { snapshot_date: snapshotDate },
+            { $set: { snapshot_date: snapshotDate, items, item_count: items.length, updated_at: new Date() },
+              $setOnInsert: { created_at: new Date() } },
+            { upsert: true }
+        );
+        console.log(`📦 재고 스냅샷 저장: ${snapshotDate} (${items.length}건)`);
+        return { ok: true, date: snapshotDate, count: items.length };
+    } catch (e) {
+        console.error('🔥 재고 스냅샷 실패:', e.message);
+        return { ok: false, date: snapshotDate, error: e.message };
+    }
+}
+
+// 🆕 매일 KST 00:05 에 스냅샷 — 다음 자정까지 ms 계산 후 setTimeout → 이후 24h 간격
+function startStockSnapshotCron() {
+    function msUntilNextKST0005() {
+        // 현재 KST 시각
+        const nowKST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+        const next = new Date(nowKST);
+        next.setHours(0, 5, 0, 0);                 // 00:05
+        if (next <= nowKST) next.setDate(next.getDate() + 1);  // 이미 지났으면 내일
+        return next.getTime() - nowKST.getTime();
+    }
+    const delay = msUntilNextKST0005();
+    console.log(`📦 재고 스냅샷 예약: ${Math.round(delay/60000)}분 후 첫 실행`);
+    setTimeout(function run() {
+        takeStockSnapshot();
+        setInterval(takeStockSnapshot, 24 * 60 * 60 * 1000);  // 매 24시간
+    }, delay);
+}
+
+// 🆕 저장된 스냅샷 날짜 목록 (최신순)
+app.get('/api/stock/snapshot/dates', async (req, res) => {
+    try {
+        const rows = await db.collection(COLLECTION_STOCK_SNAPSHOT)
+            .find({}, { projection: { snapshot_date: 1, item_count: 1, updated_at: 1, _id: 0 } })
+            .sort({ snapshot_date: -1 }).toArray();
+        res.json({ success: true, dates: rows });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// 🆕 수동 스냅샷 실행 (오늘 또는 ?date=YYYY-MM-DD 지정) — 누락/테스트 보정용
+app.post('/api/stock/snapshot/run', async (req, res) => {
+    const date = (req.query.date || req.body?.date || '').trim();
+    if (date && !/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ success: false, message: 'date 형식 오류 (YYYY-MM-DD)' });
+    const r = await takeStockSnapshot(date || null);
+    res.json({ success: r.ok, ...r });
+});
+
+// 🆕 특정 일자 재고 스냅샷 엑셀 다운로드
+app.get('/api/stock/snapshot/download', async (req, res) => {
+    try {
+        const date = String(req.query.date || '').trim();
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return res.status(400).json({ success: false, message: 'date(YYYY-MM-DD) 필수' });
+        const doc = await db.collection(COLLECTION_STOCK_SNAPSHOT).findOne({ snapshot_date: date });
+        if (!doc) return res.status(404).json({ success: false, message: `${date} 스냅샷이 없습니다.` });
+
+        const ExcelJS = require('exceljs');
+        const wb = new ExcelJS.Workbook();
+        const ws = wb.addWorksheet(`재고_${date}`);
+        ws.columns = [
+            { header: '분류', key: 'category', width: 12 },
+            { header: '품목코드', key: 'code', width: 16 },
+            { header: '상품명', key: 'name', width: 40 },
+            { header: '규격/색상', key: 'spec', width: 20 },
+            { header: '재고수량', key: 'qty', width: 12 }
+        ];
+        // 헤더 스타일
+        ws.getRow(1).font = { bold: true };
+        ws.getRow(1).alignment = { vertical: 'middle', horizontal: 'center' };
+        (doc.items || []).forEach(it => ws.addRow(it));
+        ws.getColumn('qty').alignment = { horizontal: 'right' };
+
+        const fname = encodeURIComponent(`재고스냅샷_${date}.xlsx`);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        res.setHeader('Content-Disposition', `attachment; filename*=UTF-8''${fname}`);
+        await wb.xlsx.write(res);
+        res.end();
+    } catch (e) {
+        console.error('🔥 재고 스냅샷 다운로드 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
     }
 });
