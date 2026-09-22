@@ -149,6 +149,8 @@ async function startServer() {
 
         // 📦 일일 재고 스냅샷 스케줄러 시작 (매일 KST 00:05)
         startStockSnapshotCron();
+        // 🔄 출고내역 자동연동 스케줄러 시작 (평일 KST 18:00)
+        startCdapiSyncCron();
         // 서버 시작 시 오늘 스냅샷이 없으면 즉시 1회 생성 (다운타임 대비)
         setTimeout(async () => {
             try {
@@ -1768,6 +1770,38 @@ async function syncDeliveriesFromCdapi({ force = false } = {}) {
 async function trySyncDeliveriesFromCdapi() {
     try { await syncDeliveriesFromCdapi(); }
     catch (e) { console.error('⚠️ cdApi 출고내역 연동 실패:', e.message); }
+}
+
+// 다음 평일(월~금) KST 18:00 까지 남은 ms — 서버 시간대와 무관하게 계산
+function msUntilNextWeekdayKST1800(now = Date.now()) {
+    const KST = 9 * 3600000;
+    const k = new Date(now + KST);   // getUTC* 가 곧 한국 시각
+    for (let add = 0; add <= 7; add++) {
+        const target = Date.UTC(k.getUTCFullYear(), k.getUTCMonth(), k.getUTCDate() + add, 18, 0, 0) - KST;
+        const dow = new Date(target + KST).getUTCDay();   // 0=일 … 6=토
+        if (target > now && dow >= 1 && dow <= 5) return target - now;
+    }
+    return 24 * 3600000;
+}
+
+// 🔄 출고내역 자동연동 예약 — 평일 KST 18:00 (물류팀이 그 전에 배송조회 앱에 업로드한다)
+//    출하상황 화면을 열 때도 새 파일이 있으면 가져오지만, 아무도 안 열어도 매일 저녁엔 최신이 되게 한다
+function startCdapiSyncCron() {
+    if (!CDAPI_MONGODB_URI) return;
+    const schedule = () => {
+        const delay = msUntilNextWeekdayKST1800();
+        console.log(`🔄 출고내역 자동연동 예약: ${Math.round(delay / 60000)}분 후 (평일 18:00 KST)`);
+        setTimeout(async () => {
+            try {
+                const r = await syncDeliveriesFromCdapi({ force: true });
+                console.log(`🔄 [평일 18:00 자동연동] ${r.synced ? `${r.fileName} ${r.inserted}건 반영` : `변경 없음 (${r.reason})`}`);
+            } catch (e) {
+                console.error('⚠️ [평일 18:00 자동연동] 실패:', e.message);
+            }
+            schedule();
+        }, delay);
+    };
+    schedule();
 }
 
 // ==========================================
