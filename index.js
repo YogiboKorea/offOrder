@@ -59,6 +59,11 @@ const REALTIME_URL = process.env.REALTIME_URL || 'https://port-0-realtime-lzgmwh
 // 🚚 배송완료 추정 일수 (출하 후 N일 경과 시 자동 '배송완료'로 표시)
 const DELIVERY_ESTIMATE_DAYS = 3;
 
+// 🔄 출고내역 자동연동 — 물류팀이 배송조회 앱(cdApi)에 매일 올리는 파일을 출하상황 데이터로 가져온다
+//    cdApi 는 다른 클러스터(yogico)라 접속 주소를 따로 받는다. 비어 있으면 연동을 끄고 수동 업로드만 쓴다.
+const CDAPI_MONGODB_URI = process.env.CDAPI_MONGODB_URI || '';
+const CDAPI_DB_NAME = process.env.CDAPI_DB || 'cdapi';
+
 // 🕐 근무 관리 정책
 const WORK_STANDARD_HOURS  = 8;    // 일 표준 근무시간 (평일 기준, 호환용)
 const WORK_BREAK_MINUTES   = 60;   // 점심시간 자동 차감
@@ -1627,9 +1632,142 @@ function classifyShipDate(raw) {
 
     const d = new Date(s);
     if (!isNaN(d.getTime())) {
+        // 물류팀 파일엔 지정일 배송처럼 아직 오지 않은 날짜가 적힌 행이 있다 (운송장 없음) → 출고예정
+        if (kstDateStr(d) > kstDateStr(new Date())) return { status: 'SCHEDULED', shipDate: d, raw: s };
         return { status: 'SHIPPED', shipDate: d, raw: s };
     }
     return { status: 'OTHER', shipDate: null, raw: s };
+}
+
+// 한국 날짜 'YYYY-MM-DD' (서버 시간대와 무관)
+function kstDateStr(d) {
+    return new Date(new Date(d).getTime() + 9 * 3600000).toISOString().slice(0, 10);
+}
+
+// 출고내역 한 행(엑셀 헤더명 키) → deliveryShipments 문서. 매장·이름 없으면 null
+function buildDeliveryDoc(r, batchId, fileName, uploadedAt) {
+    const store = String(r['매장'] || '').trim();
+    const name = String(r['이름'] || '').trim();
+    if (!store || !name) return null;
+
+    const shipInfo = classifyShipDate(r['출하일자']);
+    const phone = String(r['연락처'] || '').trim();
+    return {
+        store_name: store,
+        store_name_norm: normalizeName(store),
+        tracking_no: String(r['운송장번호'] || '').trim(),
+        courier: String(r['택배사'] || '').trim(),
+        order_no: String(r['주문번호'] || '').trim(),
+        ship_date_raw: shipInfo.raw,
+        ship_date: shipInfo.shipDate,
+        ship_status: shipInfo.status,
+        customer_name: name,
+        customer_name_norm: normalizeName(name),
+        customer_phone: phone,
+        customer_phone_norm: normalizePhone(phone),  // 🆕 동명인 구분
+        product_text: String(r['품명'] || '').trim(),
+        batch_id: batchId,
+        source_file: fileName || null,
+        uploaded_at: uploadedAt
+    };
+}
+
+// ==========================================
+// 🔄 출고내역 자동연동 (cdApi adminSnapshot → deliveryShipments)
+// ==========================================
+let cdapiClientPromise = null;
+let cdapiSyncRunning = null;
+let cdapiLastCheck = 0;
+let cdapiLastError = null;
+const CDAPI_CHECK_INTERVAL_MS = 60 * 1000;
+
+async function getCdapiDb() {
+    if (!cdapiClientPromise) {
+        // 접속이 안 될 때 출하상황 화면이 30초씩 멈추지 않도록 짧게 끊는다
+        cdapiClientPromise = MongoClient.connect(CDAPI_MONGODB_URI, { serverSelectionTimeoutMS: 5000 })
+            .catch(e => { cdapiClientPromise = null; throw e; });
+    }
+    return (await cdapiClientPromise).db(CDAPI_DB_NAME);
+}
+
+/**
+ * 물류팀이 cdApi 에 새 파일을 올렸으면 출하 데이터를 그 파일로 교체한다.
+ * - 어드민에서 수동 업로드한 게 더 최근이면 건드리지 않는다 (다음 물류팀 업로드 때 교체됨)
+ * - 수동 정상처리(manually_verified) 표시는 운송장번호 기준으로 새 데이터에 옮겨 심는다
+ * - 새 데이터를 먼저 넣고 옛 데이터를 지운다 → 중간에 실패해도 화면이 비지 않는다
+ */
+async function syncDeliveriesFromCdapi({ force = false } = {}) {
+    if (!CDAPI_MONGODB_URI) return { synced: false, reason: 'disabled' };
+    if (cdapiSyncRunning) return cdapiSyncRunning;
+    if (!force && Date.now() - cdapiLastCheck < CDAPI_CHECK_INTERVAL_MS) return { synced: false, reason: 'throttled' };
+    cdapiLastCheck = Date.now();
+
+    cdapiSyncRunning = (async () => {
+        const snapCol = (await getCdapiDb()).collection('adminSnapshot');
+        const snapMeta = await snapCol.findOne({ _id: 'latest' }, { projection: { rows: 0 } });
+        if (!snapMeta || !snapMeta.uploadedAt) return { synced: false, reason: 'no-snapshot' };
+
+        const col = db.collection(COLLECTION_DELIVERIES);
+        const snapAt = new Date(snapMeta.uploadedAt);
+        const localMeta = await col.findOne({ _meta: 'last_upload' });
+        if (localMeta && localMeta.uploaded_at && new Date(localMeta.uploaded_at) >= snapAt) {
+            return { synced: false, reason: 'up-to-date' };
+        }
+
+        const snap = await snapCol.findOne({ _id: 'latest' });
+        const rows = Array.isArray(snap && snap.rows) ? snap.rows : [];
+        if (rows.length === 0) return { synced: false, reason: 'empty-snapshot' };
+
+        const batchId = `CDAPI_${snapAt.getTime()}`;
+        const fileName = snap.fileName || null;
+        const docs = [];
+        for (const r of rows) {
+            const doc = buildDeliveryDoc({
+                '매장': r.store, '운송장번호': r.invoice, '택배사': r.carrier, '주문번호': r.orderNo,
+                '출하일자': r.shipDate, '이름': r.name, '연락처': r.phone, '품명': r.product
+            }, batchId, fileName, snapAt);
+            if (doc) docs.push(doc);
+        }
+        if (docs.length === 0) return { synced: false, reason: 'no-valid-rows' };
+
+        const verified = await col.find(
+            { _meta: { $exists: false }, manually_verified: true },
+            { projection: { tracking_no: 1, verified_at: 1, verified_note: 1 } }
+        ).toArray();
+        const verifiedMap = new Map(verified.filter(v => v.tracking_no).map(v => [v.tracking_no, v]));
+        for (const d of docs) {
+            const v = d.tracking_no && verifiedMap.get(d.tracking_no);
+            if (v) Object.assign(d, { manually_verified: true, verified_at: v.verified_at, verified_note: v.verified_note || '' });
+        }
+
+        await col.deleteMany({ batch_id: batchId });   // 지난번에 넣다 만 같은 배치 정리
+        await col.insertMany(docs, { ordered: false });
+        const wiped = await col.deleteMany({ _meta: { $exists: false }, batch_id: { $ne: batchId } });
+        await col.updateOne(
+            { _meta: 'last_upload' },
+            { $set: { _meta: 'last_upload', batch_id: batchId, file_name: fileName, uploaded_at: snapAt, row_count: docs.length, source: 'cdapi', synced_at: new Date() } },
+            { upsert: true }
+        );
+        console.log(`[DELIVERY] 🔄 cdApi 자동연동: ${fileName} ${docs.length}건 반영 (이전 ${wiped.deletedCount || 0}건 교체, 정상처리 유지 ${verifiedMap.size}건)`);
+        return { synced: true, inserted: docs.length, wiped: wiped.deletedCount || 0, fileName, uploadedAt: snapAt };
+    })();
+
+    try {
+        const result = await cdapiSyncRunning;
+        cdapiLastError = null;
+        return result;
+    } catch (e) {
+        cdapiLastError = { message: e.message, at: new Date() };
+        throw e;
+    } finally {
+        cdapiSyncRunning = null;
+    }
+}
+
+// 조회 API 앞단에서 부르는 용도 — 연동이 실패해도 기존 데이터로 계속 보여준다
+async function trySyncDeliveriesFromCdapi() {
+    try { await syncDeliveriesFromCdapi(); }
+    catch (e) { console.error('⚠️ cdApi 출고내역 연동 실패:', e.message); }
 }
 
 // ==========================================
@@ -1860,31 +1998,9 @@ app.post('/api/deliveries/bulk-upload', async (req, res) => {
         const docs = [];
 
         for (const r of rows) {
-            const store = String(r['매장'] || '').trim();
-            const name = String(r['이름'] || '').trim();
-            if (!store || !name) { skipped++; continue; }
-
-            const shipInfo = classifyShipDate(r['출하일자']);
-            const phone = String(r['연락처'] || '').trim();
-
-            docs.push({
-                store_name: store,
-                store_name_norm: normalizeName(store),
-                tracking_no: String(r['운송장번호'] || '').trim(),
-                courier: String(r['택배사'] || '').trim(),
-                order_no: String(r['주문번호'] || '').trim(),
-                ship_date_raw: shipInfo.raw,
-                ship_date: shipInfo.shipDate,
-                ship_status: shipInfo.status,
-                customer_name: name,
-                customer_name_norm: normalizeName(name),
-                customer_phone: phone,
-                customer_phone_norm: normalizePhone(phone),  // 🆕 동명인 구분
-                product_text: String(r['품명'] || '').trim(),
-                batch_id: batchId,
-                source_file: fileName || null,
-                uploaded_at: uploadedAt
-            });
+            const doc = buildDeliveryDoc(r, batchId, fileName, uploadedAt);
+            if (!doc) { skipped++; continue; }
+            docs.push(doc);
         }
 
         if (docs.length > 0) {
@@ -1921,11 +2037,29 @@ app.post('/api/deliveries/bulk-upload', async (req, res) => {
 
 app.get('/api/deliveries/last-upload', async (req, res) => {
     try {
+        await trySyncDeliveriesFromCdapi();
         const meta = await db.collection(COLLECTION_DELIVERIES).findOne({ _meta: 'last_upload' });
         const total = await db.collection(COLLECTION_DELIVERIES).countDocuments({ _meta: { $exists: false } });
-        res.json({ success: true, data: meta || null, totalRecords: total });
+        res.json({
+            success: true, data: meta || null, totalRecords: total,
+            cdapi: { enabled: !!CDAPI_MONGODB_URI, error: cdapiLastError }
+        });
     } catch (e) {
         res.status(500).json({ success: false });
+    }
+});
+
+// 🔄 cdApi 출고내역 즉시 동기화 (어드민 '지금 가져오기' 버튼)
+app.post('/api/deliveries/sync-cdapi', async (req, res) => {
+    try {
+        if (!CDAPI_MONGODB_URI) {
+            return res.status(400).json({ success: false, message: '서버에 CDAPI_MONGODB_URI 환경변수가 없습니다.' });
+        }
+        const result = await syncDeliveriesFromCdapi({ force: true });
+        res.json({ success: true, ...result });
+    } catch (e) {
+        console.error('🔥 cdApi 동기화 오류:', e);
+        res.status(500).json({ success: false, message: e.message });
     }
 });
 
@@ -1979,6 +2113,8 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
     try {
         const { store_name, startDate, endDate, keyword, status } = req.query;
 
+        await trySyncDeliveriesFromCdapi();
+
         // 1) CONFIRMED 주문 조회 (등록 완료) — 픽업/매장직판 제외
         //    sales_type '0003' = 출고(픽업) — 출하 매핑 대상 아님
         //    sales_type '0001' = 출고(택배) — 매핑 대상
@@ -2024,6 +2160,12 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
         const allShipments = await db.collection(COLLECTION_DELIVERIES)
             .find({ _meta: { $exists: false } })
             .toArray();
+
+        // 적재 당시 '출고예정'이던 행도 그 날짜가 지났으면 출하로 본다 (주말 등 새 파일이 늦게 와도 맞게)
+        const todayKst = kstDateStr(new Date());
+        for (const s of allShipments) {
+            if (s.ship_status === 'SCHEDULED' && s.ship_date && kstDateStr(s.ship_date) <= todayKst) s.ship_status = 'SHIPPED';
+        }
 
         // 매장+고객명+전화번호 기준 인덱싱 (동명인 구분)
         // 전화번호가 양쪽 모두 있을 때만 strict 매칭, 한 쪽이라도 없으면 매장+이름으로 fallback
@@ -2078,6 +2220,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                 const allShipped = ships.every(s => s.ship_status === 'SHIPPED');
                 const anyHold    = ships.some(s => s.ship_status === 'HOLD');
                 const anyShipped = ships.some(s => s.ship_status === 'SHIPPED');
+                const anyScheduled = ships.some(s => s.ship_status === 'SCHEDULED');
 
                 // 가장 최근 출하일 계산 (가장 늦게 나간 화물 기준으로 배송완료 판정)
                 const shipDates = ships
@@ -2107,6 +2250,8 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                     shipStatus = 'PICKUP_INCLUDED';  // 운송장 없는 잘못된 출고 → 픽업 가능성
                 } else if (anyHold && !anyShipped) {
                     shipStatus = 'HOLD';             // 모두 출고보류
+                } else if (anyScheduled && !anyShipped) {
+                    shipStatus = 'SCHEDULED';        // 출고일은 잡혔지만 아직 안 나감 (지정일 배송 등)
                 } else if (allShipped && !hasMissing) {
                     // 모든 출하 완료 + 주문 완전 일치
                     if (daysSinceShipped !== null && daysSinceShipped >= DELIVERY_ESTIMATE_DAYS) {
@@ -2221,6 +2366,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
                 mismatched:      'MISMATCHED',       // 진짜 오배송 (운송장 있음)
                 pickup_included: 'PICKUP_INCLUDED',  // 픽업상품예상포함 (운송장 없음)
                 hold:            'HOLD',
+                scheduled:       'SCHEDULED',
                 partial:         'PARTIAL',
                 pending:         'PENDING',
                 not_shipped:     'NOT_SHIPPED'
@@ -2235,7 +2381,7 @@ app.get('/api/deliveries/shipping-status', async (req, res) => {
             const k = e.ship_status_overall.toLowerCase();
             acc[k] = (acc[k] || 0) + 1;
             return acc;
-        }, { total: 0, delivered: 0, shipped: 0, mismatched: 0, pickup_included: 0, hold: 0, partial: 0, pending: 0, not_shipped: 0 });
+        }, { total: 0, delivered: 0, shipped: 0, mismatched: 0, pickup_included: 0, hold: 0, scheduled: 0, partial: 0, pending: 0, not_shipped: 0 });
 
         res.json({
             success: true,
