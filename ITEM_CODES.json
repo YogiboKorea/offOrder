@@ -13463,9 +13463,8 @@
     "code": "J211717SPre+",
     "name": "줄라 미디 프리미엄 플러스 / ZOOLA MIDI PREMIUM PLUS",
     "spec": "마린 / Marine"
-  }
-  ,
-{
+  },
+  {
     "code": "R142069",
     "name": "콜렉션 러그 라지 / Collection Rug Large",
     "spec": "베를린 / Berlin"
@@ -13519,5 +13518,4220 @@
     "code": "R140092",
     "name": "콜렉션 러그 라운드 / Collection Rug Round",
     "spec": "헬싱키 / Helsinki"
+  },
+  {
+    "code": "000001",
+    "name": "Box Package - #1(박스 패키지 - #1)",
+    "spec": "650mm×650mm×1300mm"
+  },
+  {
+    "code": "000002",
+    "name": "Box Package - #2(박스 패키지 - #2)",
+    "spec": "650mm×650mm×1000mm"
+  },
+  {
+    "code": "000003",
+    "name": "Box Package - #3(박스 패키지 - #3)",
+    "spec": "650mm×650mm×650mm"
+  },
+  {
+    "code": "000004",
+    "name": "Box Package - #4(박스 패키지 - #4)",
+    "spec": "650mm×650mm×450mm"
+  },
+  {
+    "code": "00003",
+    "name": "Yogibo Lift 2.0",
+    "spec": ""
+  },
+  {
+    "code": "00004",
+    "name": "풀장 커버 교환",
+    "spec": ""
+  },
+  {
+    "code": "00005",
+    "name": "Calm blanket",
+    "spec": ""
+  },
+  {
+    "code": "130204",
+    "name": "냅 엑스 / NAP X",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "130217",
+    "name": "냅 엑스 / NAP X",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "132956SHPre+",
+    "name": "디즈니 미키 서포트 프리미엄 플러스(EPP) / DISNEY MICKEY Support Premium Plus(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "200101SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "200103SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "200104SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "200105SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "200106SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "200107SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "200108SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "200109SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "200110SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "200111SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "딥 블랙 / Deep Black"
+  },
+  {
+    "code": "200112SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "200113SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "200114SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "200116SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "200117SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "200118SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "200119SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "뉴트럴 / Neutral"
+  },
+  {
+    "code": "200120SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "레인보우 / Rainbow"
+  },
+  {
+    "code": "200121SHPre+",
+    "name": "스타워즈 맥스 프리미엄 플러스(EPP) / STAR WARS™ Max Premium Plus(EPP)",
+    "spec": "제국군 / Empire"
+  },
+  {
+    "code": "200122SHPre+",
+    "name": "스타워즈 맥스 프리미엄 플러스(EPP) / STAR WARS™ Max Premium Plus(EPP)",
+    "spec": "반란군 / Rebel"
+  },
+  {
+    "code": "200123SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "200124SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "200125SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "200126SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "200127SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "200128SHPre+",
+    "name": "맥스 프리미엄 플러스(EPP) / Max Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "200140SHPre+",
+    "name": "럭스 맥스 프리미엄 플러스(EPP) / Luxe Max Premium Plus(EPP)",
+    "spec": "스노우 / Snow"
+  },
+  {
+    "code": "200141SHPre+",
+    "name": "럭스 맥스 프리미엄 플러스(EPP) / Luxe Max Premium Plus(EPP)",
+    "spec": "블랙펄 / Black Pearl"
+  },
+  {
+    "code": "200201SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "200203SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "200204SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "200205SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "200206SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "200207SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "200208SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "200209SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "200210SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "200211SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "딥 블랙 / Deep Black"
+  },
+  {
+    "code": "200212SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "200213SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "200214SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "200216SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "200217SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "200218SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "200223SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "200224SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "200225SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "200226SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "200227SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "200228SHPre+",
+    "name": "미니 프리미엄 플러스(EPP) / Mini Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "200303SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "200304SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "200305SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "200306SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "200307SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "200308SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "200309SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "200310SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "200312SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "200313SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "200314SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "200317SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "200318SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "200321SHPre+",
+    "name": "스타워즈 서포트 프리미엄 플러스(EPP) / STAR WARS™ Support Premium Plus(EPP)",
+    "spec": "제국군 / Empire"
+  },
+  {
+    "code": "200322SHPre+",
+    "name": "스타워즈 서포트 프리미엄 플러스(EPP) / STAR WARS™ Support Premium Plus(EPP)",
+    "spec": "반란군 / Rebel"
+  },
+  {
+    "code": "200323SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "200324SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "200325SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "200326SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "200327SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "200328SHPre+",
+    "name": "서포트 프리미엄 플러스(EPP) / Support Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "200334SHPre+",
+    "name": "스타워즈 서포트 프리미엄 플러스(EPP) / STAR WARS™ Support Premium Plus(EPP)",
+    "spec": "츄바카 / Chewbacca"
+  },
+  {
+    "code": "200340SHPre+",
+    "name": "럭스 서포트 프리미엄 플러스(EPP) / Luxe Support Premium Plus(EPP)",
+    "spec": "스노우 / Snow"
+  },
+  {
+    "code": "200341SHPre+",
+    "name": "럭스 서포트 프리미엄 플러스(EPP) / Luxe Support Premium Plus(EPP)",
+    "spec": "블랙펄 / Black Pearl"
+  },
+  {
+    "code": "200393SHPre+",
+    "name": "카카오프렌즈 서포트 프리미엄 플러스(EPP) / Kakao Friends Support Premium Plus(EPP)",
+    "spec": "라이언 / Ryan"
+  },
+  {
+    "code": "200394SHPre+",
+    "name": "카카오프렌즈 서포트 프리미엄 플러스(EPP) / Kakao Friends Support Premium Plus(EPP)",
+    "spec": "어피치 / Apeach"
+  },
+  {
+    "code": "200401SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "200403SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "200404SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "200405SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "200406SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "200407SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "200408SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "200409SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "200410SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "200412SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "200413SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "200414SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "200416SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "200417SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "200418SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "200419SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "뉴트럴 / Neutral"
+  },
+  {
+    "code": "200420SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "레인보우 / Rainbow"
+  },
+  {
+    "code": "200423SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "200424SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "200425SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "200426SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "200427SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "200428SHPre+",
+    "name": "롤 맥스 프리미엄 플러스(EPP) / Roll Max Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "200440SHPre+",
+    "name": "럭스 롤 맥스 프리미엄 플러스(EPP) / Luxe Roll Max Premium Plus(EPP)",
+    "spec": "스노우 / Snow"
+  },
+  {
+    "code": "200441SHPre+",
+    "name": "럭스 롤 맥스 프리미엄 플러스(EPP) / Luxe Roll Max Premium Plus(EPP)",
+    "spec": "블랙펄 / Black Pearl"
+  },
+  {
+    "code": "200601SHPre+",
+    "name": "카터필러 롤 맥스 프리미엄 플러스(EPP) / Caterpillar Roll Max Premium Plus(EPP)",
+    "spec": "레인보우 / Rainbow"
+  },
+  {
+    "code": "200602SHPre+",
+    "name": "카터필러 롤 맥스 프리미엄 플러스(EPP) / Caterpillar Roll Max Premium Plus(EPP)",
+    "spec": "뉴트럴 / Neutral"
+  },
+  {
+    "code": "200703NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "200704NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "200705NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "200706NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "200707NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "200708NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "200709NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "200710NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "200712NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "200713NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "200714NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "200717NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "200718NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "200723NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "200724NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "200725NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "200726NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "200727NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "200728NSHPre+",
+    "name": "미디 프리미엄 플러스(EPP) / Midi Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "200793NSHPre+",
+    "name": "카카오프렌즈 카터필러 롤 미디 프리미엄 플러스(EPP) / Kakao Friends Caterpillar Roll Midi Premium Plus(EPP)",
+    "spec": "라이언 / Ryan"
+  },
+  {
+    "code": "200903SHPre+",
+    "name": "오토만 프리미엄 플러스(EPP) / Ottoman Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "200904SHPre+",
+    "name": "오토만 프리미엄 플러스(EPP) / Ottoman Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "200908SHPre+",
+    "name": "오토만 프리미엄 플러스(EPP) / Ottoman Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "200912SHPre+",
+    "name": "오토만 프리미엄 플러스(EPP) / Ottoman Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "200921SHPre+",
+    "name": "스타워즈 오토만 프리미엄 플러스(EPP) / STAR WARS™ Ottoman Premium Plus(EPP)",
+    "spec": "제국군 / Empire"
+  },
+  {
+    "code": "200922SHPre+",
+    "name": "스타워즈 오토만 프리미엄 플러스(EPP) / STAR WARS™ Ottoman Premium Plus(EPP)",
+    "spec": "반란군 / Rebel"
+  },
+  {
+    "code": "200940SHPre+",
+    "name": "럭스 오토만 프리미엄 플러스(EPP) / Luxe Ottoman Premium Plus(EPP)",
+    "spec": "스노우 / Snow"
+  },
+  {
+    "code": "200941SHPre+",
+    "name": "럭스 오토만 프리미엄 플러스(EPP) / Luxe Ottoman Premium Plus(EPP)",
+    "spec": "블랙펄 / Black Pearl"
+  },
+  {
+    "code": "201103SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "201104SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "201105SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "201106SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "201107SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "201108SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "201109SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "201110SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "201112SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "201113SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "201114SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "201116SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "201117SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "201118SHPre+",
+    "name": "더블 프리미엄 플러스(EPP) / Double Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "201301SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "201303SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "201304SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "201305SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "201306SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "201307SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "201308SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "201309SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "201310SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "201312SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "201313SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "201314SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "201316SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "201317SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "201318SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "201319SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "뉴트럴 / Neutral"
+  },
+  {
+    "code": "201320SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "레인보우 / Rainbow"
+  },
+  {
+    "code": "201321SHPre+",
+    "name": "스타워즈 슬림 프리미엄 플러스(EPP) / STAR WARS™ Slim Premium Plus(EPP)",
+    "spec": "제국군 / Empire"
+  },
+  {
+    "code": "201322SHPre+",
+    "name": "스타워즈 슬림 프리미엄 플러스(EPP) / STAR WARS™ Slim Premium Plus(EPP)",
+    "spec": "반란군 / Rebel"
+  },
+  {
+    "code": "201323SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "201324SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "201325SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "201326SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "201327SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "201328SHPre+",
+    "name": "슬림 프리미엄 플러스(EPP) / Slim Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "201340SHPre+",
+    "name": "럭스 슬림 프리미엄 플러스(EPP) / Luxe Slim Premium Plus(EPP)",
+    "spec": "스노우 / Snow"
+  },
+  {
+    "code": "201341SHPre+",
+    "name": "럭스 슬림 프리미엄 플러스(EPP) / Luxe Slim Premium Plus(EPP)",
+    "spec": "블랙펄 / Black Pearl"
+  },
+  {
+    "code": "201393SHPre+",
+    "name": "카카오프렌즈 슬림 프리미엄 플러스(EPP) / Kakao Friends Slim Premium Plus(EPP)",
+    "spec": "라이언 / Ryan"
+  },
+  {
+    "code": "201394SHPre+",
+    "name": "카카오프렌즈 슬림 프리미엄 플러스(EPP) / Kakao Friends Slim Premium Plus(EPP)",
+    "spec": "어피치 / Apeach"
+  },
+  {
+    "code": "201401SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "201403SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "201404SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "201405SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "201406SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "201407SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "201408SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "201409SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "201410SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "201412SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "201413SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "201414SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "201416SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "201417SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "201418SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "201419SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "뉴트럴 / Neutral"
+  },
+  {
+    "code": "201420SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "레인보우 / Rainbow"
+  },
+  {
+    "code": "201421SHPre+",
+    "name": "스타워즈 라운저 프리미엄 플러스(EPP) / STAR WARS™ Lounger Premium Plus(EPP)",
+    "spec": "제국군 / Empire"
+  },
+  {
+    "code": "201422SHPre+",
+    "name": "스타워즈 라운저 프리미엄 플러스(EPP) / STAR WARS™ Lounger Premium Plus(EPP)",
+    "spec": "반란군 / Rebel"
+  },
+  {
+    "code": "201423SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "201424SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "201425SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "201426SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "201427SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "201428SHPre+",
+    "name": "라운저 프리미엄 플러스(EPP) / Lounger Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "201440SHPre+",
+    "name": "럭스 라운저 프리미엄 플러스(EPP) / Luxe Lounger Premium Plus(EPP)",
+    "spec": "스노우 / Snow"
+  },
+  {
+    "code": "201441SHPre+",
+    "name": "럭스 라운저 프리미엄 플러스(EPP) / Luxe Lounger Premium Plus(EPP)",
+    "spec": "블랙펄 / Black Pearl"
+  },
+  {
+    "code": "201503SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "201504SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "201505SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "201506SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "201507SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "201508SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "201509SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "201510SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "201512SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "201513SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "201514SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "201516SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "201517SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "201518SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "201519SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "뉴트럴 / Neutral"
+  },
+  {
+    "code": "201520SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "레인보우 / Rainbow"
+  },
+  {
+    "code": "201521SHPre+",
+    "name": "스타워즈 드롭 프리미엄 플러스(EPP) / STAR WARS™ DROP Premium Plus(EPP)",
+    "spec": "제국군 / Empire"
+  },
+  {
+    "code": "201522SHPre+",
+    "name": "스타워즈 드롭 프리미엄 플러스(EPP) / STAR WARS™ DROP Premium Plus(EPP)",
+    "spec": "반란군 / Rebel"
+  },
+  {
+    "code": "201523SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "201524SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "201525SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "201526SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "201527SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "201528SHPre+",
+    "name": "드롭 프리미엄 플러스(EPP) / DROP Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "201593SHPre+",
+    "name": "카카오프렌즈 드롭 프리미엄 플러스(EPP) / Kakao Friends DROP Premium Plus(EPP)",
+    "spec": "라이언 / Ryan"
+  },
+  {
+    "code": "201594SHPre+",
+    "name": "카카오프렌즈 드롭 프리미엄 플러스(EPP) / Kakao Friends DROP Premium Plus(EPP)",
+    "spec": "어피치 / Apeach"
+  },
+  {
+    "code": "201595SHPre+",
+    "name": "카카오프렌즈 드롭 프리미엄 플러스(EPP) / Kakao Friends DROP Premium Plus(EPP)",
+    "spec": "네오 / Neo"
+  },
+  {
+    "code": "201603SHPre+",
+    "name": "버블 프리미엄 플러스(EPP) / BUBBLE Premium Plus(EPP)",
+    "spec": "네이비 블루, 체리 레드 / Navy Blue, Cherry Red"
+  },
+  {
+    "code": "201604SHPre+",
+    "name": "버블 프리미엄 플러스(EPP) / BUBBLE Premium Plus(EPP)",
+    "spec": "아쿠아 블루, 스위트 오렌지 / Aqua Blue, Sweet Orange"
+  },
+  {
+    "code": "201610SHPre+",
+    "name": "버블 프리미엄 플러스(EPP) / BUBBLE Premium Plus(EPP)",
+    "spec": "딥 퍼플, 올리브 그린 / Deep Purple, Olive Green"
+  },
+  {
+    "code": "201612SHPre+",
+    "name": "버블 프리미엄 플러스(EPP) / BUBBLE Premium Plus(EPP)",
+    "spec": "다크 그레이, 라이트 그레이 / Dark Grey, Light Grey"
+  },
+  {
+    "code": "201701SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "201703SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "201704SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "201705SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "201706SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "201707SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "201708SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "201709SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "201710SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "201712SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "201713SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "201714SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "201717SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "201718SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "201723SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "201724SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "201725SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "201726SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "201727SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "201728SHPre+",
+    "name": "피라미드 프리미엄 플러스(EPP) / Pyramid Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "201793SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "라이언 / Ryan"
+  },
+  {
+    "code": "201794SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "어피치 / Apeach"
+  },
+  {
+    "code": "201795SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "네오 / Neo"
+  },
+  {
+    "code": "201796SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "제이지 / Jay-G"
+  },
+  {
+    "code": "201797SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "무지-콘 / Muzi-Con"
+  },
+  {
+    "code": "201798SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "튜브 / Tube"
+  },
+  {
+    "code": "201799SHPre+",
+    "name": "카카오프렌즈 피라미드 프리미엄 플러스(EPP) / Kakao Friends Pyramid Premium Plus(EPP)",
+    "spec": "프로도 / Prodo"
+  },
+  {
+    "code": "201901SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "슈가 브라운 / Sugar Brown"
+  },
+  {
+    "code": "201903SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "201904SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "201905SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "201906SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "201907SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "체리 레드 / Cherry Red"
+  },
+  {
+    "code": "201908SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "201909SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "와인 버건디 / Wine Burgundy"
+  },
+  {
+    "code": "201910SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "딥 퍼플 / Deep Purple"
+  },
+  {
+    "code": "201912SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "201913SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "201914SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "초코 브라운 / Choco Brown"
+  },
+  {
+    "code": "201916SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "셀틱 그린 / Celtic Green"
+  },
+  {
+    "code": "201917SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "브라이트 퍼플 / Bright Purple"
+  },
+  {
+    "code": "201918SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "브라이트 옐로우 / Bright Yellow"
+  },
+  {
+    "code": "201923SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "파스텔 블루 / Pastel Blue"
+  },
+  {
+    "code": "201924SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "프레시 민트 / Fresh Mint"
+  },
+  {
+    "code": "201925SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "리빙 코럴 / Living Coral"
+  },
+  {
+    "code": "201926SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "아보카도 그린 / Avocado Green"
+  },
+  {
+    "code": "201927SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "블라썸 핑크 / Blossom Pink"
+  },
+  {
+    "code": "201928SHPre+",
+    "name": "팟 프리미엄 플러스(EPP) / Pod Premium Plus(EPP)",
+    "spec": "라벤더 퍼플 / Lavender Purple"
+  },
+  {
+    "code": "202003SHPre+",
+    "name": "프라임 프리미엄 플러스(EPP) / Prime Premium Plus(EPP)",
+    "spec": "네이비 블루 / Navy Blue"
+  },
+  {
+    "code": "202008SHPre+",
+    "name": "프라임 프리미엄 플러스(EPP) / Prime Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "202012SHPre+",
+    "name": "프라임 프리미엄 플러스(EPP) / Prime Premium Plus(EPP)",
+    "spec": "다크 그레이 / Dark Grey"
+  },
+  {
+    "code": "202013SHPre+",
+    "name": "프라임 프리미엄 플러스(EPP) / Prime Premium Plus(EPP)",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "202156SHPre+",
+    "name": "디즈니 버블 프리미엄 플러스(EPP) / Dinsey Bubble Premium Plus(EPP)",
+    "spec": "미키 / Mickey"
+  },
+  {
+    "code": "202157SHPre+",
+    "name": "디즈니 버블 프리미엄 플러스(EPP) / Dinsey Bubble Premium Plus(EPP)",
+    "spec": "미니 / Minnie"
+  },
+  {
+    "code": "211103SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "211104SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "211106SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "211108SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "211112SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "211113SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "211115SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "썸머 / Summer"
+  },
+  {
+    "code": "211116SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "다이아몬드 / Diamond"
+  },
+  {
+    "code": "211117SHPre+",
+    "name": "줄라 맥스 프리미엄 플러스(EPP) / Zoola Max Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "211203SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "211204SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "211206SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "211208SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "211212SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "211213SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "211215SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "썸머 / Summer"
+  },
+  {
+    "code": "211216SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "다이아몬드 / Diamond"
+  },
+  {
+    "code": "211217SHPre+",
+    "name": "줄라 미니 프리미엄 플러스(EPP) / Zoola Mini Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "211303SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "211304SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "211306SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "211308SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "211312SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "211313SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "211315SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "썸머 / Summer"
+  },
+  {
+    "code": "211316SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "다이아몬드 / Diamond"
+  },
+  {
+    "code": "211317SHPre+",
+    "name": "줄라 서포트 프리미엄 플러스(EPP) / Zoola Support Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "211703SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "211704SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "211706SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "211708SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "211712SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "211715SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "썸머 / Summer"
+  },
+  {
+    "code": "211717SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "211903SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "211904SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "211906SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "211908SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "211912SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "211913SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "211915SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "썸머 / Summer"
+  },
+  {
+    "code": "211916SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "다이아몬드 / Diamond"
+  },
+  {
+    "code": "211917SHPre+",
+    "name": "줄라 팟 프리미엄 플러스(EPP) / Zoola Pod Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "212303SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "212304SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "212306SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "212308SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "212312SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "212313SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "212317SHPre+",
+    "name": "줄라 슬림 프리미엄 플러스(EPP) / Zoola Slim Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "212403SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "212404SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "212406SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "212408SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "212412SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "212413SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "212417SHPre+",
+    "name": "줄라 라운저 프리미엄 플러스(EPP) / Zoola Lounger Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "212503SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "212504SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "212506SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "212508SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "212512SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "212513SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "212517SHPre+",
+    "name": "줄라 드롭 프리미엄 플러스(EPP) / Zoola DROP Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "212713SHPre+",
+    "name": "줄라 피라미드 프리미엄 플러스(EPP) / Zoola Pyramid Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "221413C",
+    "name": "슬리피보 커버/파우치 없음 / SLEEPYBO COVER",
+    "spec": "라이트 그레이 / Light Grey"
+  },
+  {
+    "code": "231304SHPre+",
+    "name": "허기보 프리미엄 플러스(EPP) / HUGIBO Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "231305SHPre+",
+    "name": "허기보 프리미엄 플러스(EPP) / HUGIBO Premium Plus(EPP)",
+    "spec": "로즈 핑크 / Rose Pink"
+  },
+  {
+    "code": "231308SHPre+",
+    "name": "허기보 프리미엄 플러스(EPP) / HUGIBO Premium Plus(EPP)",
+    "spec": "올리브 그린 / Olive Green"
+  },
+  {
+    "code": "231356SHPre+",
+    "name": "디즈니 허거 프리미엄 플러스(EPP) / Disney Hugger Premium Plus(EPP)",
+    "spec": "미키 / Mickey"
+  },
+  {
+    "code": "231357SHPre+",
+    "name": "디즈니 허거 프리미엄 플러스(EPP) / Disney Hugger Premium Plus(EPP)",
+    "spec": "미니 / Minnie"
+  },
+  {
+    "code": "231358SHPre+",
+    "name": "디즈니 허거 프리미엄 플러스(EPP) / Disney Hugger Premium Plus(EPP)",
+    "spec": "도날드 / Donald"
+  },
+  {
+    "code": "231365SHPre+",
+    "name": "토이스토리 허거 프리미엄 플러스(EPP) / Toy Story Premium Plus(EPP)",
+    "spec": "버즈 / Buzz"
+  },
+  {
+    "code": "231366SHPre+",
+    "name": "토이스토리 허거 프리미엄 플러스(EPP) / Toy Story Premium Plus(EPP)",
+    "spec": "우디 / Woody"
+  },
+  {
+    "code": "231367SHPre+",
+    "name": "토이스토리 허거 프리미엄 플러스(EPP) / Toy Story Premium Plus(EPP)",
+    "spec": "알린 / Alien"
+  },
+  {
+    "code": "231801SHPre+",
+    "name": "롤 메이트 프리미엄 플러스(EPP) / Roll Mate Premium Plus(EPP)",
+    "spec": "판다 / Panda"
+  },
+  {
+    "code": "231802SHPre+",
+    "name": "롤 메이트 프리미엄 플러스(EPP) / Roll Mate Premium Plus(EPP)",
+    "spec": "도그 / Dog"
+  },
+  {
+    "code": "231803SHPre+",
+    "name": "롤 메이트 프리미엄 플러스(EPP) / Roll Mate Premium Plus(EPP)",
+    "spec": "팍스 / Fox"
+  },
+  {
+    "code": "231817SHPre+",
+    "name": "롤 메이트 프리미엄 플러스(EPP) / Roll Mate Premium Plus(EPP)",
+    "spec": "유니콘 / Unicorn"
+  },
+  {
+    "code": "231827SHPre+",
+    "name": "롤 메이트 프리미엄 플러스(EPP) / Roll Mate Premium Plus(EPP)",
+    "spec": "앨리게이터 / Alligator"
+  },
+  {
+    "code": "231898SHPre+",
+    "name": "롤 메이트 프리미엄 플러스(EPP) / Roll Mate Premium Plus(EPP)",
+    "spec": "우파루파 / Axolotl"
+  },
+  {
+    "code": "260204SHPre+",
+    "name": "롤 미디 프리미엄 플러스(EPP) / Roll Midi Premium Plus(EPP)",
+    "spec": "아쿠아 블루 / Aqua Blue"
+  },
+  {
+    "code": "260206SHPre+",
+    "name": "롤 미디 프리미엄 플러스(EPP) / Roll Midi Premium Plus(EPP)",
+    "spec": "스위트 오렌지 / Sweet Orange"
+  },
+  {
+    "code": "BXYB02",
+    "name": "(부)박스 #2",
+    "spec": "650×650×1000"
+  },
+  {
+    "code": "BXYB03",
+    "name": "(부)박스 #1",
+    "spec": "650×650×1300"
+  },
+  {
+    "code": "BXYM01",
+    "name": "(부)박스 #3",
+    "spec": "650×650×650"
+  },
+  {
+    "code": "BXYM011",
+    "name": "(부)박스 #8 Pyramid",
+    "spec": "550×550×650"
+  },
+  {
+    "code": "BXYM02",
+    "name": "(부)박스 #4",
+    "spec": "650×650×400"
+  },
+  {
+    "code": "BXYMS01",
+    "name": "(부)박스 #M1(모듀소파)",
+    "spec": "900×900×600"
+  },
+  {
+    "code": "BXYS01",
+    "name": "(부)박스 #5",
+    "spec": "500×500×250"
+  },
+  {
+    "code": "BXYS02",
+    "name": "(부)박스 #6",
+    "spec": "350×250×250"
+  },
+  {
+    "code": "BXYS03",
+    "name": "(부)박스 #7",
+    "spec": "350×350×650"
+  },
+  {
+    "code": "BXYS04",
+    "name": "(부)박스 #9",
+    "spec": "290×250×100"
+  },
+  {
+    "code": "BXYSB01",
+    "name": "(부)샐리필박스 #1(마인드 필로우)",
+    "spec": "500 X 500 X 250"
+  },
+  {
+    "code": "BXYSB02",
+    "name": "(부)샐리필박스 #2(알로 소파)",
+    "spec": "800 x 800 x 600"
+  },
+  {
+    "code": "BXYSB03",
+    "name": "(부)샐리필박스 #3(마인드 바디필로우)",
+    "spec": "250 x 250 x 800"
+  },
+  {
+    "code": "BubbleBag",
+    "name": "에어캡(트레이보/접착식)",
+    "spec": "0.04 48×61+4"
+  },
+  {
+    "code": "BubbleWrap6",
+    "name": "에어캡6",
+    "spec": "0.04 50×50 소"
+  },
+  {
+    "code": "BubbleWrap7",
+    "name": "에어캡7",
+    "spec": "0.04 100×50 대"
+  },
+  {
+    "code": "CAP001",
+    "name": "토출캡-TOP",
+    "spec": ""
+  },
+  {
+    "code": "CAP002",
+    "name": "토출캡-MIDDLE",
+    "spec": ""
+  },
+  {
+    "code": "CAP003",
+    "name": "토출캡-BOTTOM",
+    "spec": ""
+  },
+  {
+    "code": "CGV01",
+    "name": "CGV_춘천_요기보관_수익쉐어",
+    "spec": ""
+  },
+  {
+    "code": "CGV02",
+    "name": "CGV_연남_요기보관_수익쉐어",
+    "spec": ""
+  },
+  {
+    "code": "CS0006",
+    "name": "리플렛",
+    "spec": "A5-아트지 백색 300G/240×120"
+  },
+  {
+    "code": "Copper",
+    "name": "동판",
+    "spec": ""
+  },
+  {
+    "code": "DC_B2B",
+    "name": "할인",
+    "spec": ""
+  },
+  {
+    "code": "DC_Coupon00",
+    "name": "스크래치 복권",
+    "spec": ""
+  },
+  {
+    "code": "DC_Rolldot_Gwanggyo",
+    "name": "[제이드VIP]롤 닷 할인",
+    "spec": ""
+  },
+  {
+    "code": "DC_VOUCHER001",
+    "name": "요기보 상품권 (고객 사용)",
+    "spec": "10,000원"
+  },
+  {
+    "code": "DC_VOUCHER002",
+    "name": "요기보 상품권 (고객 사용)",
+    "spec": "20,000원"
+  },
+  {
+    "code": "DC_VOUCHER003",
+    "name": "요기보 상품권 (고객 사용)",
+    "spec": "30,000원"
+  },
+  {
+    "code": "DC_VOUCHER005",
+    "name": "요기보 상품권 (고객 사용)",
+    "spec": "50,000원"
+  },
+  {
+    "code": "DC_VOUCHER007",
+    "name": "요기보 상품권 (고객 사용)",
+    "spec": "70,000원"
+  },
+  {
+    "code": "DC_VOUCHER008",
+    "name": "[네이버리뷰] 케어15%쿠폰",
+    "spec": ""
+  },
+  {
+    "code": "DC_VOUCHER101",
+    "name": "요기보 상품권 (배포용)",
+    "spec": "10,000원"
+  },
+  {
+    "code": "DC_VOUCHER102",
+    "name": "요기보 상품권 (배포용)",
+    "spec": "20,000원"
+  },
+  {
+    "code": "DC_VOUCHER103",
+    "name": "요기보 상품권 (배포용)",
+    "spec": "30,000원"
+  },
+  {
+    "code": "DC_VOUCHER107",
+    "name": "요기보 상품권 (배포용)",
+    "spec": "70,000원"
+  },
+  {
+    "code": "DC_hm01",
+    "name": "하이트만 센서티브 린스",
+    "spec": "1250㎖"
+  },
+  {
+    "code": "DC_hm02",
+    "name": "하이트만 스프레이",
+    "spec": "250㎖"
+  },
+  {
+    "code": "EPP001",
+    "name": "EPP(원재료)",
+    "spec": "1.0kg"
+  },
+  {
+    "code": "EPPHB001",
+    "name": "맥스 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB002",
+    "name": "미디 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB003",
+    "name": "팟 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB004",
+    "name": "슬림 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB004Z",
+    "name": "줄라 슬림 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB005",
+    "name": "허기보 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB006",
+    "name": "프라임 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB007",
+    "name": "미니 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB008",
+    "name": "드롭 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB009",
+    "name": "라운저 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB009Z",
+    "name": "줄라 라운저 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB010",
+    "name": "버블 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB011",
+    "name": "피라미드 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB011Z",
+    "name": "줄라 피라미드 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB012",
+    "name": "롤 맥스 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB013",
+    "name": "디즈니 버블 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB014",
+    "name": "허거 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB015",
+    "name": "서포트 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB016",
+    "name": "카터필러 롤 맥스 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB017",
+    "name": "오토만 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB018",
+    "name": "미키 서포트 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB019",
+    "name": "카터필러 롤 미디 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB020",
+    "name": "롤 메이트 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPHB021",
+    "name": "롤 미니 프리미엄 플러스 이너(EPP)",
+    "spec": ""
+  },
+  {
+    "code": "EPPPILL03",
+    "name": "리필 비즈 프리미엄(EPP) / Refill Beads Premium(EPP)",
+    "spec": "0.3KG"
+  },
+  {
+    "code": "EPPPILL05",
+    "name": "리필 비즈 프리미엄(EPP) / Refill Beads Premium(EPP)",
+    "spec": "0.5KG"
+  },
+  {
+    "code": "EPS001",
+    "name": "EPS(원재료)",
+    "spec": "1.0kg"
+  },
+  {
+    "code": "FG001",
+    "name": "굿즈",
+    "spec": ""
+  },
+  {
+    "code": "GIFT000",
+    "name": "G_strap",
+    "spec": "손잡이 상,하"
+  },
+  {
+    "code": "GIFT001",
+    "name": "G_Box",
+    "spec": ""
+  },
+  {
+    "code": "GIFT01",
+    "name": "선물세트박스",
+    "spec": "大"
+  },
+  {
+    "code": "GIFT02",
+    "name": "선물세트박스",
+    "spec": "小"
+  },
+  {
+    "code": "GIFT03",
+    "name": "선물포장",
+    "spec": "메이트"
+  },
+  {
+    "code": "Goober_Peanut",
+    "name": "구버크레용",
+    "spec": "8 COLORS + COLORING BOOK"
+  },
+  {
+    "code": "HRF000",
+    "name": "HRF(원재료)",
+    "spec": "1.0kg"
+  },
+  {
+    "code": "HRF0001",
+    "name": "HRF(원재료) / 30배율",
+    "spec": "1.0kg"
+  },
+  {
+    "code": "J211703SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "오션 / Ocean"
+  },
+  {
+    "code": "J211704SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "스카이 / Sky"
+  },
+  {
+    "code": "J211706SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "시트러스 / Citrus"
+  },
+  {
+    "code": "J211708SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "그라스 / Grass"
+  },
+  {
+    "code": "J211712SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "스톤 / Stone"
+  },
+  {
+    "code": "J211713SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "오닉스 / Onyx"
+  },
+  {
+    "code": "J211715SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "썸머 / Summer"
+  },
+  {
+    "code": "J211716SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "다이아몬드 / Diamond"
+  },
+  {
+    "code": "J211717SHPre+",
+    "name": "줄라 미디 프리미엄 플러스(EPP) / Zoola Midi Premium Plus(EPP)",
+    "spec": "마린 / Marine"
+  },
+  {
+    "code": "K20250801",
+    "name": "LED 키캡 / LED KEYCAP",
+    "spec": "폭스 / FOX"
+  },
+  {
+    "code": "K20250802",
+    "name": "LED 키캡 / LED KEYCAP",
+    "spec": "티렉스 / T-Rex"
+  },
+  {
+    "code": "K20250803",
+    "name": "LED 키캡 / LED KEYCAP",
+    "spec": "우파루파 / Axolotl"
+  },
+  {
+    "code": "KOSPAEPP001",
+    "name": "코스파EPP(원재료)",
+    "spec": "1.0kg"
+  },
+  {
+    "code": "MF",
+    "name": "메모리폼",
+    "spec": "1.0kg"
+  },
+  {
+    "code": "Mate_BP",
+    "name": "선물포장",
+    "spec": "메이트 백팩(포장)"
+  },
+  {
+    "code": "OS0001",
+    "name": "이케아 철제 선반",
+    "spec": "W60×4단×화이트"
+  },
+  {
+    "code": "OS0002",
+    "name": "이케아 철제 선반",
+    "spec": "W60×4단×블랙"
+  },
+  {
+    "code": "OS0003",
+    "name": "이케아 철제 선반",
+    "spec": "W60×4단×옐로우"
+  },
+  {
+    "code": "OS0004",
+    "name": "이케아 철제 선반",
+    "spec": "W30×4단×화이트"
+  },
+  {
+    "code": "OS0005",
+    "name": "이케아 철제 선반",
+    "spec": "W30×4단×블랙"
+  },
+  {
+    "code": "OS0016",
+    "name": "이케아 칼락스장",
+    "spec": "4x1(화이트)"
+  },
+  {
+    "code": "OS0017",
+    "name": "몬스터 3단 철제 선반",
+    "spec": "80 x 40 x 120 (블랙)"
+  },
+  {
+    "code": "OS0019",
+    "name": "FISKBO 액자",
+    "spec": "73×50×70"
+  },
+  {
+    "code": "OS0020",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "130(다크그레이)"
+  },
+  {
+    "code": "OS0021",
+    "name": "이케아(MORUM)_러그",
+    "spec": "200×80"
+  },
+  {
+    "code": "OS0022",
+    "name": "이케아(STOPP FILT)_러그 미끄럼 방지대",
+    "spec": "235×165"
+  },
+  {
+    "code": "OS0024",
+    "name": "한목가구 오픈형 공간박스",
+    "spec": "300×240×325(화이트)"
+  },
+  {
+    "code": "OS0026",
+    "name": "이케아(MALM)_3칸 서랍장",
+    "spec": "80×78(화이트스테인참나무무늬목)"
+  },
+  {
+    "code": "OS0027",
+    "name": "이케아 칼락스장",
+    "spec": "4×3(112×147/참나무무늬)"
+  },
+  {
+    "code": "OS0028",
+    "name": "카운터(大大)",
+    "spec": ""
+  },
+  {
+    "code": "OS0029",
+    "name": "오픈선반(제작)",
+    "spec": "900×1200×350(참나무무늬목필름)"
+  },
+  {
+    "code": "OS0030",
+    "name": "이케아 칼락스장",
+    "spec": "4×1(42×147/참나무무늬)"
+  },
+  {
+    "code": "OS0031",
+    "name": "이케아 스니글라르(SNIGLAR) 유아침대",
+    "spec": "60×120(너도밤나무)"
+  },
+  {
+    "code": "OS0032",
+    "name": "이케아 칼락스장",
+    "spec": "4×4(참나무무늬)"
+  },
+  {
+    "code": "OS0033",
+    "name": "이케아 칼락스장",
+    "spec": "4×2(참나무무늬)"
+  },
+  {
+    "code": "OS0034",
+    "name": "이케아 드뢰나 수납함",
+    "spec": "33×38×33(블랙)"
+  },
+  {
+    "code": "OS0035",
+    "name": "이케아 드뢰나 수납함",
+    "spec": "33×38×33(레드)"
+  },
+  {
+    "code": "OS0036",
+    "name": "스완 롤 카페트",
+    "spec": "3600×2500"
+  },
+  {
+    "code": "OS0037",
+    "name": "스완 롤 카페트",
+    "spec": "2800×2500"
+  },
+  {
+    "code": "OS0063",
+    "name": "끌차(大)",
+    "spec": "850×550×180"
+  },
+  {
+    "code": "OS0065",
+    "name": "스퀴지보 진열장",
+    "spec": "아크릴"
+  },
+  {
+    "code": "OS0066",
+    "name": "의자(SUS/PS)",
+    "spec": ""
+  },
+  {
+    "code": "OS0067",
+    "name": "카운터(원목)",
+    "spec": ""
+  },
+  {
+    "code": "OS0068",
+    "name": "샤이니보 진열장",
+    "spec": ""
+  },
+  {
+    "code": "OS0072",
+    "name": "이케아(HAMPEN)_러그",
+    "spec": "230×160(회색)"
+  },
+  {
+    "code": "OS0073",
+    "name": "이케아(HAMPEN)_러그",
+    "spec": "230×160(아이보리)"
+  },
+  {
+    "code": "OS0074",
+    "name": "이케아_러그",
+    "spec": "133×195(그린)"
+  },
+  {
+    "code": "OS0075",
+    "name": "이케아_러그",
+    "spec": "133×195(핑크)"
+  },
+  {
+    "code": "OS0076",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "130(블루)"
+  },
+  {
+    "code": "OS0077",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "130(연그린)"
+  },
+  {
+    "code": "OS0078",
+    "name": "원형_러그",
+    "spec": "133(회색)"
+  },
+  {
+    "code": "OS0080",
+    "name": "카페트",
+    "spec": "270×120(그린)"
+  },
+  {
+    "code": "OS0083",
+    "name": "카페트",
+    "spec": "360×180(그린)"
+  },
+  {
+    "code": "OS0084",
+    "name": "카페트",
+    "spec": "640×120(그린)"
+  },
+  {
+    "code": "OS0085",
+    "name": "카페트",
+    "spec": "360×270(그린)"
+  },
+  {
+    "code": "OS0086",
+    "name": "카페트",
+    "spec": "440×260(그린)"
+  },
+  {
+    "code": "OS0087",
+    "name": "러그_사각",
+    "spec": "180×120(진그레이)"
+  },
+  {
+    "code": "OS0089",
+    "name": "카페트",
+    "spec": "388×200(블루)"
+  },
+  {
+    "code": "OS0090",
+    "name": "카페트",
+    "spec": "298×120(블루)"
+  },
+  {
+    "code": "OS0091",
+    "name": "유니폼(반팔)",
+    "spec": "L"
+  },
+  {
+    "code": "OS0092",
+    "name": "유니폼(반팔)",
+    "spec": "XL"
+  },
+  {
+    "code": "OS0093",
+    "name": "유니폼(반팔)",
+    "spec": "XXL"
+  },
+  {
+    "code": "OS0094",
+    "name": "이케아_러그",
+    "spec": "133×195(블루)"
+  },
+  {
+    "code": "OS0095",
+    "name": "이케아(VINDUM)_러그",
+    "spec": "170×230(블루/그린)"
+  },
+  {
+    "code": "OS0096",
+    "name": "이케아(VINDUM)_장모러그",
+    "spec": "200×270(블루/그린)"
+  },
+  {
+    "code": "OS0097",
+    "name": "이케아(SÖNDERÖD)_러그",
+    "spec": "170×240(블루)"
+  },
+  {
+    "code": "OS0098",
+    "name": "이케아(VINDUM)_러그",
+    "spec": "170×230(다크그레이)"
+  },
+  {
+    "code": "OS0100",
+    "name": "라이프스푼 라운드 러그",
+    "spec": "120×120(다크 브라운)"
+  },
+  {
+    "code": "OS0101",
+    "name": "라이프스푼 라운드 러그",
+    "spec": "120×120(오렌지)"
+  },
+  {
+    "code": "OS0102",
+    "name": "카페트",
+    "spec": "332×240(그린)"
+  },
+  {
+    "code": "OS0105",
+    "name": "카페트",
+    "spec": "356x240(그린)"
+  },
+  {
+    "code": "OS0107",
+    "name": "이케아 플로어스탠드/독서등_레르스타",
+    "spec": "131x25(레드)"
+  },
+  {
+    "code": "OS0113",
+    "name": "이케아(VINDUM)_러그",
+    "spec": "133x180 (블루그린)"
+  },
+  {
+    "code": "OS0114",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "130(다크블루)"
+  },
+  {
+    "code": "OS0115",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "195(다크그레이)"
+  },
+  {
+    "code": "OS0116",
+    "name": "이케아(ADUM)_러그",
+    "spec": "200X300(아이보리)"
+  },
+  {
+    "code": "OS0118",
+    "name": "이케아(VINDUM)_장모러그",
+    "spec": "200×270(다크그레이)"
+  },
+  {
+    "code": "OS0119",
+    "name": "이케아(VINDUM)_러그",
+    "spec": "133x180 (다크그레이)"
+  },
+  {
+    "code": "OS0120",
+    "name": "카페트",
+    "spec": "356x260(그린)"
+  },
+  {
+    "code": "OS0121",
+    "name": "카페트",
+    "spec": "380×250(블루)"
+  },
+  {
+    "code": "OS0122",
+    "name": "카페트",
+    "spec": "280×250(브라운)"
+  },
+  {
+    "code": "OS0123",
+    "name": "카페트",
+    "spec": "360×250(브라운)"
+  },
+  {
+    "code": "OS0124",
+    "name": "POP 스탠드",
+    "spec": "A3"
+  },
+  {
+    "code": "OS0125",
+    "name": "POP 스탠드",
+    "spec": "A4"
+  },
+  {
+    "code": "OS0126",
+    "name": "백월 트러스",
+    "spec": "3x3 (230x230)"
+  },
+  {
+    "code": "OS0127",
+    "name": "소화기",
+    "spec": "빨간색 (3,3KG)"
+  },
+  {
+    "code": "OS0128",
+    "name": "소화기",
+    "spec": "은색 (5,4KG)"
+  },
+  {
+    "code": "OS0129",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "130(퍼플)"
+  },
+  {
+    "code": "OS0130",
+    "name": "이케아 스니글라르(SNIGLAR) 유아침대",
+    "spec": "60×120(화이트)"
+  },
+  {
+    "code": "OS0131",
+    "name": "이케아(원형_ADUM)_러그",
+    "spec": "130(미디엄그레이)"
+  },
+  {
+    "code": "OS0132",
+    "name": "원형 러그 (명석유통 제작)",
+    "spec": "130(라이트 그레이)"
+  },
+  {
+    "code": "OS0133",
+    "name": "원형 러그 (명석유통 제작)",
+    "spec": "180(라이트 그레이)"
+  },
+  {
+    "code": "OS0134",
+    "name": "철제 선반장 (라운드형)",
+    "spec": "800*380*H1500"
+  },
+  {
+    "code": "OS0135",
+    "name": "철제 선반장 (직사각형)",
+    "spec": "800*380*H1500"
+  },
+  {
+    "code": "OS0135-2",
+    "name": "철제 선반장 (직사각형)",
+    "spec": "800*380*H1200"
+  },
+  {
+    "code": "OS0136",
+    "name": "철제 롤맥스장 (비조명형)",
+    "spec": "1600*600*H1174"
+  },
+  {
+    "code": "OS0137",
+    "name": "철제 롤맥스장 (조명형)",
+    "spec": "1600*600*H1174"
+  },
+  {
+    "code": "OS0138",
+    "name": "이케아 칼락스장",
+    "spec": "4×2(블랙)"
+  },
+  {
+    "code": "OS0139",
+    "name": "이케아 칼락스장",
+    "spec": "4×2(블랙/브라운)"
+  },
+  {
+    "code": "OS0140",
+    "name": "이케아 칼락스장",
+    "spec": "2×2(블랙)"
+  },
+  {
+    "code": "PEFOAM5T",
+    "name": "발포지 5T",
+    "spec": "100*50"
+  },
+  {
+    "code": "PEROLL01",
+    "name": "비닐-롤(밀크런포장)",
+    "spec": "5×75×457"
+  },
+  {
+    "code": "PFILL03",
+    "name": "리필 비즈 프로 / REFILL BEADS PRO",
+    "spec": "0.3KG"
+  },
+  {
+    "code": "PFILL05",
+    "name": "리필 비즈 프로 / REFILL BEADS PRO",
+    "spec": "0.5KG"
+  },
+  {
+    "code": "PVBD01",
+    "name": "비닐-리필비즈 포장용(2개 포장용)",
+    "spec": "850×1300×0.06(MM)"
+  },
+  {
+    "code": "PVBS01",
+    "name": "(부)(비닐)매장용(BACK PACK)-[JNJ]",
+    "spec": "400×500×0.07"
+  },
+  {
+    "code": "PVDD01",
+    "name": "비닐-미디(택배)",
+    "spec": "1150×1800×0.03(MM)"
+  },
+  {
+    "code": "PVND01",
+    "name": "비닐-미니(택배)",
+    "spec": "1150×1450×0.03(MM)"
+  },
+  {
+    "code": "PVNS01",
+    "name": "비닐-미니(매장)",
+    "spec": "1150×1450×0.06(MM)"
+  },
+  {
+    "code": "PVPB01",
+    "name": "비닐-2번(메이트)",
+    "spec": "38×54"
+  },
+  {
+    "code": "PVPB02",
+    "name": "폴리백(택배)",
+    "spec": "40×50"
+  },
+  {
+    "code": "PVPB03",
+    "name": "비닐-1번(메가메이트)",
+    "spec": "55×68"
+  },
+  {
+    "code": "PVPB04",
+    "name": "비닐-3번(샤이니보)",
+    "spec": "9×8"
+  },
+  {
+    "code": "PVPB05",
+    "name": "비닐-4번(샤이니보 타공)",
+    "spec": "9×8"
+  },
+  {
+    "code": "PVPD01",
+    "name": "비닐-팟(택배)",
+    "spec": "1300×1800×0.03(MM)"
+  },
+  {
+    "code": "PVPD02",
+    "name": "비닐-팟(매장)",
+    "spec": "1300×1800×0.06(MM)"
+  },
+  {
+    "code": "PVRD01",
+    "name": "비닐-롤 맥스(택배)",
+    "spec": "520×2150×0.03(MM)"
+  },
+  {
+    "code": "PVRD02",
+    "name": "비닐-6번(롤 미디)",
+    "spec": "340*1500*0.06(MM)"
+  },
+  {
+    "code": "PVRS01",
+    "name": "비닐-롤 맥스(매장)",
+    "spec": "520×2150×0.06(MM)"
+  },
+  {
+    "code": "PVRS02",
+    "name": "비닐-5번(롤 스마일)",
+    "spec": "520×1300×0.06(MM)"
+  },
+  {
+    "code": "PVRS03",
+    "name": "비닐-리필비즈(토출캡용/0.75/0.5)",
+    "spec": "520×1300×0.06(MM)"
+  },
+  {
+    "code": "PVRS04",
+    "name": "비닐인쇄-리필비즈(토출캡용/0.75/0.5)",
+    "spec": "520×1300×0.06(MM)"
+  },
+  {
+    "code": "PVRS05",
+    "name": "비닐-7번(메이트 시트)",
+    "spec": "520×1100×0.06(MM)"
+  },
+  {
+    "code": "PVSD01",
+    "name": "비닐-서포트(택배)",
+    "spec": "770×1350×0.03(MM)"
+  },
+  {
+    "code": "PVSS01",
+    "name": "비닐-서포트(매장)",
+    "spec": "770×1350×0.06(MM)"
+  },
+  {
+    "code": "PVSS02",
+    "name": "(부)(비닐)매장용(SHOPPING BIG)-[JNJ]",
+    "spec": "650×750×0.06(MM)"
+  },
+  {
+    "code": "PVSS03",
+    "name": "(부)(비닐)매장용(SHOPPING SMALL)-[대원]",
+    "spec": "400×450×0.06(MM)"
+  },
+  {
+    "code": "PVSS04",
+    "name": "종이백(大)",
+    "spec": "400×130×450"
+  },
+  {
+    "code": "PVSS06",
+    "name": "종이백(小)",
+    "spec": "310×130×340"
+  },
+  {
+    "code": "PVSS07",
+    "name": "타포린백",
+    "spec": "530×300×380"
+  },
+  {
+    "code": "PVSS08_BS",
+    "name": "부직포백-소 (화이트)",
+    "spec": "400x510"
+  },
+  {
+    "code": "PVSS09_BM",
+    "name": "부직포백-중 (화이트)",
+    "spec": "550x610"
+  },
+  {
+    "code": "PVSS10_BL",
+    "name": "부직포백-대 (화이트)",
+    "spec": "750x500 (스트링X)"
+  },
+  {
+    "code": "PVXD01",
+    "name": "비닐-맥스(택배)",
+    "spec": "1150×2150×0.03(MM)"
+  },
+  {
+    "code": "PVXS01",
+    "name": "비닐-맥스(매장)",
+    "spec": "1150×2150×0.06(MM)"
+  },
+  {
+    "code": "Perfume001",
+    "name": "Heder Fabric Perfume(헤델 패브릭 퍼퓸)",
+    "spec": "Rosa Damascena Dream(로사 다마세나 드림)"
+  },
+  {
+    "code": "Perfume002",
+    "name": "Heder Fabric Perfume(헤델 패브릭 퍼퓸)",
+    "spec": "Muy Bien(무이 비엔)"
+  },
+  {
+    "code": "Perfume003",
+    "name": "Heder Fabric Perfume(헤델 패브릭 퍼퓸)",
+    "spec": "Good Morning Airport(굿모닝 에어포트)"
+  },
+  {
+    "code": "R142006",
+    "name": "콜렉션 러그 라지 / Collection Rug Large",
+    "spec": "피렌체 / Firenze"
+  },
+  {
+    "code": "R200100",
+    "name": "렌탈_맥스 프로",
+    "spec": "프로"
+  },
+  {
+    "code": "R200200",
+    "name": "렌탈_미니 프로",
+    "spec": "프로"
+  },
+  {
+    "code": "R200300",
+    "name": "렌탈_서포트",
+    "spec": "릴랙스"
+  },
+  {
+    "code": "R200400",
+    "name": "렌탈_롤 맥스",
+    "spec": "릴랙스"
+  },
+  {
+    "code": "R200600",
+    "name": "렌탈_카터필러 롤",
+    "spec": "릴랙스"
+  },
+  {
+    "code": "R201500",
+    "name": "렌탈_줄라 드롭",
+    "spec": "오리지널"
+  },
+  {
+    "code": "R201700",
+    "name": "렌탈_피라미드 프로",
+    "spec": "프로"
+  },
+  {
+    "code": "R201900",
+    "name": "렌탈_팟 프로",
+    "spec": "프로"
+  },
+  {
+    "code": "R211100",
+    "name": "렌탈_줄라 맥스 프로",
+    "spec": "줄라 프로"
+  },
+  {
+    "code": "R211200",
+    "name": "렌탈_줄라 미니 프로",
+    "spec": "줄라 프로"
+  },
+  {
+    "code": "R211300",
+    "name": "렌탈_줄라 서포트",
+    "spec": "줄라 릴랙스"
+  },
+  {
+    "code": "R211700",
+    "name": "렌탈_줄라 피라미드 프로",
+    "spec": "줄라 프로"
+  },
+  {
+    "code": "R211900",
+    "name": "렌탈_줄라 팟 프로",
+    "spec": "줄라 프로"
+  },
+  {
+    "code": "R231300",
+    "name": "렌탈_허기보 프로",
+    "spec": "줄라 프로"
+  },
+  {
+    "code": "RENT01",
+    "name": "렌탈-1일-[0%]",
+    "spec": "적용 요율"
+  },
+  {
+    "code": "RENT02",
+    "name": "렌탈-2일-[15%]",
+    "spec": "적용 요율"
+  },
+  {
+    "code": "RENT03",
+    "name": "렌탈-3일-[30%]",
+    "spec": "적용 요율"
+  },
+  {
+    "code": "RENT04",
+    "name": "렌탈-4일-[40%]",
+    "spec": "적용 요율"
+  },
+  {
+    "code": "RENT05",
+    "name": "렌탈-5일-[50%]",
+    "spec": "적용 요율"
+  },
+  {
+    "code": "RENT06",
+    "name": "렌탈-6일-[58%]",
+    "spec": "적용 요율"
+  },
+  {
+    "code": "SA110800",
+    "name": "마인드 필로우 이너 / Mind Pillow Inner",
+    "spec": "충전재 미포함"
+  },
+  {
+    "code": "SA110801",
+    "name": "마인드 필로우 커버 / Mind Pillow Cover",
+    "spec": "화이트 미스트 / White Mist"
+  },
+  {
+    "code": "SA110801H",
+    "name": "[하루명상] 마인드 필로우 커버 / Mind Pillow Cover",
+    "spec": "화이트 미스트 / White Mist"
+  },
+  {
+    "code": "SA110801SPre",
+    "name": "마인드 필로우 / Mind Pillow",
+    "spec": "화이트 미스트 / White Mist"
+  },
+  {
+    "code": "SA110801SPreH",
+    "name": "[하루명상] 마인드 필로우 / Mind Pillow",
+    "spec": "화이트 미스트 / White Mist"
+  },
+  {
+    "code": "SA110802",
+    "name": "마인드 필로우 커버 / Mind Pillow Cover",
+    "spec": "블루 문 / Blue Moon"
+  },
+  {
+    "code": "SA110802H",
+    "name": "[하루명상] 마인드 필로우 커버 / Mind Pillow Cover",
+    "spec": "블루 문 / Blue Moon"
+  },
+  {
+    "code": "SA110802SPre",
+    "name": "마인드 필로우 / Mind Pillow",
+    "spec": "블루 문 / Blue Moon"
+  },
+  {
+    "code": "SA110802SPreH",
+    "name": "[하루명상] 마인드 필로우 / Mind Pillow",
+    "spec": "블루 문 / Blue Moon"
+  },
+  {
+    "code": "SA110803",
+    "name": "마인드 필로우 커버 / Mind Pillow Cover",
+    "spec": "핑크 샌드 / Pink Sand"
+  },
+  {
+    "code": "SA110803H",
+    "name": "[하루명상] 마인드 필로우 커버 / Mind Pillow Cover",
+    "spec": "핑크 샌드 / Pink Sand"
+  },
+  {
+    "code": "SA110803SPre",
+    "name": "마인드 필로우 / Mind Pillow",
+    "spec": "핑크 샌드 / Pink Sand"
+  },
+  {
+    "code": "SA110803SPreH",
+    "name": "[하루명상] 마인드 필로우 / Mind Pillow",
+    "spec": "핑크 샌드 / Pink Sand"
+  },
+  {
+    "code": "SA110900",
+    "name": "바디 필로우 이너 / Body Fillow Inner",
+    "spec": "충전재 미포함"
+  },
+  {
+    "code": "SA110901",
+    "name": "마인드 바디 필로우 커버 / Mind Body Fillow Cover",
+    "spec": "화이트 미스트 / White Mist"
+  },
+  {
+    "code": "SA110901S",
+    "name": "마인드 바디 필로우 / Mind Body Fillow",
+    "spec": "화이트 미스트 / White Mist"
+  },
+  {
+    "code": "SA110902",
+    "name": "마인드 바디 필로우 커버 / Mind Body Fillow Cover",
+    "spec": "블루 문 / Blue Moon"
+  },
+  {
+    "code": "SA110902S",
+    "name": "마인드 바디 필로우 / Mind Body Fillow",
+    "spec": "블루 문 / Blue Moon"
+  },
+  {
+    "code": "SA110903",
+    "name": "마인드 바디 필로우 커버 / Mind Body Fillow Cover",
+    "spec": "핑크 샌드 / Pink Sand"
+  },
+  {
+    "code": "SA110903S",
+    "name": "마인드 바디 필로우 / Mind Body Fillow",
+    "spec": "핑크 샌드 / Pink Sand"
+  },
+  {
+    "code": "SA110904",
+    "name": "알로 바디 필로우 커버 / Allo Body Fillow Cover",
+    "spec": "심플리 화이트 / Simply White"
+  },
+  {
+    "code": "SA110904S",
+    "name": "알로 바디 필로우 / Allo Body Fillow",
+    "spec": "심플리 화이트 / Simply White"
+  },
+  {
+    "code": "SA203301",
+    "name": "알로 커버 (이너포함) / Allo Cover",
+    "spec": "심플리 화이트 / Simply White"
+  },
+  {
+    "code": "SA203301SPre",
+    "name": "알로 소파 / Allo Sofa",
+    "spec": "심플리 화이트 / Simply White"
+  },
+  {
+    "code": "SA203302",
+    "name": "알로 커버 (이너포함) / Allo Cover",
+    "spec": "심플리 블랙 / Simply Black"
+  },
+  {
+    "code": "SA203302SPre",
+    "name": "알로 소파 / Allo Sofa",
+    "spec": "심플리 블랙 / Simply Black"
+  },
+  {
+    "code": "SUP001",
+    "name": "줄라 컬러 스와치(ZOOLA COLOR SWATC)",
+    "spec": "ZOOLA"
+  },
+  {
+    "code": "SUP002",
+    "name": "컬러 스와치(COLOR SWATCH)",
+    "spec": "YOGIBO"
+  },
+  {
+    "code": "SUP003",
+    "name": "컬러 스와치(COLOR SWATCH)",
+    "spec": "YOGIBO - Finished Edges"
+  },
+  {
+    "code": "SUP005",
+    "name": "모듀 컬러 스와치(Modju COLOR SWATCH)",
+    "spec": "기존+신규"
+  },
+  {
+    "code": "SUP006",
+    "name": "컬러 스와치(COLOR SWATCH)",
+    "spec": "기존+신규"
+  },
+  {
+    "code": "SUP007",
+    "name": "컬러 스와치(COLOR SWATCH)",
+    "spec": "신규 색상"
+  },
+  {
+    "code": "SUP008",
+    "name": "줄라 컬러 스와치(ZOOLA COLOR SWATCH)",
+    "spec": "기존+신규"
+  },
+  {
+    "code": "TAPE01",
+    "name": "아크릴테이프(투명/베이지)",
+    "spec": "65um × 48mm × 78m"
+  },
+  {
+    "code": "TAPE02",
+    "name": "인쇄테이프(요기보)",
+    "spec": "48mm x 80m"
+  },
+  {
+    "code": "TAPE03",
+    "name": "인쇄테이프(샐리필)",
+    "spec": "48mm x 80m"
+  },
+  {
+    "code": "UMB001",
+    "name": "우산",
+    "spec": ""
+  },
+  {
+    "code": "UNI_2025DENIM_2XL",
+    "name": "유니폼(2025 데님셔츠)",
+    "spec": "2XL"
+  },
+  {
+    "code": "UNI_2025DENIM_L",
+    "name": "유니폼(2025 데님셔츠)",
+    "spec": "L"
+  },
+  {
+    "code": "UNI_2025DENIM_M",
+    "name": "유니폼(2025 데님셔츠)",
+    "spec": "M"
+  },
+  {
+    "code": "UNI_2025DENIM_XL",
+    "name": "유니폼(2025 데님셔츠)",
+    "spec": "XL"
+  },
+  {
+    "code": "UNI_2025ROUND_2XL",
+    "name": "유니폼(2025 라운드)",
+    "spec": "2XL"
+  },
+  {
+    "code": "UNI_2025ROUND_3XL",
+    "name": "유니폼(2025 라운드)",
+    "spec": "3XL"
+  },
+  {
+    "code": "UNI_2025ROUND_L",
+    "name": "유니폼(2025 라운드)",
+    "spec": "L"
+  },
+  {
+    "code": "UNI_2025ROUND_M",
+    "name": "유니폼(2025 라운드)",
+    "spec": "M"
+  },
+  {
+    "code": "UNI_2025ROUND_XL",
+    "name": "유니폼(2025 라운드)",
+    "spec": "XL"
+  },
+  {
+    "code": "UNI_HOOD_2XL",
+    "name": "유니폼(후드티)",
+    "spec": "2XL"
+  },
+  {
+    "code": "UNI_HOOD_3XL",
+    "name": "유니폼(후드티)",
+    "spec": "3XL"
+  },
+  {
+    "code": "UNI_HOOD_L",
+    "name": "유니폼(후드티)",
+    "spec": "L"
+  },
+  {
+    "code": "UNI_HOOD_M",
+    "name": "유니폼(후드티)",
+    "spec": "M"
+  },
+  {
+    "code": "UNI_HOOD_S",
+    "name": "유니폼(후드티)",
+    "spec": "S"
+  },
+  {
+    "code": "UNI_HOOD_XL",
+    "name": "유니폼(후드티)",
+    "spec": "XL"
+  },
+  {
+    "code": "UNI_JACKET_2XL",
+    "name": "유니폼(야구점퍼)",
+    "spec": "2XL"
+  },
+  {
+    "code": "UNI_JACKET_L",
+    "name": "유니폼(야구점퍼)",
+    "spec": "L"
+  },
+  {
+    "code": "UNI_JACKET_M",
+    "name": "유니폼(야구점퍼)",
+    "spec": "M"
+  },
+  {
+    "code": "UNI_JACKET_XL",
+    "name": "유니폼(야구점퍼)",
+    "spec": "XL"
+  },
+  {
+    "code": "UNI_KNIT_2XLM",
+    "name": "유니폼(가디건)",
+    "spec": "2XL_MAN"
+  },
+  {
+    "code": "UNI_KNIT_2XLW",
+    "name": "유니폼(가디건)",
+    "spec": "2XL_WOMAN"
+  },
+  {
+    "code": "UNI_KNIT_3XLM",
+    "name": "유니폼(가디건)",
+    "spec": "3XL_MAN"
+  },
+  {
+    "code": "UNI_KNIT_LM",
+    "name": "유니폼(가디건)",
+    "spec": "L_MAN"
+  },
+  {
+    "code": "UNI_KNIT_LW",
+    "name": "유니폼(가디건)",
+    "spec": "L_WOMAN"
+  },
+  {
+    "code": "UNI_KNIT_MM",
+    "name": "유니폼(가디건)",
+    "spec": "M_MAN"
+  },
+  {
+    "code": "UNI_KNIT_MW",
+    "name": "유니폼(가디건)",
+    "spec": "M_WOMAN"
+  },
+  {
+    "code": "UNI_KNIT_SM",
+    "name": "유니폼(가디건)",
+    "spec": "S_MAN"
+  },
+  {
+    "code": "UNI_KNIT_SW",
+    "name": "유니폼(가디건)",
+    "spec": "S_WOMAN"
+  },
+  {
+    "code": "UNI_KNIT_XLM",
+    "name": "유니폼(가디건)",
+    "spec": "XL_MAN"
+  },
+  {
+    "code": "UNI_KNIT_XLW",
+    "name": "유니폼(가디건)",
+    "spec": "XL_WOMAN"
+  },
+  {
+    "code": "UNI_PK24_2XL",
+    "name": "유니폼(PK/24)",
+    "spec": "2XL / 네이비"
+  },
+  {
+    "code": "UNI_PK24_3XL",
+    "name": "유니폼(PK/24)",
+    "spec": "3XL / 네이비"
+  },
+  {
+    "code": "UNI_PK24_L",
+    "name": "유니폼(PK/24)",
+    "spec": "L / 네이비"
+  },
+  {
+    "code": "UNI_PK24_M",
+    "name": "유니폼(PK/24)",
+    "spec": "M / 네이비"
+  },
+  {
+    "code": "UNI_PK24_XL",
+    "name": "유니폼(PK/24)",
+    "spec": "XL / 네이비"
+  },
+  {
+    "code": "UNI_PK25_GRAY_2XL",
+    "name": "유니폼(PK/25)",
+    "spec": "2XL / 그레이"
+  },
+  {
+    "code": "UNI_PK25_GRAY_L",
+    "name": "유니폼(PK/25)",
+    "spec": "L / 그레이"
+  },
+  {
+    "code": "UNI_PK25_GRAY_M",
+    "name": "유니폼(PK/25)",
+    "spec": "M / 그레이"
+  },
+  {
+    "code": "UNI_PK25_GRAY_XL",
+    "name": "유니폼(PK/25)",
+    "spec": "XL / 그레이"
+  },
+  {
+    "code": "UNI_PK25_NAVY_2XL",
+    "name": "유니폼(PK/25)",
+    "spec": "2XL / 네이비"
+  },
+  {
+    "code": "UNI_PK25_NAVY_L",
+    "name": "유니폼(PK/25)",
+    "spec": "L / 네이비"
+  },
+  {
+    "code": "UNI_PK25_NAVY_M",
+    "name": "유니폼(PK/25)",
+    "spec": "M / 네이비"
+  },
+  {
+    "code": "UNI_PK25_NAVY_XL",
+    "name": "유니폼(PK/25)",
+    "spec": "XL / 네이비"
+  },
+  {
+    "code": "UNI_PK_2XL",
+    "name": "유니폼(PK)",
+    "spec": "2XL"
+  },
+  {
+    "code": "UNI_PK_3XL",
+    "name": "유니폼(PK)",
+    "spec": "3XL"
+  },
+  {
+    "code": "UNI_PK_L",
+    "name": "유니폼(PK)",
+    "spec": "L"
+  },
+  {
+    "code": "UNI_PK_M",
+    "name": "유니폼(PK)",
+    "spec": "M"
+  },
+  {
+    "code": "UNI_PK_S",
+    "name": "유니폼(PK)",
+    "spec": "S"
+  },
+  {
+    "code": "UNI_PK_XL",
+    "name": "유니폼(PK)",
+    "spec": "XL"
+  },
+  {
+    "code": "UNI_ROUND_2XL_BLUE",
+    "name": "유니폼(라운드)",
+    "spec": "2XL_BLUE"
+  },
+  {
+    "code": "UNI_ROUND_2XL_YELLOW",
+    "name": "유니폼(라운드)",
+    "spec": "2XL_YELLOW"
+  },
+  {
+    "code": "UNI_ROUND_3XL_BLUE",
+    "name": "유니폼(라운드)",
+    "spec": "3XL_BLUE"
+  },
+  {
+    "code": "UNI_ROUND_3XL_YELLOW",
+    "name": "유니폼(라운드)",
+    "spec": "3XL_YELLOW"
+  },
+  {
+    "code": "UNI_ROUND_L_BLUE",
+    "name": "유니폼(라운드)",
+    "spec": "L_BLUE"
+  },
+  {
+    "code": "UNI_ROUND_L_YELLOW",
+    "name": "유니폼(라운드)",
+    "spec": "L_YELLOW"
+  },
+  {
+    "code": "UNI_ROUND_M_BLUE",
+    "name": "유니폼(라운드)",
+    "spec": "M_BLUE"
+  },
+  {
+    "code": "UNI_ROUND_M_YELLOW",
+    "name": "유니폼(라운드)",
+    "spec": "M_YELLOW"
+  },
+  {
+    "code": "UNI_ROUND_S_BLUE",
+    "name": "유니폼(라운드)",
+    "spec": "S_BLUE"
+  },
+  {
+    "code": "UNI_ROUND_S_YELLOW",
+    "name": "유니폼(라운드)",
+    "spec": "S_YELLOW"
+  },
+  {
+    "code": "UNI_ROUND_XL_BLUE",
+    "name": "유니폼(라운드)",
+    "spec": "XL_BLUE"
+  },
+  {
+    "code": "UNI_ROUND_XL_RED",
+    "name": "유니폼(라운드)",
+    "spec": "XL_RED"
+  },
+  {
+    "code": "UNI_ROUND_XL_YELLOW",
+    "name": "유니폼(라운드)",
+    "spec": "XL_YELLOW"
+  },
+  {
+    "code": "UNI_T01",
+    "name": "유니폼(라운드T)",
+    "spec": "L / Pink"
+  },
+  {
+    "code": "UNI_T02",
+    "name": "유니폼(라운드T)",
+    "spec": "XL / Pink"
+  },
+  {
+    "code": "UNI_T03",
+    "name": "유니폼(라운드T)",
+    "spec": "2XL / Pink"
+  },
+  {
+    "code": "UNI_T04",
+    "name": "유니폼(라운드T)",
+    "spec": "L / Blue"
+  },
+  {
+    "code": "UNI_T05",
+    "name": "유니폼(라운드T)",
+    "spec": "XL / Blue"
+  },
+  {
+    "code": "UNI_T06",
+    "name": "유니폼(라운드T)",
+    "spec": "2XL / Blue"
+  },
+  {
+    "code": "WRAP01",
+    "name": "공업용 랩",
+    "spec": "20Mic × 500m × 380m"
+  },
+  {
+    "code": "YEKT11001",
+    "name": "에그(KT Egg_bed2/012-2363-0534)",
+    "spec": "SN : 0119286"
+  },
+  {
+    "code": "YEKT11002",
+    "name": "에그(KT Egg_bed5/012-2366-0534)",
+    "spec": "SN : 0119289"
+  },
+  {
+    "code": "YEKT11003",
+    "name": "에그(KT Egg_447/012-2377-2277)",
+    "spec": "SN : 0034247"
+  },
+  {
+    "code": "YEKT11004",
+    "name": "에그(KT Egg_bed8/012-3315-2457)",
+    "spec": "SN : 0119292"
+  },
+  {
+    "code": "YEKT11005",
+    "name": "에그(KT Egg_bed7/012-2331-0534)",
+    "spec": "SN : 0119291"
+  },
+  {
+    "code": "YEKT11006",
+    "name": "에그(KT Egg 424/012-2363-0534)",
+    "spec": "SN : 0001424"
+  },
+  {
+    "code": "YL14001",
+    "name": "노트북(S145-14API)",
+    "spec": "PF14GQCD"
+  },
+  {
+    "code": "YL14002",
+    "name": "노트북(S145-14API)_YT14002",
+    "spec": "PF1DTV7P"
+  },
+  {
+    "code": "YL14003",
+    "name": "노트북(S145-14API)",
+    "spec": "PF1DU29C"
+  },
+  {
+    "code": "YL14004",
+    "name": "노트북(Lenovo G40-70)",
+    "spec": "YB02401424"
+  },
+  {
+    "code": "YL14006",
+    "name": "노트북(Lenovo 81WA)",
+    "spec": "PF36GHLY"
+  },
+  {
+    "code": "YL14007",
+    "name": "노트북(Lenovo 81WA)",
+    "spec": "PF2BLRY0"
+  },
+  {
+    "code": "YL15001",
+    "name": "노트북(L340-15API)",
+    "spec": "PF21KAHB"
+  },
+  {
+    "code": "YL15002",
+    "name": "노트북(S145-15API)",
+    "spec": "PF1FZHRC"
+  },
+  {
+    "code": "YL15003",
+    "name": "노트북(L340-15API)",
+    "spec": "PF21D8PW"
+  },
+  {
+    "code": "YL15004",
+    "name": "노트북(V15-ADA)",
+    "spec": "PF2CHZ5Z"
+  },
+  {
+    "code": "YL15005",
+    "name": "노트북(S145-15API)",
+    "spec": "PF1DNM9H"
+  },
+  {
+    "code": "YL15006",
+    "name": "노트북(S145-15API)",
+    "spec": "PF291DPX"
+  },
+  {
+    "code": "YL15007",
+    "name": "노트북(S145-15API)",
+    "spec": "PF291448"
+  },
+  {
+    "code": "YL15008",
+    "name": "노트북(V15-ADA)",
+    "spec": "PF2CJ1CM"
+  },
+  {
+    "code": "YL15009",
+    "name": "노트북(S145-15API)",
+    "spec": "PF1DU39Z"
+  },
+  {
+    "code": "YL15010",
+    "name": "노트북(L340-15API)",
+    "spec": "PF21D5MW"
+  },
+  {
+    "code": "YL15011",
+    "name": "노트북(L340-15API)",
+    "spec": "PF1PJZVQ"
+  },
+  {
+    "code": "YL15012",
+    "name": "노트북(L340-15API)",
+    "spec": "PF1QJVJM"
+  },
+  {
+    "code": "YL15013",
+    "name": "노트북(S145-15API)",
+    "spec": "PF1DTVC4"
+  },
+  {
+    "code": "YL15014",
+    "name": "노트북(S145-15API)",
+    "spec": "PF292HCA"
+  },
+  {
+    "code": "YL15015",
+    "name": "노트북(15ARE05)",
+    "spec": "PF2CEZ3W"
+  },
+  {
+    "code": "YL15016",
+    "name": "노트북(S145-15API)",
+    "spec": "PF256BBP"
+  },
+  {
+    "code": "YL15017",
+    "name": "노트북(15ARE05)",
+    "spec": "PF2CF49M"
+  },
+  {
+    "code": "YL15018",
+    "name": "노트북(X507MA-EJ136)",
+    "spec": "J4N0CV0oY128175"
+  },
+  {
+    "code": "YL15019",
+    "name": "노트북(S145-15API)",
+    "spec": "PF28YLJ6"
+  },
+  {
+    "code": "YL15020",
+    "name": "노트북(N15Q1)",
+    "spec": "NXG87SJ0045441DC517600"
+  },
+  {
+    "code": "YL15021",
+    "name": "노트북(D515DA-BQ270)",
+    "spec": "M3N0CV11N12211D"
+  },
+  {
+    "code": "YL15022",
+    "name": "노트북(D515DA-BQ270)",
+    "spec": "M3N0CV11N199119"
+  },
+  {
+    "code": "YL15023",
+    "name": "노트북(D515DA-BQ270)",
+    "spec": "M2N0CV12P067080"
+  },
+  {
+    "code": "YL15024",
+    "name": "노트북(D515DA-BQ270)",
+    "spec": "M3N0CV11N247119"
+  },
+  {
+    "code": "YL15025",
+    "name": "노트북(D515DA-BQ270)",
+    "spec": "M2N0CV120000089"
+  },
+  {
+    "code": "YL15026",
+    "name": "노트북(D515DA-BQ270)",
+    "spec": "M2N0CV120119088"
+  },
+  {
+    "code": "YL15027",
+    "name": "노트북(15ARE05)",
+    "spec": "PF2CF896"
+  },
+  {
+    "code": "YL15028",
+    "name": "노트북(L340-15API)",
+    "spec": "PF21KJJD"
+  },
+  {
+    "code": "YL15029",
+    "name": "노트북(15ARE05)",
+    "spec": "J4N0CV09Y142173"
+  },
+  {
+    "code": "YL15030",
+    "name": "노트북D515UA-BQ236",
+    "spec": "M6N0CV17E988253"
+  },
+  {
+    "code": "YL15031",
+    "name": "노트북IdeaPadL340",
+    "spec": "PF1QK7MZ"
+  },
+  {
+    "code": "YL15032",
+    "name": "노트북V15-ADA",
+    "spec": "PF2CHZ77"
+  },
+  {
+    "code": "YL15033",
+    "name": "노트북14IML05",
+    "spec": "PF25QXWR"
+  },
+  {
+    "code": "YL15034",
+    "name": "노트북IdeaPad 3 14ITL6",
+    "spec": "PF2VWAGV"
+  },
+  {
+    "code": "YL15035",
+    "name": "노트북IdeaPad 330",
+    "spec": "PF1AT2BR"
+  },
+  {
+    "code": "YL15036",
+    "name": "노트북NT350XCR-AD3AW",
+    "spec": "4RH79FFR901480"
+  },
+  {
+    "code": "YL15037",
+    "name": "노트북S145-15API",
+    "spec": "PF291GDN"
+  },
+  {
+    "code": "YL15038",
+    "name": "ASUS ZENBOOK PRO15 OLED",
+    "spec": "N5N0CX14810521E"
+  },
+  {
+    "code": "YT08001",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2P5J"
+  },
+  {
+    "code": "YT08002",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2PBJ"
+  },
+  {
+    "code": "YT08003",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D3EYJ"
+  },
+  {
+    "code": "YT08004",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2PMJ"
+  },
+  {
+    "code": "YT08005",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2PWJ"
+  },
+  {
+    "code": "YT08006",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2PHJ"
+  },
+  {
+    "code": "YT08007",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2PVJ"
+  },
+  {
+    "code": "YT08008",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R9WN40D2P2J"
+  },
+  {
+    "code": "YT08009",
+    "name": "태블릿(갤럭시탭A 8.0/SM-T290)",
+    "spec": "R54JA00MKLX"
+  },
+  {
+    "code": "YT10001",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330093"
+  },
+  {
+    "code": "YT10002",
+    "name": "태블릿(갤럭시탭A 10.1/SM-T580)",
+    "spec": "R54JA00MBNE"
+  },
+  {
+    "code": "YT10003",
+    "name": "태블릿(갤럭시탭A6 10.1/SM-T585NO)",
+    "spec": "R54J202RMQD"
+  },
+  {
+    "code": "YT10004",
+    "name": "태블릿(갤럭시탭A6 10.1/SM-T585NO)",
+    "spec": "R54J202RY0A"
+  },
+  {
+    "code": "YT10005",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203332049"
+  },
+  {
+    "code": "YT10006",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330096"
+  },
+  {
+    "code": "YT10007",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330061"
+  },
+  {
+    "code": "YT10008",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330066"
+  },
+  {
+    "code": "YT10009",
+    "name": "태블릿(갤럭시탭A6 10.1/SM-T585NO)",
+    "spec": "R54J202RD8X"
+  },
+  {
+    "code": "YT10010",
+    "name": "태블릿(갤럭시탭A6 10.1/SM-T585NO)",
+    "spec": "R54J202QQBD"
+  },
+  {
+    "code": "YT10011",
+    "name": "태블릿(갤럭시탭A6 10.1/SM-T585NO)",
+    "spec": "R54J203SN8F"
+  },
+  {
+    "code": "YT10012",
+    "name": "태블릿(갤럭시탭A 10.1/SM-T580)",
+    "spec": "R54JA00MKLX"
+  },
+  {
+    "code": "YT10013",
+    "name": "태블릿(갤럭시탭A 10.1/SM-T580)",
+    "spec": "R54JA00MBLY"
+  },
+  {
+    "code": "YT10014",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330095"
+  },
+  {
+    "code": "YT10015",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330068"
+  },
+  {
+    "code": "YT10016",
+    "name": "태블릿(갤럭시탭A6 10.1/SM-T585NO)",
+    "spec": "R54J202RY4M"
+  },
+  {
+    "code": "YT10017",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330064"
+  },
+  {
+    "code": "YT10018",
+    "name": "태블릿(아이패드4 9.7/MD510J/A)",
+    "spec": "DMPKJ7TSF182"
+  },
+  {
+    "code": "YT10019",
+    "name": "태블릿(갤럭시탭A 10.1/SM-T580)",
+    "spec": "R54JA00M6QY"
+  },
+  {
+    "code": "YT10020",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330063"
+  },
+  {
+    "code": "YT10021",
+    "name": "태블릿(갤럭시탭A 7/SM-T500NZAEKOO)",
+    "spec": "R9TR40EWMHJ"
+  },
+  {
+    "code": "YT10022",
+    "name": "태블릿(P10 HD PLUS)",
+    "spec": "8235N203330070"
+  },
+  {
+    "code": "YT25001",
+    "name": "태블릿(레노보 탭 10.1)",
+    "spec": "HA25KCQL"
+  },
+  {
+    "code": "YT25002",
+    "name": "태블릿(레노보 탭 10.1)",
+    "spec": "HA25XX5X"
+  },
+  {
+    "code": "YT25003",
+    "name": "태블릿(레노보 탭 10.1)",
+    "spec": "HA25HPEC"
+  },
+  {
+    "code": "Y_VOUCHER001",
+    "name": "요기보 금액권 (카드형) - 10,000원",
+    "spec": "10,000원"
+  },
+  {
+    "code": "Y_VOUCHER002",
+    "name": "요기보 금액권 (카드형) - 30,000원",
+    "spec": "30,000원"
+  },
+  {
+    "code": "Y_VOUCHER003",
+    "name": "요기보 금액권 (카드형) - 50,000원",
+    "spec": "50,000원"
+  },
+  {
+    "code": "os0011",
+    "name": "이케아 칼락스장",
+    "spec": "2×2(화이트)"
+  },
+  {
+    "code": "os0012",
+    "name": "이케아 칼락스장",
+    "spec": "4×2(화이트)"
+  },
+  {
+    "code": "os0013",
+    "name": "이케아 칼락스장",
+    "spec": "4×4(화이트)"
+  },
+  {
+    "code": "os0014",
+    "name": "이케아 칼락스장",
+    "spec": "5x5(화이트)"
+  },
+  {
+    "code": "os0051",
+    "name": "TV",
+    "spec": ""
+  },
+  {
+    "code": "os0052",
+    "name": "TV 스탠드",
+    "spec": ""
+  },
+  {
+    "code": "os0053",
+    "name": "전자레인지",
+    "spec": ""
+  },
+  {
+    "code": "os0054",
+    "name": "금고",
+    "spec": ""
+  },
+  {
+    "code": "os0055",
+    "name": "카운터(大)",
+    "spec": ""
+  },
+  {
+    "code": "os0056",
+    "name": "카운터(小)",
+    "spec": ""
+  },
+  {
+    "code": "os0057",
+    "name": "카운터 서랍장",
+    "spec": ""
+  },
+  {
+    "code": "os0058",
+    "name": "이케아 협탁",
+    "spec": "55×55×45"
+  },
+  {
+    "code": "os0060",
+    "name": "매대(大)",
+    "spec": ""
+  },
+  {
+    "code": "os0061",
+    "name": "매대(小)",
+    "spec": ""
+  },
+  {
+    "code": "os0062",
+    "name": "청소기",
+    "spec": ""
+  },
+  {
+    "code": "네이버포인트",
+    "name": "네이버페이 포인트",
+    "spec": ""
+  },
+  {
+    "code": "매장실수",
+    "name": "매장-계산실수",
+    "spec": ""
+  },
+  {
+    "code": "비용",
+    "name": "기타비용",
+    "spec": ""
+  },
+  {
+    "code": "수수료",
+    "name": "카드 수수료",
+    "spec": ""
+  },
+  {
+    "code": "운반비01",
+    "name": "화물(일반)",
+    "spec": ""
+  },
+  {
+    "code": "운반비02",
+    "name": "화물(제주)",
+    "spec": ""
+  },
+  {
+    "code": "유니폼WH",
+    "name": "물류센터 조끼_ZB-V2022",
+    "spec": "M, L, XL, 2XL"
+  },
+  {
+    "code": "유니폼WH01",
+    "name": "물류센터 조끼_윌토프조끼",
+    "spec": "5XL"
+  },
+  {
+    "code": "임대료(12)",
+    "name": "수수료 12%",
+    "spec": ""
+  },
+  {
+    "code": "임대료(13)",
+    "name": "수수료 13%",
+    "spec": ""
+  },
+  {
+    "code": "임대료(15)",
+    "name": "수수료 15％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(16)",
+    "name": "수수료 16％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(19)",
+    "name": "수수료 19％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(20)",
+    "name": "수수료 20％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(21)",
+    "name": "수수료 21%",
+    "spec": ""
+  },
+  {
+    "code": "임대료(22)",
+    "name": "수수료 22％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(23)",
+    "name": "수수료 23％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(25)",
+    "name": "수수료 25％",
+    "spec": ""
+  },
+  {
+    "code": "임대료(30)",
+    "name": "수수료 30％",
+    "spec": ""
+  },
+  {
+    "code": "임대료기타",
+    "name": "수수료기타",
+    "spec": ""
+  },
+  {
+    "code": "적립금",
+    "name": "자사몰적립금",
+    "spec": ""
+  },
+  {
+    "code": "화물비",
+    "name": "화물비",
+    "spec": ""
   }
 ]

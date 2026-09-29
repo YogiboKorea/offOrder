@@ -57,12 +57,13 @@ function matchByHardcodedRules(orderFullText) {
         if (t.includes('라이트그레이')) return code('241113');
     }
 
-    // ── 요기보 롤 미디 (커버 / 일반 / 프리미엄 / EPP / 플러스 × 7색)
+    // ── 요기보 롤 미디 (커버 / 일반 / 프리미엄 / 프리미엄EPP / 플러스 / 플러스EPP × 7색)
     if (t.includes('요기보롤미디')) {
         let sfx = 'S';
+        const epp = t.includes('epp');
         if (t.includes('커버')) sfx = '';
-        else if (t.includes('플러스')) sfx = 'SPre+';
-        else if (t.includes('epp')) sfx = 'SHPre';
+        else if (t.includes('플러스')) sfx = epp ? 'SHPre+' : 'SPre+';   // 플러스(EPP) 먼저 구분
+        else if (epp) sfx = 'SHPre';
         else if (t.includes('프리미엄')) sfx = 'SPre';
         if (t.includes('아쿠아블루'))     return '260204' + sfx;
         if (t.includes('로즈핑크'))       return '260205' + sfx;
@@ -96,6 +97,8 @@ function matchByHardcodedRules(orderFullText) {
     }
 
     // ── 우파루파 롤메이트 (구체적인 룰이 먼저 매칭되어야 하므로 순서 중요)
+    if (t.includes('우파루파롤메이트프리미엄플러스epp')) return '231898SHPre+';
+    if (t.includes('우파루파롤메이트프리미엄플러스'))    return '231898SPre+';
     if (t.includes('우파루파롤메이트프리미엄epp')) return '231898SHPre';
     if (t.includes('우파루파롤메이트프리미엄'))    return '231898SPre';
     if (t.includes('우파루파롤메이트'))             return '231898S';
@@ -158,7 +161,10 @@ function matchByHardcodedRules(orderFullText) {
     }
 
     // ── 맥스 프리미엄 아쿠아블루 (직접 매핑)
-    if (t.includes('요기보맥스프리미엄') && t.includes('아쿠아블루')) {
+    //    ⚠️ '요기보맥스프리미엄' 은 '프리미엄 플러스'·'프리미엄 EPP' 에도 들어 있어서
+    //       예전엔 맥스 아쿠아블루 4종이 전부 200104SPre 로 잡혔다. 순수 프리미엄일 때만 적용한다.
+    if (t.includes('요기보맥스프리미엄') && t.includes('아쿠아블루')
+        && !t.includes('플러스') && !t.includes('epp')) {
         return '200104SPre';
     }
 
