@@ -458,12 +458,20 @@ app.get('/api/cafe24/products', async (req, res) => {
         const { keyword } = req.query;
         if (!keyword) return res.json({ success: true, count: 0, data: [] });
 
+        // 🆕 'EPP' 는 cafe24 상품명에 없는 말이다 (EPP 항목은 아래 expandPremiumWithEPP 가 만들어 붙이는 복사본).
+        //     그대로 cafe24 에 검색하면 '맥스 프리미엄 EPP' · '프리미엄 플러스 EPP' 가 0건이 된다.
+        //     → cafe24 에는 EPP 를 뺀 말로 검색하고, 결과에서 EPP 복사본만 남긴다. ('EPP' 만 치면 프리미엄 전체에서 찾음)
+        const wantsEPP = /epp/i.test(keyword);
+        const cafe24Keyword = wantsEPP
+            ? (keyword.replace(/epp/ig, ' ').replace(/[()]/g, ' ').replace(/\s+/g, ' ').trim() || '프리미엄')
+            : keyword;
+
         const fetchFromCafe24 = async (retry = false) => {
             try {
                 return await axios.get(
                     `https://${CAFE24_MALLID}.cafe24api.com/api/v2/admin/products`,
                     {
-                        params: { shop_no: 1, product_name: keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100, sort: 'created_date', order: 'asc' },
+                        params: { shop_no: 1, product_name: cafe24Keyword, display: 'T', selling: 'T', embed: 'options,images', limit: 100, sort: 'created_date', order: 'asc' },
                         headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json', 'X-Cafe24-Api-Version': CAFE24_API_VERSION }
                     }
                 );
@@ -504,6 +512,8 @@ app.get('/api/cafe24/products', async (req, res) => {
         });
         // 🆕 프리미엄 EPP 복사본 추가
         cleanData = expandPremiumWithEPP(cleanData);
+        // 🆕 검색어에 EPP 가 있으면 EPP 항목만 보여준다
+        if (wantsEPP) cleanData = cleanData.filter(p => p.is_epp || /EPP/i.test(p.product_name || ''));
         res.json({ success: true, count: cleanData.length, data: cleanData });
     } catch (error) { res.status(500).json({ success: false, message: "Cafe24 API Error" }); }
 });
