@@ -15,7 +15,9 @@ const PORT = process.env.PORT || 8080;
 const whitelist = [
     'https://yogibo.kr',
     'https://www.yogibo.kr',
-    'http://skin-skin123.yogibo.cafe24.com', 
+    'http://skin-skin123.yogibo.cafe24.com',
+    // 이 서버가 직접 내보내는 페이지(/picking)의 POST 요청 — 브라우저가 같은 주소여도 Origin을 붙인다
+    'https://port-0-offorder-lzgmwhc4d9883c97.sel4.cloudtype.app',
 ];
 
 app.use(cors({
