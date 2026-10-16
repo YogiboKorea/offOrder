@@ -43,8 +43,9 @@
 
         /* 구분: 상품(판매 재고) / 데모(데모 창고) — 꺼내는 곳이 다르다 */
         .kind { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-        .kind.k-sale { background: var(--brand-tint); color: var(--brand-ink); }
-        .kind.k-demo { background: #FFF4E5; color: #9A5B00; }
+        .kind.k-out { background: var(--brand-tint); color: var(--brand-ink); }   /* 주문: 매장으로 보낼 것 */
+        .kind.k-in { background: #FFF4E5; color: #9A5B00; }                       /* 회수: 매장에서 돌아올 것 */
+        .kind.k-etc { background: var(--head); color: var(--ink-2); border: 1px solid var(--line); }   /* 전환·세팅·철수 등 */
         .stat .split { margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
 
         /* 확인창 */
@@ -245,20 +246,20 @@
     <details class="guide" id="guide" open>
         <summary>
             <span class="guide-title">사용 방법</span>
-            <span class="guide-sub">이카운트의 진행중 매장 주문을 품목별로 합쳐, 창고에서 한 번에 꺼낼 목록을 만듭니다.</span>
+            <span class="guide-sub">이카운트 주문서조회의 진행중 주문서를 품목별로 합쳐, 보낼 것(주문)과 돌아올 것(회수)을 한눈에 봅니다.</span>
             <span class="guide-toggle" aria-hidden="true"></span>
         </summary>
         <div class="guide-body">
             <ol class="steps">
                 <li class="step"><b>실시간 데이터 가져오기</b>누르고 확인창에서 <strong>가져오기</strong>를 누르면 물류 서버 PC가 이카운트에서 진행중인 주문을 새로 가져옵니다. 1~2분 뒤 화면이 저절로 바뀝니다. 10분 간격으로 가져올 수 있습니다.</li>
-                <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. 창고에서 이 목록대로 한 번에 꺼냅니다.</li>
+                <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. <strong>주문</strong>은 창고에서 꺼내 보낼 것, <strong>회수</strong>는 매장에서 돌아올 것입니다.</li>
                 <li class="step"><b>매장별 분배 탭</b>꺼낸 물건을 매장별로 몇 개씩 나눠 담을지 보여 줍니다.</li>
                 <li class="step"><b>포함된 주문 탭</b>합산된 주문서 목록입니다. 이미 출고한 주문이 섞여 있지 않은지 확인합니다.</li>
                 <li class="step"><b>엑셀 다운로드 · 인쇄</b>엑셀은 시트 3개(피킹리스트·매장별 분배·포함된 주문)로 받습니다. 인쇄는 지금 보는 탭만 나갑니다.</li>
             </ol>
             <ul class="guide-notes">
                 <li>페이지를 열거나 새로고침하면 <b>마지막으로 가져온 데이터</b>를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 것은 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐입니다.</li>
-                <li>합치는 주문: 이카운트 주문서조회에서 <b>진행중</b>이면서 구분이 <b>주문(상품/발주)</b>인 것만. 데모 발주·회수·데모 전환은 빼고 ‘포함된 주문’ 탭 아래에 따로 보여 줍니다. 출고가 끝나 <b>완료</b>된 주문은 들어가지 않습니다.</li>
+                <li>합치는 주문서: 이카운트 주문서조회 <b>진행중</b> 탭의 주문서 <b>전부</b>(주문·회수·데모 전환 등). 같은 품목이라도 <b>구분</b>이 다르면 줄을 나눕니다(보내는 것과 돌아오는 것이 섞이지 않게). 처리가 끝나 <b>완료</b>된 주문서는 들어가지 않습니다.</li>
                 <li>출고가 끝난 주문서는 이카운트에서 <b>완료 처리</b>해 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
                 <li>‘물류 서버 PC가 꺼져 있거나…’ 안내가 나오면 서버 PC가 켜져 있는지 확인하거나 본사 담당자에게 알려 주세요.</li>
             </ul>
@@ -304,7 +305,21 @@
     const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f(x)) || 0), 0);
     // 구분: 상품(판매 재고) / 데모(데모 창고). 예전 스냅샷에는 kind가 없다 → 상품
     const kindOf = x => x.kind || '상품';
-    const kindChip = x => `<span class="kind ${kindOf(x) === '데모' ? 'k-demo' : 'k-sale'}">${esc(kindOf(x))}</span>`;
+    // 구분(발주/반납) 묶음: 주문 = 매장으로 보낼 것, 회수 = 매장에서 돌아올 것, 그 밖(전환·세팅·철수)
+    const kindGroup = k => (k.startsWith('주문') ? '주문' : k.startsWith('회수') ? '회수' : '기타');
+    // "회수(상품/물류 회송)" → "회수 상품", "상품 → 데모 전환" → "데모 전환" (화면용 짧은 이름, 엑셀은 원래 이름)
+    const shortKind = k => {
+        const m = k.match(/^(\S+?)\((상품|데모)\//);
+        if (m) return `${m[1]} ${m[2]}`;
+        return k.replace(/^상품\s*→\s*/, '');
+    };
+    const kindChip = x => {
+        const k = kindOf(x);
+        const cls = { 주문: 'k-out', 회수: 'k-in', 기타: 'k-etc' }[kindGroup(k)];
+        return `<span class="kind ${cls}" title="${esc(k)}">${esc(shortKind(k))}</span>`;
+    };
+    // 예전 스냅샷의 대상 이름은 "주문(상품/발주)", 지금은 "진행중 주문서 전체"
+    const targetLabel = () => (snap.filter.type.startsWith('진행중') ? snap.filter.type : `진행중 ${snap.filter.type}`);
     // 구분 열은 상품이 아닌 줄(예: 데모)이 섞일 때만 보인다. 지금 규칙은 주문(상품/발주)만이라 평소엔 숨김
     const showKind = () => [...snap.items, ...snap.orders].some(x => kindOf(x) !== '상품');
     const kindTh = () => (showKind() ? '<th>구분</th>' : '');
@@ -344,7 +359,7 @@
 
     // 인쇄물·엑셀 머리말
     const basisText = () =>
-        `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / 진행중 ${snap.filter.type} ${snap.totals.orders}건` +
+        `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / ${targetLabel()} ${snap.totals.orders}건` +
         (snap.stores.length ? ` (${snap.stores.join(', ')})` : '') +
         (snap.orders.length ? ` / 주문일 ${orderDates()} / 납기 ${dueDates()}` : '');
 
@@ -385,8 +400,15 @@
         const ageText = age <= 0 ? '오늘' : `${age}일 전`;
         const counts = { pick: `${t.items}종`, dist: `${t.stores}곳`, orders: `${t.orders}건` };
 
-        $('#sub').textContent = '진행중 매장 주문을 품목별로 합친 목록';
-        const demoQty = sum(snap.items.filter(i => kindOf(i) === '데모'), i => i.qty);
+        $('#sub').textContent = '진행중 주문서를 품목별로 합친 목록';
+        // 총수량을 주문(보낼 것)·회수(돌아올 것)·기타로 나눠 보여 준다 (묶음이 둘 이상일 때만)
+        const groupQty = {};
+        for (const i of snap.items) {
+            const g = showKind() ? kindGroup(kindOf(i)) : '주문';
+            groupQty[g] = (groupQty[g] || 0) + i.qty;
+        }
+        const groupSplit = Object.keys(groupQty).length > 1
+            ? ['주문', '회수', '기타'].filter(g => groupQty[g]).map(g => `${g} ${fmt(groupQty[g])}`).join(' · ') : '';
         $('#btn-excel').disabled = t.items === 0;
         $('#btn-print').disabled = false;
 
@@ -403,8 +425,8 @@
                 <div class="stat"><div class="k">포함된 주문</div><div class="v">${fmt(t.orders)}<small>건</small></div></div>
                 <div class="stat"><div class="k">매장</div><div class="v">${fmt(t.stores)}<small>곳</small></div></div>
                 <div class="stat"><div class="k">품목</div><div class="v">${fmt(t.items)}<small>종</small></div></div>
-                <div class="stat main"><div class="k">꺼낼 총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div>
-                    ${demoQty ? `<div class="split">상품 ${fmt(t.qty - demoQty)} · 데모 ${fmt(demoQty)}</div>` : ''}</div>
+                <div class="stat main"><div class="k">총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div>
+                    ${groupSplit ? `<div class="split">${esc(groupSplit)}</div>` : ''}</div>
             </section>
             ${age >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
                 이 목록은 <b>${age}일 전</b>(${esc(kstText(dataTime()))})에 이카운트에서 가져온 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
@@ -442,7 +464,7 @@
 
     const emptyState = () => `<div class="table-wrap"><div class="empty">
         <div class="t">지금 피킹할 주문이 없습니다</div>
-        <div class="d">지금 진행중인 피킹 대상 주문이 없습니다. 대상 구분: ${esc(snap.filter.type)}.${snap.excluded.length ? ` 회수·전환 등 다른 구분 ${snap.excluded.length}건은 합산하지 않았습니다.` : ''}</div>
+        <div class="d">이카운트 주문서조회에 지금 진행중인 주문서가 없습니다 (대상: ${esc(targetLabel())}).${snap.excluded.length ? ` 다른 구분 ${snap.excluded.length}건은 합산하지 않았습니다.` : ''}</div>
     </div></div>`;
     const noMatch = () => `<div class="table-wrap"><div class="empty"><div class="d">‘${esc(query)}’에 맞는 품목이 없습니다.</div></div></div>`;
 
@@ -562,7 +584,7 @@
 
         // 구분(상품/데모) 열은 상품이 아닌 줄이 섞일 때만 맨 앞에 넣는다 (평소엔 시제품과 같은 모양)
         const K = showKind();
-        const kh = K ? ['구분'] : [], kw = K ? [8] : [], ka = K ? [C] : [], kb = K ? [''] : [];
+        const kh = K ? ['구분'] : [], kw = K ? [20] : [], ka = K ? [C] : [], kb = K ? [''] : [];
         const kv = x => (K ? [kindOf(x)] : []);
         const s = K ? 1 : 0;   // 구분 열이 있으면 숫자 열이 한 칸씩 밀린다
 
@@ -570,7 +592,7 @@
         let ws = sheet('통합 피킹리스트', [...kh, '품목코드', '품목명', '규격', '수량'], [...kw, 16, 46, 34, 10]);
         items.forEach((it, i) => put(ws, first + i, [...kv(it), it.code, it.name, it.spec, it.qty], [...ka, C, L, L, C], { bold: [4 + s] }));
         put(ws, last + 1, ['합계', `${items.length}종`, '', ...kb, SUM(4 + s, first, last, snap.totals.qty)], [...ka, C, L, L, C], { total: true });
-        ws.getCell(`A${last + 3}`).value = `수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(상품/데모)·' : ''}품목코드 기준으로 합친 값입니다.`;
+        ws.getCell(`A${last + 3}`).value = `수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(발주/반납)·' : ''}품목코드 기준으로 합친 값입니다.`;
         ws.getCell(`A${last + 3}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
 
         // 2) 매장별 분배
