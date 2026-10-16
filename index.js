@@ -3412,8 +3412,13 @@ app.get('/api/stock/snapshot/download', async (req, res) => {
 // [🧺] 통합 피킹리스트 (진행중 매장 주문(상품/발주) 품목별 합산 스냅샷)
 //   데이터 적재: Dropbox 04_개발/물류/picking (물류 PC가 이카운트 주문서조회+주문서현황을 수집해 1건씩 insert)
 //   같은 클러스터의 warehouse DB를 읽는다 (OFFLINE_ORDER와 같은 클러스터)
-//   페이지: deliveryOFF/피킹리스트.html (/off/staff/picking.html)
+//   페이지: pages/picking.html → https://port-0-offorder-…cloudtype.app/picking
 // ==========================================
+app.get('/picking', (req, res) => {
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(__dirname, 'pages', 'picking.html'));
+});
+
 app.get('/api/picking-list', async (req, res) => {
     try {
         const col = db.client.db('warehouse').collection('picking_snapshots');

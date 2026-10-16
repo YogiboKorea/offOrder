@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>통합 피킹리스트</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+    <style>
+        :root {
+            --brand: #3FA6D3;
+            --brand-ink: #1F7FAA;
+            --brand-tint: #EAF5FA;
+            --ink: #1F2933;
+            --ink-2: #52606D;
+            --ink-3: #8A96A3;
+            --line: #E4E7EB;
+            --line-strong: #CBD2D9;
+            --head: #F5F7FA;
+            --hover: #F8FAFB;
+            --warn-bg: #FFF8E6;
+            --warn-line: #F3D58B;
+            --warn-ink: #7A5200;
+            --err: #B42318;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background: #fff; color: var(--ink);
+            font-family: 'Pretendard', sans-serif; font-size: 15px; line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+        }
+        .wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 56px; }
+
+        header.top {
+            display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 16px;
+            padding-bottom: 16px; border-bottom: 2px solid var(--brand);
+        }
+        h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+        .sub { margin-top: 4px; color: var(--ink-2); font-size: 13px; }
+        .actions { display: flex; gap: 8px; }
+        .btn {
+            appearance: none; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
+            display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;
+            border-radius: 8px; border: 1px solid var(--brand); background: #fff; color: var(--brand-ink);
+        }
+        .btn.primary { background: var(--brand); color: #fff; }
+        .btn.primary:hover { background: var(--brand-ink); border-color: var(--brand-ink); }
+        .btn:not(.primary):hover { background: var(--brand-tint); }
+        .btn:disabled { opacity: .4; cursor: not-allowed; }
+        .btn svg { width: 18px; height: 18px; }
+        :focus-visible { outline: 3px solid rgba(63, 166, 211, .4); outline-offset: 2px; }
+
+        .stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin: 20px 0 10px; }
+        .stat { border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px; }
+        .stat .k { font-size: 12px; font-weight: 600; color: var(--ink-2); }
+        .stat .v { margin-top: 2px; font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .stat .v small { margin-left: 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
+        .stat.main { border-color: var(--brand); background: var(--brand-tint); }
+        .stat.main .v { color: var(--brand-ink); }
+        .stamp { margin: 0; font-size: 12px; color: var(--ink-3); }
+
+        .banner {
+            margin: 14px 0 0; padding: 12px 14px; border-radius: 8px; font-size: 14px;
+            background: var(--warn-bg); border: 1px solid var(--warn-line); color: var(--warn-ink);
+        }
+
+        .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 12px; margin: 22px 0 12px; }
+        .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; max-width: 100%; }
+        .tab {
+            appearance: none; background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer;
+            font: inherit; font-weight: 700; color: var(--ink-2); padding: 10px 14px; min-height: 44px; white-space: nowrap;
+        }
+        .tab:hover { color: var(--ink); }
+        .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); }
+        .tab .cnt { margin-left: 4px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+        .search {
+            width: 280px; max-width: 100%; min-height: 44px; padding: 0 12px;
+            border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; font-size: 14px; color: var(--ink);
+        }
+        .search::placeholder { color: var(--ink-3); }
+
+        .table-wrap { border: 1px solid var(--line); border-radius: 10px; overflow: auto; max-height: max(420px, calc(100vh - 200px)); }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; font-variant-numeric: tabular-nums; }
+        th {
+            position: sticky; top: 0; z-index: 1; background: var(--head); text-align: left; white-space: nowrap;
+            font-size: 12px; font-weight: 700; color: var(--ink-2); padding: 10px 12px; border-bottom: 1px solid var(--line-strong);
+        }
+        td { padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+        tbody tr:hover td { background: var(--hover); }
+        tbody tr:last-child td { border-bottom: 0; }
+        .num { text-align: right; white-space: nowrap; }
+        td.code { font-family: Consolas, 'SF Mono', monospace; font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+        td.name { font-weight: 600; }
+        td.spec { color: var(--ink-2); }
+        td.qty { font-size: 17px; font-weight: 800; }
+        td.zero { color: var(--line-strong); }
+        th.sum, td.sum { background: var(--brand-tint); }
+        tbody tr:hover td.sum { background: #DDEFF7; }
+        tfoot td {
+            position: sticky; bottom: 0; background: var(--brand-tint); font-weight: 800;
+            border-top: 1px solid var(--brand); border-bottom: 0;
+        }
+        .note { margin: 10px 2px 0; font-size: 12px; color: var(--ink-3); }
+
+        .empty { padding: 48px 20px; text-align: center; }
+        .empty .t { font-size: 18px; font-weight: 800; }
+        .empty .d { margin-top: 6px; color: var(--ink-2); font-size: 14px; }
+        .empty.err .t { color: var(--err); }
+
+        h2.sec { margin: 28px 0 4px; font-size: 16px; font-weight: 800; }
+        .sec-d { margin: 0 0 10px; font-size: 13px; color: var(--ink-2); }
+        .chip {
+            display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 600;
+            background: var(--head); color: var(--ink-2); border: 1px solid var(--line); white-space: nowrap;
+        }
+
+        .print-head { display: none; }
+
+        @media (max-width: 640px) {
+            .wrap { padding-top: 16px; }
+            h1 { font-size: 21px; }
+            .actions { width: 100%; }
+            .actions .btn { flex: 1; justify-content: center; }
+            .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+            .stat .v { font-size: 22px; }
+            .search { width: 100%; }
+            td, th { padding: 9px 10px; }
+        }
+
+        @page { size: A4; margin: 12mm; }
+        @media print {
+            body { font-size: 11pt; }
+            .wrap { max-width: none; padding: 0; }
+            header.top, .stats, .stamp, .banner, .toolbar, .note, .sec-d { display: none !important; }
+            .print-head { display: block; margin-bottom: 8px; }
+            .print-head .t { font-size: 16pt; font-weight: 800; }
+            .print-head .m { font-size: 9pt; color: #555; }
+            [role="tabpanel"][hidden] { display: none !important; }
+            .table-wrap { border: 0; border-radius: 0; overflow: visible; max-height: none; }
+            th, td { border: 1px solid #999 !important; padding: 5px 7px; }
+            th, tfoot td, th.sum, td.sum { position: static; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            th { background: #E6E6E6; color: #000; }
+            thead { display: table-header-group; }
+            tfoot { display: table-row-group; }   /* 합계는 마지막 페이지에만 (페이지마다 반복되면 소계로 오해) */
+            tr { break-inside: avoid; }
+            td.qty { font-size: 12pt; }
+        }
+    </style>
+    <!-- 매장별 분배 탭에서는 가로 인쇄 (selectTab에서 바꿈) -->
+    <style id="print-page"></style>
+</head>
+<body>
+<div class="wrap">
+    <header class="top">
+        <div>
+            <h1>통합 피킹리스트</h1>
+            <div class="sub" id="sub">진행중 매장 주문(상품/발주)을 품목별로 합친 목록</div>
+        </div>
+        <div class="actions">
+            <button class="btn primary" id="btn-excel" type="button" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+                엑셀 다운로드
+            </button>
+            <button class="btn" id="btn-print" type="button" disabled>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 01-1-1v-6a2 2 0 012-2h14a2 2 0 012 2v6a1 1 0 01-1 1h-2M6 14h12v7H6z"/></svg>
+                인쇄
+            </button>
+        </div>
+    </header>
+
+    <div id="app">
+        <div class="empty"><div class="d">피킹리스트를 불러오는 중…</div></div>
+    </div>
+</div>
+
+<script>
+    const SERVER_URL = "https://port-0-offorder-lzgmwhc4d9883c97.sel4.cloudtype.app";   // 오프라인 서버
+    const params = new URLSearchParams(window.location.search);
+    const API_BASE = params.get('api') || SERVER_URL;   // 로컬 테스트용 오버라이드
+    const NOTICE_AFTER_DAYS = 2;                        // 이보다 오래된 수집이면 안내 표시
+    const TABS = [
+        { id: 'pick', label: '통합 피킹리스트' },
+        { id: 'dist', label: '매장별 분배' },
+        { id: 'orders', label: '포함된 주문' },
+    ];
+
+    let snap = null;
+    let activeTab = 'pick';
+    let query = '';
+
+    const $ = sel => document.querySelector(sel);
+    const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const fmt = n => Number(n || 0).toLocaleString('ko-KR');
+    const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+
+    function kstParts(d) {
+        const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
+            timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit',
+            hour: '2-digit', minute: '2-digit', weekday: 'short', hour12: false,
+        }).formatToParts(new Date(d)).map(x => [x.type, x.value]));
+        return { ...p, hour: p.hour === '24' ? '00' : p.hour };
+    }
+    function kstText(d) {
+        const p = kstParts(d);
+        const wd = { Sun: '일', Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토' }[p.weekday];
+        return `${p.year}-${p.month}-${p.day}(${wd}) ${p.hour}:${p.minute}`;
+    }
+    const metaText = () =>
+        `기준: 이카운트 ${snap.source.lineStamp || kstText(snap.collectedAt)} / 대상: 진행중 ${snap.filter.type} ${snap.totals.orders}건` +
+        (snap.stores.length ? ` (${snap.stores.join(', ')})` : '');
+
+    // ---------- 데이터 ----------
+    async function load() {
+        try {
+            const res = await fetch(`${API_BASE}/api/picking-list`, { cache: 'no-store' });
+            const json = await res.json();
+            if (!json.success) return showError(json.message || '피킹리스트를 불러오지 못했습니다.');
+            snap = json.snapshot;
+            render();
+        } catch (e) {
+            showError('서버에 연결하지 못했습니다. 잠시 후 새로고침해 주세요.');
+        }
+    }
+
+    function showError(msg) {
+        $('#app').innerHTML = `<div class="empty err"><div class="t">${esc(msg)}</div>
+            <div class="d">계속 같은 화면이면 본사 담당자에게 알려 주세요.</div></div>`;
+    }
+
+    function filteredItems() {
+        const keys = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
+        if (!keys.length) return snap.items;
+        return snap.items.filter(it => {
+            const t = `${it.code} ${it.name} ${it.spec}`.toLowerCase();
+            return keys.every(k => t.includes(k));
+        });
+    }
+
+    // ---------- 화면 ----------
+    function render() {
+        const t = snap.totals;
+        const ageDays = Math.floor((Date.now() - new Date(snap.collectedAt)) / 86400000);
+        const counts = { pick: `${t.items}종`, dist: `${t.stores}곳`, orders: `${t.orders}건` };
+
+        $('#sub').textContent = `진행중 매장 ${snap.filter.type}을 품목별로 합친 목록`;
+        $('#btn-excel').disabled = t.items === 0;
+        $('#btn-print').disabled = false;
+
+        $('#app').innerHTML = `
+            <div class="print-head"><div class="t" id="print-title"></div><div class="m">${esc(metaText())}</div></div>
+            <section class="stats" aria-label="요약">
+                <div class="stat"><div class="k">포함된 주문</div><div class="v">${fmt(t.orders)}<small>건</small></div></div>
+                <div class="stat"><div class="k">매장</div><div class="v">${fmt(t.stores)}<small>곳</small></div></div>
+                <div class="stat"><div class="k">품목</div><div class="v">${fmt(t.items)}<small>종</small></div></div>
+                <div class="stat main"><div class="k">꺼낼 총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div></div>
+            </section>
+            <p class="stamp">이카운트 기준 ${esc(snap.source.lineStamp || '-')} · 수집 ${esc(kstText(snap.collectedAt))}</p>
+            ${ageDays >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
+                이 목록은 <b>${ageDays}일 전</b>(${esc(kstText(snap.collectedAt))})에 수집한 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
+                최신 주문이 필요하면 물류 PC에서 피킹리스트 수집을 실행해 주세요.</div>` : ''}
+            <div class="toolbar">
+                <div class="tabs" role="tablist" aria-label="보기">
+                    ${TABS.map(tab => `<button class="tab" role="tab" type="button" id="tab-${tab.id}" aria-controls="panel-${tab.id}"
+                        aria-selected="${tab.id === activeTab}" data-tab="${tab.id}">${tab.label}<span class="cnt">${counts[tab.id]}</span></button>`).join('')}
+                </div>
+                <input class="search" id="search" type="search" placeholder="품목코드, 품목명, 색상 검색" aria-label="품목 검색" value="${esc(query)}">
+            </div>
+            ${TABS.map(tab => `<div role="tabpanel" id="panel-${tab.id}" aria-labelledby="tab-${tab.id}" ${tab.id === activeTab ? '' : 'hidden'}></div>`).join('')}
+        `;
+
+        document.querySelectorAll('.tab').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.tab)));
+        $('#search').addEventListener('input', e => { query = e.target.value; renderPanels(); });
+        renderPanels();
+    }
+
+    function selectTab(id) {
+        activeTab = id;
+        document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.tab === id)));
+        TABS.forEach(tab => { $(`#panel-${tab.id}`).hidden = tab.id !== id; });
+        $('#search').style.visibility = id === 'orders' ? 'hidden' : '';
+        $('#print-title').textContent = TABS.find(tab => tab.id === id).label;
+        $('#print-page').textContent = id === 'dist' ? '@page { size: A4 landscape; margin: 10mm; }' : '';
+    }
+
+    function renderPanels() {
+        $('#panel-pick').innerHTML = renderPick();
+        $('#panel-dist').innerHTML = renderDist();
+        $('#panel-orders').innerHTML = renderOrders();
+        selectTab(activeTab);
+    }
+
+    const emptyState = () => `<div class="table-wrap"><div class="empty">
+        <div class="t">지금 피킹할 주문이 없습니다</div>
+        <div class="d">진행중인 ${esc(snap.filter.type)} 주문이 없습니다.${snap.excluded.length ? ` 회수·데모 등 다른 구분 ${snap.excluded.length}건은 합산하지 않았습니다.` : ''}</div>
+    </div></div>`;
+    const noMatch = () => `<div class="table-wrap"><div class="empty"><div class="d">‘${esc(query)}’에 맞는 품목이 없습니다.</div></div></div>`;
+
+    function renderPick() {
+        if (!snap.items.length) return emptyState();
+        const rows = filteredItems();
+        if (!rows.length) return noMatch();
+        return `<div class="table-wrap"><table>
+            <thead><tr><th>품목코드</th><th>품목명</th><th>규격</th><th class="num">수량</th></tr></thead>
+            <tbody>${rows.map(it => `<tr>
+                <td class="code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td>
+                <td class="spec">${esc(it.spec)}</td><td class="num qty">${fmt(it.qty)}</td></tr>`).join('')}</tbody>
+            <tfoot><tr><td>${query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
+        </table></div>
+        <p class="note">수량은 이카운트 주문서현황의 품목별 수량을 품목코드 기준으로 합친 값입니다.</p>`;
+    }
+
+    function renderDist() {
+        if (!snap.items.length) return emptyState();
+        const rows = filteredItems();
+        if (!rows.length) return noMatch();
+        const stores = snap.stores;
+        const cell = q => q ? `<td class="num">${fmt(q)}</td>` : `<td class="num zero">·</td>`;
+        return `<div class="table-wrap"><table>
+            <thead><tr><th>품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
+                ${stores.map(s => `<th class="num">${esc(s)}</th>`).join('')}</tr></thead>
+            <tbody>${rows.map(it => `<tr>
+                <td class="code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
+                <td class="num qty sum">${fmt(it.qty)}</td>${stores.map(s => cell(it.byStore[s])).join('')}</tr>`).join('')}</tbody>
+            <tfoot><tr><td>${query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td>
+                <td class="num">${fmt(sum(rows, r => r.qty))}</td>
+                ${stores.map(s => `<td class="num">${fmt(sum(rows, r => r.byStore[s]))}</td>`).join('')}</tr></tfoot>
+        </table></div>`;
+    }
+
+    function renderOrders() {
+        const o = snap.orders;
+        const main = o.length ? `<div class="table-wrap"><table>
+            <thead><tr><th>주문번호</th><th>매장</th><th>받는창고</th><th>납기일자</th><th>담당자</th><th class="num">품목 수</th><th class="num">수량</th></tr></thead>
+            <tbody>${o.map(r => `<tr><td class="code">${esc(r.no)}</td><td class="name">${esc(r.store)}</td><td class="spec">${esc(r.warehouse)}</td>
+                <td>${esc(r.dueDate)}</td><td class="spec">${esc(r.manager)}</td><td class="num">${fmt(r.itemCount)}</td><td class="num qty">${fmt(r.qty)}</td></tr>`).join('')}</tbody>
+            <tfoot><tr><td>합계</td><td>${o.length}건</td><td></td><td></td><td></td>
+                <td class="num">${fmt(sum(o, r => r.itemCount))}</td><td class="num">${fmt(sum(o, r => r.qty))}</td></tr></tfoot>
+        </table></div>` : emptyState();
+
+        const ex = snap.excluded;
+        const excluded = ex.length ? `<h2 class="sec">합산하지 않은 진행중 주문 ${ex.length}건</h2>
+            <p class="sec-d">구분이 ${esc(snap.filter.type)}가 아니어서 피킹리스트에 넣지 않았습니다.</p>
+            <div class="table-wrap"><table>
+                <thead><tr><th>주문번호</th><th>구분</th><th>매장</th><th>납기일자</th></tr></thead>
+                <tbody>${ex.map(r => `<tr><td class="code">${esc(r.no)}</td><td><span class="chip">${esc(r.type)}</span></td>
+                    <td class="name">${esc(r.store)}</td><td>${esc(r.dueDate)}</td></tr>`).join('')}</tbody>
+            </table></div>` : '';
+        return main + excluded;
+    }
+
+    // ---------- 엑셀 (시트 3개: 통합 피킹리스트 / 매장별 분배 / 포함된 주문) ----------
+    async function downloadExcel() {
+        const FONT = '맑은 고딕';
+        const thin = { style: 'thin', color: { argb: 'FFBFBFBF' } };
+        const border = { top: thin, left: thin, bottom: thin, right: thin };
+        const fillHead = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF3FA6D3' } };
+        const fillTotal = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF5FA' } };
+        const C = { horizontal: 'center', vertical: 'middle', wrapText: true };
+        const L = { horizontal: 'left', vertical: 'middle', wrapText: true };
+        const meta = metaText();
+
+        const wb = new ExcelJS.Workbook();
+        wb.creator = '요기보 통합 피킹리스트';
+        wb.created = new Date();
+
+        function sheet(name, header, widths, landscape) {
+            const ws = wb.addWorksheet(name, {
+                views: [{ state: 'frozen', ySplit: 4 }],
+                pageSetup: {
+                    paperSize: 9, orientation: landscape ? 'landscape' : 'portrait',
+                    fitToPage: true, fitToWidth: 1, fitToHeight: 0, horizontalCentered: true,
+                    margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
+                    printTitlesRow: '4:4',
+                },
+            });
+            ws.getCell('A1').value = name;
+            ws.getCell('A1').font = { name: FONT, size: 16, bold: true };
+            ws.getRow(1).height = 28;
+            ws.getCell('A2').value = meta;
+            ws.getCell('A2').font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
+            const hr = ws.getRow(4);
+            header.forEach((h, i) => {
+                const c = hr.getCell(i + 1);
+                c.value = h; c.font = { name: FONT, size: 11, bold: true, color: { argb: 'FFFFFFFF' } };
+                c.fill = fillHead; c.alignment = C; c.border = border;
+            });
+            hr.height = 24;
+            widths.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
+            return ws;
+        }
+
+        function put(ws, r, values, aligns, { bold = [], total = false } = {}) {
+            const row = ws.getRow(r);
+            values.forEach((v, i) => {
+                const c = row.getCell(i + 1);
+                c.value = v;
+                c.font = { name: FONT, size: 11, bold: total || bold.includes(i + 1) };
+                c.alignment = aligns[i]; c.border = border;
+                if (total) c.fill = fillTotal;
+            });
+            row.height = 22;
+        }
+
+        const items = snap.items, stores = snap.stores, orders = snap.orders;
+        const first = 5, last = first + items.length - 1;
+        const col = n => String.fromCharCode(64 + n);   // 1 → A (열 26개 이하)
+        const SUM = (n, from, to, result) => ({ formula: `SUM(${col(n)}${from}:${col(n)}${to})`, result });
+
+        // 1) 통합 피킹리스트
+        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '수량'], [16, 46, 34, 10]);
+        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty], [C, L, L, C], { bold: [4] }));
+        put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty)], [C, L, L, C], { total: true });
+        ws.getCell(`A${last + 3}`).value = '수량은 이카운트 주문서현황의 품목별 수량을 품목코드 기준으로 합친 값입니다.';
+        ws.getCell(`A${last + 3}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
+
+        // 2) 매장별 분배
+        ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '합계', ...stores], [16, 46, 34, 9, ...stores.map(() => 16)], true);
+        const da = [C, L, L, C, ...stores.map(() => C)];
+        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(s => it.byStore[s] || null)], da, { bold: [4] }));
+        put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty),
+            ...stores.map((s, i) => SUM(5 + i, first, last, sum(items, it => it.byStore[s])))], da, { total: true });
+
+        // 3) 포함된 주문
+        ws = sheet('포함된 주문', ['주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '수량'], [16, 20, 26, 14, 18, 10, 10]);
+        const oa = [C, L, L, C, L, C, C];
+        orders.forEach((o, i) => put(ws, first + i, [o.no, o.store, o.warehouse, o.dueDate, o.manager, o.itemCount, o.qty], oa));
+        const oLast = first + orders.length - 1;
+        put(ws, oLast + 1, ['합계', `${orders.length}건`, '', '', '',
+            SUM(6, first, oLast, sum(orders, o => o.itemCount)), SUM(7, first, oLast, sum(orders, o => o.qty))], oa, { total: true });
+
+        const p = kstParts(snap.collectedAt);
+        const blob = new Blob([await wb.xlsx.writeBuffer()],
+            { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `통합피킹리스트_${p.year}${p.month}${p.day}_${p.hour}${p.minute}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    $('#btn-excel').addEventListener('click', async () => {
+        const btn = $('#btn-excel');
+        btn.disabled = true;
+        try { await downloadExcel(); }
+        catch (e) { alert('엑셀을 만들지 못했습니다: ' + e.message); }
+        finally { btn.disabled = false; }
+    });
+    $('#btn-print').addEventListener('click', () => window.print());
+
+    load();
+</script>
+</body>
+</html>
