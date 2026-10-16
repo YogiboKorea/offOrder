@@ -3419,16 +3419,81 @@ app.get('/picking', (req, res) => {
     res.sendFile(path.join(__dirname, 'pages', 'picking.html'));
 });
 
+// 실시간 가져오기: 페이지 버튼 → picking_requests에 요청 1줄 → 물류 서버 PC의 worker.js가 10초마다 집어서 수집
+const pickingDb = () => db.client.db('warehouse');
+const PICKING_REQUEST_TTL = { requested: 5 * 60 * 1000, running: 10 * 60 * 1000 };   // 이 시간이 지나면 만료로 본다
+const PICKING_COOLDOWN_MS = 60 * 1000;     // 방금 가져왔으면 새로 돌리지 않고 그 결과를 쓴다
+const PICKING_WORKER_ALIVE_MS = 60 * 1000;  // worker는 10초마다 신호를 보낸다
+
+async function pickingWorkerStatus() {
+    const w = await pickingDb().collection('picking_worker').findOne({ _id: 'worker' });
+    if (!w) return { alive: false };
+    return { alive: Date.now() - new Date(w.lastSeenAt) < PICKING_WORKER_ALIVE_MS, lastSeenAt: w.lastSeenAt, busy: !!w.busy };
+}
+
+// 오래 멈춘 요청(PC가 꺼졌거나 수집이 멈춤)은 만료로 보여 준다
+function pickingRequestView(r) {
+    const ttl = PICKING_REQUEST_TTL[r.status];
+    const since = r.status === 'running' ? r.startedAt : r.requestedAt;
+    if (ttl && Date.now() - new Date(since) > ttl) {
+        return { ...r, status: 'expired', message: r.message || '물류 PC가 응답하지 않아 가져오지 못했습니다.' };
+    }
+    return r;
+}
+
+async function pickingActiveRequest() {
+    const [r] = await pickingDb().collection('picking_requests')
+        .find({ status: { $in: ['requested', 'running'] } }).sort({ requestedAt: -1 }).limit(1).toArray();
+    const view = r && pickingRequestView(r);
+    return view && view.status !== 'expired' ? view : null;
+}
+
 app.get('/api/picking-list', async (req, res) => {
     try {
-        const col = db.client.db('warehouse').collection('picking_snapshots');
+        const col = pickingDb().collection('picking_snapshots');
         const [snapshot] = await col.find({}).sort({ collectedAt: -1 }).limit(1).project({ _id: 0 }).toArray();
+        const [worker, activeRequest] = await Promise.all([pickingWorkerStatus(), pickingActiveRequest()]);
         if (!snapshot) {
-            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. 물류 PC에서 수집 프로그램을 실행해 주세요.' });
+            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. ‘실시간 주문 가져오기’를 눌러 주세요.', worker, activeRequest });
         }
-        res.json({ success: true, snapshot });
+        res.json({ success: true, snapshot, worker, activeRequest });
     } catch (e) {
         console.error('🔥 피킹리스트 조회 오류:', e);
+        res.status(500).json({ success: false, message: '서버 오류', error: e.message });
+    }
+});
+
+app.post('/api/picking-list/refresh', async (req, res) => {
+    try {
+        const requests = pickingDb().collection('picking_requests');
+        const worker = await pickingWorkerStatus();
+
+        // 누가 이미 눌러서 진행 중이면 그 요청을 같이 기다린다
+        const active = await pickingActiveRequest();
+        if (active) return res.json({ success: true, request: active, worker, reused: true });
+
+        const [last] = await requests.find({}).sort({ requestedAt: -1 }).limit(1).toArray();
+        if (last && last.status === 'done' && Date.now() - new Date(last.finishedAt) < PICKING_COOLDOWN_MS) {
+            return res.json({ success: true, request: last, worker, reused: true });
+        }
+
+        const doc = { status: 'requested', requestedAt: new Date() };
+        const { insertedId } = await requests.insertOne(doc);
+        res.json({ success: true, request: { ...doc, _id: insertedId }, worker });
+    } catch (e) {
+        console.error('🔥 피킹리스트 가져오기 요청 오류:', e);
+        res.status(500).json({ success: false, message: '서버 오류', error: e.message });
+    }
+});
+
+app.get('/api/picking-list/refresh/:id', async (req, res) => {
+    try {
+        if (!ObjectId.isValid(req.params.id)) return res.status(400).json({ success: false, message: '잘못된 요청 번호' });
+        const r = await pickingDb().collection('picking_requests').findOne({ _id: new ObjectId(req.params.id) });
+        if (!r) return res.status(404).json({ success: false, message: '요청을 찾을 수 없습니다.' });
+        res.json({ success: true, request: pickingRequestView(r), worker: await pickingWorkerStatus() });
+    } catch (e) {
+        console.error('🔥 피킹리스트 가져오기 상태 오류:', e);
         res.status(500).json({ success: false, message: '서버 오류', error: e.message });
     }
 });

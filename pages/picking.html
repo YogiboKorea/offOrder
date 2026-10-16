@@ -37,7 +37,21 @@
         }
         h1 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
         .sub { margin-top: 4px; color: var(--ink-2); font-size: 13px; }
-        .actions { display: flex; gap: 8px; }
+        .actions { display: flex; flex-wrap: wrap; gap: 8px; }
+        .btn.busy svg { animation: spin 1s linear infinite; }
+
+        .refresh-status {
+            display: flex; align-items: center; gap: 8px; margin: 14px 0 0; padding: 10px 14px;
+            border-radius: 8px; font-size: 14px; font-weight: 600;
+        }
+        .refresh-status.info { background: var(--brand-tint); color: var(--brand-ink); border: 1px solid #BFE3F2; }
+        .refresh-status.ok { background: #ECFDF3; color: #067647; border: 1px solid #ABEFC6; }
+        .refresh-status.err { background: #FEF3F2; color: var(--err); border: 1px solid #FECDCA; }
+        .spin {
+            flex: none; width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
         .btn {
             appearance: none; font: inherit; font-size: 14px; font-weight: 700; cursor: pointer;
             display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px;
@@ -57,7 +71,14 @@
         .stat .v small { margin-left: 2px; font-size: 14px; font-weight: 600; color: var(--ink-2); }
         .stat.main { border-color: var(--brand); background: var(--brand-tint); }
         .stat.main .v { color: var(--brand-ink); }
-        .stamp { margin: 0; font-size: 12px; color: var(--ink-3); }
+        .basis {
+            display: flex; flex-wrap: wrap; gap: 10px 28px; margin: 16px 0 0; padding: 12px 16px;
+            border: 1px solid var(--line); border-left: 4px solid var(--brand); border-radius: 8px;
+        }
+        .basis .item { display: flex; align-items: baseline; gap: 8px; }
+        .basis .k { font-size: 12px; font-weight: 700; color: var(--ink-2); white-space: nowrap; }
+        .basis .v { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .basis .v small { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
 
         .banner {
             margin: 14px 0 0; padding: 12px 14px; border-radius: 8px; font-size: 14px;
@@ -121,6 +142,7 @@
             h1 { font-size: 21px; }
             .actions { width: 100%; }
             .actions .btn { flex: 1; justify-content: center; }
+            #btn-refresh { flex-basis: 100%; }
             .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
             .stat .v { font-size: 22px; }
             .search { width: 100%; }
@@ -131,7 +153,7 @@
         @media print {
             body { font-size: 11pt; }
             .wrap { max-width: none; padding: 0; }
-            header.top, .stats, .stamp, .banner, .toolbar, .note, .sec-d { display: none !important; }
+            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status { display: none !important; }
             .print-head { display: block; margin-bottom: 8px; }
             .print-head .t { font-size: 16pt; font-weight: 800; }
             .print-head .m { font-size: 9pt; color: #555; }
@@ -157,6 +179,10 @@
             <div class="sub" id="sub">진행중 매장 주문(상품/발주)을 품목별로 합친 목록</div>
         </div>
         <div class="actions">
+            <button class="btn" id="btn-refresh" type="button" title="물류 서버 PC가 지금 이카운트에서 주문을 다시 가져옵니다 (1~2분)">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+                <span class="label">실시간 주문 가져오기</span>
+            </button>
             <button class="btn primary" id="btn-excel" type="button" disabled>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
                 엑셀 다운로드
@@ -167,6 +193,8 @@
             </button>
         </div>
     </header>
+
+    <div id="refresh-status" class="refresh-status" role="status" hidden></div>
 
     <div id="app">
         <div class="empty"><div class="d">피킹리스트를 불러오는 중…</div></div>
@@ -205,15 +233,38 @@
         const wd = { Sun: '일', Mon: '월', Tue: '화', Wed: '수', Thu: '목', Fri: '금', Sat: '토' }[p.weekday];
         return `${p.year}-${p.month}-${p.day}(${wd}) ${p.hour}:${p.minute}`;
     }
-    const metaText = () =>
-        `기준: 이카운트 ${snap.source.lineStamp || kstText(snap.collectedAt)} / 대상: 진행중 ${snap.filter.type} ${snap.totals.orders}건` +
-        (snap.stores.length ? ` (${snap.stores.join(', ')})` : '');
+    // 이카운트 엑셀 끝줄 "2026/10/13 (화) 오후 4:10:02" → Date. 데이터 기준 시각 = 이카운트에서 받은 시각
+    function parseEcountStamp(s) {
+        const m = String(s || '').match(/(\d{4})\/(\d{2})\/(\d{2}).*?(오전|오후)\s*(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+        if (!m) return null;
+        const h = Number(m[5]) % 12 + (m[4] === '오후' ? 12 : 0);
+        return new Date(`${m[1]}-${m[2]}-${m[3]}T${String(h).padStart(2, '0')}:${m[6]}:${m[7] || '00'}+09:00`);
+    }
+    const dataTime = () => parseEcountStamp(snap.source.lineStamp || snap.source.listStamp) || new Date(snap.collectedAt);
+    const ageDays = () => Math.floor((Date.now() - dataTime()) / 86400000);
+
+    // 주문일(주문번호 앞 날짜)·납기일 범위 "2026/10/11" / "2026/10/14 ~ 2026/10/15"
+    function dateRange(values) {
+        const v = [...new Set(values.filter(Boolean))].sort();
+        if (!v.length) return '-';
+        return v.length === 1 ? v[0] : `${v[0]} ~ ${v[v.length - 1]}`;
+    }
+    const orderDates = () => dateRange(snap.orders.map(o => o.no.split(/\s/)[0]));
+    const dueDates = () => dateRange(snap.orders.map(o => o.dueDate));
+
+    // 인쇄물·엑셀 머리말
+    const basisText = () =>
+        `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / 진행중 ${snap.filter.type} ${snap.totals.orders}건` +
+        (snap.stores.length ? ` (${snap.stores.join(', ')})` : '') +
+        (snap.orders.length ? ` / 주문일 ${orderDates()} / 납기 ${dueDates()}` : '');
 
     // ---------- 데이터 ----------
     async function load() {
         try {
             const res = await fetch(`${API_BASE}/api/picking-list`, { cache: 'no-store' });
             const json = await res.json();
+            // 다른 사람이 이미 눌러 가져오는 중이면 같이 기다린다
+            if (json.activeRequest && !pollTimer) watchRefresh(json.activeRequest._id);
             if (!json.success) return showError(json.message || '피킹리스트를 불러오지 못했습니다.');
             snap = json.snapshot;
             render();
@@ -239,7 +290,8 @@
     // ---------- 화면 ----------
     function render() {
         const t = snap.totals;
-        const ageDays = Math.floor((Date.now() - new Date(snap.collectedAt)) / 86400000);
+        const age = ageDays();
+        const ageText = age <= 0 ? '오늘' : `${age}일 전`;
         const counts = { pick: `${t.items}종`, dist: `${t.stores}곳`, orders: `${t.orders}건` };
 
         $('#sub').textContent = `진행중 매장 ${snap.filter.type}을 품목별로 합친 목록`;
@@ -247,17 +299,23 @@
         $('#btn-print').disabled = false;
 
         $('#app').innerHTML = `
-            <div class="print-head"><div class="t" id="print-title"></div><div class="m">${esc(metaText())}</div></div>
+            <div class="print-head"><div class="t" id="print-title"></div>
+                <div class="m">${esc(basisText())}</div><div class="m">출력: <span id="print-time"></span></div></div>
+            <section class="basis" aria-label="데이터 기준">
+                <div class="item"><span class="k">데이터 기준</span>
+                    <span class="v">${esc(kstText(dataTime()))}<small>이카운트에서 가져온 시각 · ${ageText}</small></span></div>
+                <div class="item"><span class="k">주문일</span><span class="v">${esc(orderDates())}</span></div>
+                <div class="item"><span class="k">납기일</span><span class="v">${esc(dueDates())}</span></div>
+            </section>
             <section class="stats" aria-label="요약">
                 <div class="stat"><div class="k">포함된 주문</div><div class="v">${fmt(t.orders)}<small>건</small></div></div>
                 <div class="stat"><div class="k">매장</div><div class="v">${fmt(t.stores)}<small>곳</small></div></div>
                 <div class="stat"><div class="k">품목</div><div class="v">${fmt(t.items)}<small>종</small></div></div>
                 <div class="stat main"><div class="k">꺼낼 총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div></div>
             </section>
-            <p class="stamp">이카운트 기준 ${esc(snap.source.lineStamp || '-')} · 수집 ${esc(kstText(snap.collectedAt))}</p>
-            ${ageDays >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
-                이 목록은 <b>${ageDays}일 전</b>(${esc(kstText(snap.collectedAt))})에 수집한 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
-                최신 주문이 필요하면 물류 PC에서 피킹리스트 수집을 실행해 주세요.</div>` : ''}
+            ${age >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
+                이 목록은 <b>${age}일 전</b>(${esc(kstText(dataTime()))})에 이카운트에서 가져온 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
+                최신 주문이 필요하면 위의 ‘실시간 주문 가져오기’를 눌러 주세요.</div>` : ''}
             <div class="toolbar">
                 <div class="tabs" role="tablist" aria-label="보기">
                     ${TABS.map(tab => `<button class="tab" role="tab" type="button" id="tab-${tab.id}" aria-controls="panel-${tab.id}"
@@ -357,7 +415,8 @@
         const fillTotal = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF5FA' } };
         const C = { horizontal: 'center', vertical: 'middle', wrapText: true };
         const L = { horizontal: 'left', vertical: 'middle', wrapText: true };
-        const meta = metaText();
+        const basis = basisText();
+        const downloaded = `엑셀 다운로드: ${kstText(new Date())}`;
 
         const wb = new ExcelJS.Workbook();
         wb.creator = '요기보 통합 피킹리스트';
@@ -376,8 +435,10 @@
             ws.getCell('A1').value = name;
             ws.getCell('A1').font = { name: FONT, size: 16, bold: true };
             ws.getRow(1).height = 28;
-            ws.getCell('A2').value = meta;
-            ws.getCell('A2').font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
+            ws.getCell('A2').value = basis;
+            ws.getCell('A2').font = { name: FONT, size: 10, bold: true, color: { argb: 'FF1F7FAA' } };
+            ws.getCell('A3').value = downloaded;
+            ws.getCell('A3').font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
             const hr = ws.getRow(4);
             header.forEach((h, i) => {
                 const c = hr.getCell(i + 1);
@@ -428,7 +489,7 @@
         put(ws, oLast + 1, ['합계', `${orders.length}건`, '', '', '',
             SUM(6, first, oLast, sum(orders, o => o.itemCount)), SUM(7, first, oLast, sum(orders, o => o.qty))], oa, { total: true });
 
-        const p = kstParts(snap.collectedAt);
+        const p = kstParts(dataTime());   // 파일 이름 = 데이터 기준 시각 (내려받은 시각은 시트 3행)
         const blob = new Blob([await wb.xlsx.writeBuffer()],
             { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const a = document.createElement('a');
@@ -448,6 +509,84 @@
         finally { btn.disabled = false; }
     });
     $('#btn-print').addEventListener('click', () => window.print());
+
+    // ---------- 실시간 주문 가져오기 (요청 → 물류 서버 PC worker.js가 수집 → 끝나면 다시 불러오기) ----------
+    const POLL_MS = 3000;
+    const WORKER_GRACE_MS = 20000;   // 요청 후 이만큼 지나도 PC 신호가 없으면 꺼진 것으로 본다
+    let pollTimer = null;
+
+    function setRefreshStatus(kind, html) {
+        const el = $('#refresh-status');
+        el.hidden = !kind;
+        el.className = `refresh-status ${kind || ''}`;
+        el.innerHTML = kind ? html : '';
+    }
+    function setRefreshBusy(busy) {
+        const btn = $('#btn-refresh');
+        btn.disabled = busy;
+        btn.classList.toggle('busy', busy);
+        btn.querySelector('.label').textContent = busy ? '가져오는 중…' : '실시간 주문 가져오기';
+    }
+
+    async function requestRefresh() {
+        setRefreshBusy(true);
+        setRefreshStatus('info', '<span class="spin"></span>물류 서버 PC에 가져오기를 요청하는 중…');
+        try {
+            const res = await fetch(`${API_BASE}/api/picking-list/refresh`, { method: 'POST' });
+            const json = await res.json();
+            if (!json.success) throw new Error(json.message || '요청 실패');
+            watchRefresh(json.request._id);
+        } catch (e) {
+            setRefreshBusy(false);
+            setRefreshStatus('err', `가져오기 요청을 보내지 못했습니다. ${esc(e.message)}`);
+        }
+    }
+
+    function watchRefresh(id) {
+        clearInterval(pollTimer);
+        setRefreshBusy(true);
+        let stopped = false;   // 늦게 도착한 응답이 끝난 뒤에 화면을 다시 건드리지 않게
+        const finish = (kind, html) => {
+            stopped = true;
+            clearInterval(pollTimer);
+            pollTimer = null;
+            setRefreshBusy(false);
+            setRefreshStatus(kind, html);
+        };
+        const tick = async () => {
+            let json;
+            try {
+                json = await (await fetch(`${API_BASE}/api/picking-list/refresh/${id}`, { cache: 'no-store' })).json();
+            } catch (e) { return; }   // 잠깐 끊긴 것은 다음 확인에서 다시
+            if (stopped) return;
+            if (!json.success) return finish('err', esc(json.message || '상태를 확인하지 못했습니다.'));
+            const r = json.request, w = json.worker || {};
+            if (r.status === 'done') {
+                stopped = true;
+                clearInterval(pollTimer);
+                await load();
+                return finish('ok', `${esc(kstText(r.finishedAt || new Date()))}에 이카운트에서 새로 가져왔습니다.`);
+            }
+            if (r.status === 'failed' || r.status === 'expired') {
+                return finish('err', `가져오지 못했습니다. ${esc(r.message || '')}`);
+            }
+            if (r.status === 'requested' && !w.alive && Date.now() - new Date(r.requestedAt) > WORKER_GRACE_MS) {
+                return finish('err', '물류 서버 PC가 꺼져 있거나 대기 프로그램(worker.bat)이 멈춰 있어 가져올 수 없습니다. 서버 PC를 확인해 주세요.');
+            }
+            const sec = Math.max(0, Math.round((Date.now() - new Date(r.startedAt || r.requestedAt)) / 1000));
+            setRefreshStatus('info', r.status === 'running'
+                ? `<span class="spin"></span>물류 서버 PC가 이카운트에서 주문을 가져오는 중입니다… ${sec}초 (보통 1~2분)`
+                : `<span class="spin"></span>물류 서버 PC가 요청을 받기를 기다리는 중… ${sec}초`);
+        };
+        pollTimer = setInterval(tick, POLL_MS);
+        tick();
+    }
+
+    $('#btn-refresh').addEventListener('click', requestRefresh);
+    window.addEventListener('beforeprint', () => {
+        const el = document.getElementById('print-time');
+        if (el) el.textContent = kstText(new Date());
+    });
 
     load();
 </script>
