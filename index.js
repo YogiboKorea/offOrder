@@ -3407,3 +3407,23 @@ app.get('/api/stock/snapshot/download', async (req, res) => {
         res.status(500).json({ success: false, message: e.message });
     }
 });
+
+// ==========================================
+// [🧺] 통합 피킹리스트 (진행중 매장 주문(상품/발주) 품목별 합산 스냅샷)
+//   데이터 적재: Dropbox 04_개발/물류/picking (물류 PC가 이카운트 주문서조회+주문서현황을 수집해 1건씩 insert)
+//   같은 클러스터의 warehouse DB를 읽는다 (OFFLINE_ORDER와 같은 클러스터)
+//   페이지: deliveryOFF/피킹리스트.html (/off/staff/picking.html)
+// ==========================================
+app.get('/api/picking-list', async (req, res) => {
+    try {
+        const col = db.client.db('warehouse').collection('picking_snapshots');
+        const [snapshot] = await col.find({}).sort({ collectedAt: -1 }).limit(1).project({ _id: 0 }).toArray();
+        if (!snapshot) {
+            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. 물류 PC에서 수집 프로그램을 실행해 주세요.' });
+        }
+        res.json({ success: true, snapshot });
+    } catch (e) {
+        console.error('🔥 피킹리스트 조회 오류:', e);
+        res.status(500).json({ success: false, message: '서버 오류', error: e.message });
+    }
+});
