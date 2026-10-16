@@ -40,10 +40,14 @@
         .actions { display: flex; flex-wrap: wrap; gap: 8px; }
         .btn.busy svg { animation: spin 1s linear infinite; }
 
+        .refresh-help { margin: 12px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
+        .refresh-help b { color: var(--brand-ink); }
+
         .refresh-status {
             display: flex; align-items: center; gap: 8px; margin: 14px 0 0; padding: 10px 14px;
             border-radius: 8px; font-size: 14px; font-weight: 600;
         }
+        .refresh-status[hidden] { display: none; }   /* display:flex가 hidden 속성을 덮어쓰지 않게 */
         .refresh-status.info { background: var(--brand-tint); color: var(--brand-ink); border: 1px solid #BFE3F2; }
         .refresh-status.ok { background: #ECFDF3; color: #067647; border: 1px solid #ABEFC6; }
         .refresh-status.err { background: #FEF3F2; color: var(--err); border: 1px solid #FECDCA; }
@@ -153,7 +157,7 @@
         @media print {
             body { font-size: 11pt; }
             .wrap { max-width: none; padding: 0; }
-            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status { display: none !important; }
+            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .refresh-help { display: none !important; }
             .print-head { display: block; margin-bottom: 8px; }
             .print-head .t { font-size: 16pt; font-weight: 800; }
             .print-head .m { font-size: 9pt; color: #555; }
@@ -179,9 +183,9 @@
             <div class="sub" id="sub">진행중 매장 주문(상품/발주)을 품목별로 합친 목록</div>
         </div>
         <div class="actions">
-            <button class="btn" id="btn-refresh" type="button" title="물류 서버 PC가 지금 이카운트에서 주문을 다시 가져옵니다 (1~2분)">
+            <button class="btn" id="btn-refresh" type="button" title="이카운트에서 지금 진행중인 매장 주문을 새로 가져옵니다 (1~2분)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
-                <span class="label">실시간 주문 가져오기</span>
+                <span class="label">실시간 데이터 가져오기</span>
             </button>
             <button class="btn primary" id="btn-excel" type="button" disabled>
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0l-4-4m4 4l4-4M4 17v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
@@ -193,6 +197,11 @@
             </button>
         </div>
     </header>
+
+    <p class="refresh-help">
+        <b>실시간 데이터 가져오기</b>를 누르면 물류 서버 PC가 이카운트에 접속해 지금 진행중인 매장 주문을 새로 가져옵니다.
+        1~2분 걸리며, 끝나면 이 화면이 자동으로 바뀝니다.
+    </p>
 
     <div id="refresh-status" class="refresh-status" role="status" hidden></div>
 
@@ -315,7 +324,7 @@
             </section>
             ${age >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
                 이 목록은 <b>${age}일 전</b>(${esc(kstText(dataTime()))})에 이카운트에서 가져온 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
-                최신 주문이 필요하면 위의 ‘실시간 주문 가져오기’를 눌러 주세요.</div>` : ''}
+                최신 주문이 필요하면 위의 ‘실시간 데이터 가져오기’를 눌러 주세요.</div>` : ''}
             <div class="toolbar">
                 <div class="tabs" role="tablist" aria-label="보기">
                     ${TABS.map(tab => `<button class="tab" role="tab" type="button" id="tab-${tab.id}" aria-controls="panel-${tab.id}"
@@ -510,7 +519,7 @@
     });
     $('#btn-print').addEventListener('click', () => window.print());
 
-    // ---------- 실시간 주문 가져오기 (요청 → 물류 서버 PC worker.js가 수집 → 끝나면 다시 불러오기) ----------
+    // ---------- 실시간 데이터 가져오기 (요청 → 물류 서버 PC worker.js가 수집 → 끝나면 다시 불러오기) ----------
     const POLL_MS = 3000;
     const WORKER_GRACE_MS = 20000;   // 요청 후 이만큼 지나도 PC 신호가 없으면 꺼진 것으로 본다
     let pollTimer = null;
@@ -525,7 +534,7 @@
         const btn = $('#btn-refresh');
         btn.disabled = busy;
         btn.classList.toggle('busy', busy);
-        btn.querySelector('.label').textContent = busy ? '가져오는 중…' : '실시간 주문 가져오기';
+        btn.querySelector('.label').textContent = busy ? '가져오는 중…' : '실시간 데이터 가져오기';
     }
 
     async function requestRefresh() {

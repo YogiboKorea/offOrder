@@ -3454,7 +3454,7 @@ app.get('/api/picking-list', async (req, res) => {
         const [snapshot] = await col.find({}).sort({ collectedAt: -1 }).limit(1).project({ _id: 0 }).toArray();
         const [worker, activeRequest] = await Promise.all([pickingWorkerStatus(), pickingActiveRequest()]);
         if (!snapshot) {
-            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. ‘실시간 주문 가져오기’를 눌러 주세요.', worker, activeRequest });
+            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. ‘실시간 데이터 가져오기’를 눌러 주세요.', worker, activeRequest });
         }
         res.json({ success: true, snapshot, worker, activeRequest });
     } catch (e) {
