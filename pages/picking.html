@@ -24,6 +24,7 @@
             --err: #B42318;
         }
         * { box-sizing: border-box; }
+        [hidden] { display: none !important; }   /* .btn{display:inline-flex} 같은 규칙이 hidden 속성을 덮어쓰지 않게 */
         body {
             margin: 0; background: #fff; color: var(--ink);
             font-family: 'Pretendard', sans-serif; font-size: 15px; line-height: 1.5;
@@ -39,6 +40,25 @@
         .sub { margin-top: 4px; color: var(--ink-2); font-size: 13px; }
         .actions { display: flex; flex-wrap: wrap; gap: 8px; }
         .btn.busy svg { animation: spin 1s linear infinite; }
+
+        /* 구분: 상품(판매 재고) / 데모(데모 창고) — 꺼내는 곳이 다르다 */
+        .kind { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .kind.k-sale { background: var(--brand-tint); color: var(--brand-ink); }
+        .kind.k-demo { background: #FFF4E5; color: #9A5B00; }
+        .stat .split { margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
+
+        /* 확인창 */
+        .modal {
+            position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center;
+            padding: 16px; background: rgba(15, 23, 42, .45);
+        }
+        .modal[hidden] { display: none; }
+        .modal-card { width: 100%; max-width: 440px; padding: 22px 22px 18px; border-radius: 12px; background: #fff; box-shadow: 0 20px 50px rgba(15, 23, 42, .25); }
+        .modal-card h2 { margin: 0 0 12px; font-size: 18px; font-weight: 800; }
+        .modal-card p { margin: 0; font-size: 14px; line-height: 1.65; color: var(--ink-2); }
+        .modal-card p + p { margin-top: 8px; }
+        .modal-card .last { padding: 10px 12px; border-radius: 8px; background: var(--head); color: var(--ink); }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
 
         /* 사용 방법 (접을 수 있음, 접은 상태는 브라우저에 기억) */
         .guide { margin: 16px 0 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
@@ -180,7 +200,8 @@
         @media print {
             body { font-size: 11pt; }
             .wrap { max-width: none; padding: 0; }
-            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .guide { display: none !important; }
+            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .guide, .modal { display: none !important; }
+            .kind { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .print-head { display: block; margin-bottom: 8px; }
             .print-head .t { font-size: 16pt; font-weight: 800; }
             .print-head .m { font-size: 9pt; color: #555; }
@@ -206,7 +227,7 @@
             <div class="sub" id="sub">진행중 매장 주문(상품/발주)을 품목별로 합친 목록</div>
         </div>
         <div class="actions">
-            <button class="btn" id="btn-refresh" type="button" title="이카운트에서 지금 진행중인 매장 주문을 새로 가져옵니다 (1~2분)">
+            <button class="btn" id="btn-refresh" type="button" title="이카운트에서 지금 진행중인 매장 주문을 새로 가져옵니다 (1~2분, 10분 간격)">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
                 <span class="label">실시간 데이터 가져오기</span>
             </button>
@@ -229,14 +250,15 @@
         </summary>
         <div class="guide-body">
             <ol class="steps">
-                <li class="step"><b>실시간 데이터 가져오기</b>누르면 물류 서버 PC가 이카운트에서 지금 진행중인 주문을 새로 가져옵니다. 1~2분 뒤 화면이 저절로 바뀝니다. 아래 <strong>데이터 기준</strong> 시각을 확인하세요.</li>
-                <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. 창고에서 이 목록대로 한 번에 꺼냅니다.</li>
+                <li class="step"><b>실시간 데이터 가져오기</b>누르고 확인창에서 <strong>가져오기</strong>를 누르면 물류 서버 PC가 이카운트에서 진행중인 주문을 새로 가져옵니다. 1~2분 뒤 화면이 저절로 바뀝니다. 10분 간격으로 가져올 수 있습니다.</li>
+                <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. <strong>구분</strong>이 상품이면 판매 재고, 데모면 데모 창고에서 꺼냅니다.</li>
                 <li class="step"><b>매장별 분배 탭</b>꺼낸 물건을 매장별로 몇 개씩 나눠 담을지 보여 줍니다.</li>
                 <li class="step"><b>포함된 주문 탭</b>합산된 주문서 목록입니다. 이미 출고한 주문이 섞여 있지 않은지 확인합니다.</li>
                 <li class="step"><b>엑셀 다운로드 · 인쇄</b>엑셀은 시트 3개(피킹리스트·매장별 분배·포함된 주문)로 받습니다. 인쇄는 지금 보는 탭만 나갑니다.</li>
             </ol>
             <ul class="guide-notes">
-                <li>합치는 주문: 이카운트 주문서 중 <b>진행중</b>이면서 구분이 <b>주문(상품/발주)</b>인 것만. 회수·데모 전환 등은 빼고 ‘포함된 주문’ 탭 아래에 따로 보여 줍니다.</li>
+                <li>페이지를 열거나 새로고침하면 <b>마지막으로 가져온 데이터</b>를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 것은 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐입니다.</li>
+                <li>합치는 주문: 이카운트 주문서 중 <b>진행중</b>이면서 구분이 <b>주문(상품/발주)</b> 또는 <b>주문(데모/발주)</b>인 것. 같은 품목이라도 상품과 데모는 줄을 나눕니다. 회수·데모 전환 등은 빼고 ‘포함된 주문’ 탭 아래에 따로 보여 줍니다.</li>
                 <li>출고가 끝난 주문서는 이카운트에서 <b>완료 처리</b>해 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
                 <li>‘물류 서버 PC가 꺼져 있거나…’ 안내가 나오면 서버 PC가 켜져 있는지 확인하거나 본사 담당자에게 알려 주세요.</li>
             </ul>
@@ -247,6 +269,17 @@
 
     <div id="app">
         <div class="empty"><div class="d">피킹리스트를 불러오는 중…</div></div>
+    </div>
+</div>
+
+<div class="modal" id="modal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+        <h2 id="modal-title"></h2>
+        <div id="modal-body"></div>
+        <div class="modal-actions">
+            <button class="btn" id="modal-cancel" type="button">취소</button>
+            <button class="btn primary" id="modal-ok" type="button">가져오기</button>
+        </div>
     </div>
 </div>
 
@@ -269,6 +302,9 @@
     const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const fmt = n => Number(n || 0).toLocaleString('ko-KR');
     const sum = (arr, f) => arr.reduce((s, x) => s + (Number(f(x)) || 0), 0);
+    // 구분: 상품(판매 재고) / 데모(데모 창고). 예전 스냅샷에는 kind가 없다 → 상품
+    const kindOf = x => x.kind || '상품';
+    const kindChip = x => `<span class="kind ${kindOf(x) === '데모' ? 'k-demo' : 'k-sale'}">${esc(kindOf(x))}</span>`;
 
     function kstParts(d) {
         const p = Object.fromEntries(new Intl.DateTimeFormat('en-CA', {
@@ -312,8 +348,9 @@
         try {
             const res = await fetch(`${API_BASE}/api/picking-list`, { cache: 'no-store' });
             const json = await res.json();
-            // 다른 사람이 이미 눌러 가져오는 중이면 같이 기다린다
-            if (json.activeRequest && !pollTimer) watchRefresh(json.activeRequest._id);
+            // 페이지를 열거나 새로고침하면 마지막으로 가져온 데이터만 보여 준다.
+            // 이카운트에서 새로 가져오는 것은 버튼을 눌렀을 때뿐 (진행 표시도 버튼을 누른 화면에만)
+            if (json.cooldownMs) cooldownMs = json.cooldownMs;
             if (!json.success) return showError(json.message || '피킹리스트를 불러오지 못했습니다.');
             snap = json.snapshot;
             render();
@@ -331,7 +368,7 @@
         const keys = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
         if (!keys.length) return snap.items;
         return snap.items.filter(it => {
-            const t = `${it.code} ${it.name} ${it.spec}`.toLowerCase();
+            const t = `${kindOf(it)} ${it.code} ${it.name} ${it.spec}`.toLowerCase();
             return keys.every(k => t.includes(k));
         });
     }
@@ -343,7 +380,8 @@
         const ageText = age <= 0 ? '오늘' : `${age}일 전`;
         const counts = { pick: `${t.items}종`, dist: `${t.stores}곳`, orders: `${t.orders}건` };
 
-        $('#sub').textContent = `진행중 매장 ${snap.filter.type}을 품목별로 합친 목록`;
+        $('#sub').textContent = '진행중 매장 주문을 품목별로 합친 목록';
+        const demoQty = sum(snap.items.filter(i => kindOf(i) === '데모'), i => i.qty);
         $('#btn-excel').disabled = t.items === 0;
         $('#btn-print').disabled = false;
 
@@ -360,7 +398,8 @@
                 <div class="stat"><div class="k">포함된 주문</div><div class="v">${fmt(t.orders)}<small>건</small></div></div>
                 <div class="stat"><div class="k">매장</div><div class="v">${fmt(t.stores)}<small>곳</small></div></div>
                 <div class="stat"><div class="k">품목</div><div class="v">${fmt(t.items)}<small>종</small></div></div>
-                <div class="stat main"><div class="k">꺼낼 총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div></div>
+                <div class="stat main"><div class="k">꺼낼 총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div>
+                    ${demoQty ? `<div class="split">상품 ${fmt(t.qty - demoQty)} · 데모 ${fmt(demoQty)}</div>` : ''}</div>
             </section>
             ${age >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
                 이 목록은 <b>${age}일 전</b>(${esc(kstText(dataTime()))})에 이카운트에서 가져온 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
@@ -398,7 +437,7 @@
 
     const emptyState = () => `<div class="table-wrap"><div class="empty">
         <div class="t">지금 피킹할 주문이 없습니다</div>
-        <div class="d">진행중인 ${esc(snap.filter.type)} 주문이 없습니다.${snap.excluded.length ? ` 회수·데모 등 다른 구분 ${snap.excluded.length}건은 합산하지 않았습니다.` : ''}</div>
+        <div class="d">지금 진행중인 피킹 대상 주문이 없습니다. 대상 구분: ${esc(snap.filter.type)}.${snap.excluded.length ? ` 회수·전환 등 다른 구분 ${snap.excluded.length}건은 합산하지 않았습니다.` : ''}</div>
     </div></div>`;
     const noMatch = () => `<div class="table-wrap"><div class="empty"><div class="d">‘${esc(query)}’에 맞는 품목이 없습니다.</div></div></div>`;
 
@@ -407,11 +446,11 @@
         const rows = filteredItems();
         if (!rows.length) return noMatch();
         return `<div class="table-wrap"><table>
-            <thead><tr><th>품목코드</th><th>품목명</th><th>규격</th><th class="num">수량</th></tr></thead>
-            <tbody>${rows.map(it => `<tr>
+            <thead><tr><th>구분</th><th>품목코드</th><th>품목명</th><th>규격</th><th class="num">수량</th></tr></thead>
+            <tbody>${rows.map(it => `<tr><td>${kindChip(it)}</td>
                 <td class="code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td>
                 <td class="spec">${esc(it.spec)}</td><td class="num qty">${fmt(it.qty)}</td></tr>`).join('')}</tbody>
-            <tfoot><tr><td>${query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
+            <tfoot><tr><td colspan="2">${query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
         </table></div>
         <p class="note">수량은 이카운트 주문서현황의 품목별 수량을 품목코드 기준으로 합친 값입니다.</p>`;
     }
@@ -423,12 +462,12 @@
         const stores = snap.stores;
         const cell = q => q ? `<td class="num">${fmt(q)}</td>` : `<td class="num zero">·</td>`;
         return `<div class="table-wrap"><table>
-            <thead><tr><th>품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
+            <thead><tr><th>구분</th><th>품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
                 ${stores.map(s => `<th class="num">${esc(s)}</th>`).join('')}</tr></thead>
-            <tbody>${rows.map(it => `<tr>
+            <tbody>${rows.map(it => `<tr><td>${kindChip(it)}</td>
                 <td class="code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
                 <td class="num qty sum">${fmt(it.qty)}</td>${stores.map(s => cell(it.byStore[s])).join('')}</tr>`).join('')}</tbody>
-            <tfoot><tr><td>${query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td>
+            <tfoot><tr><td colspan="2">${query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td>
                 <td class="num">${fmt(sum(rows, r => r.qty))}</td>
                 ${stores.map(s => `<td class="num">${fmt(sum(rows, r => r.byStore[s]))}</td>`).join('')}</tr></tfoot>
         </table></div>`;
@@ -437,16 +476,16 @@
     function renderOrders() {
         const o = snap.orders;
         const main = o.length ? `<div class="table-wrap"><table>
-            <thead><tr><th>주문번호</th><th>매장</th><th>받는창고</th><th>납기일자</th><th>담당자</th><th class="num">품목 수</th><th class="num">수량</th></tr></thead>
-            <tbody>${o.map(r => `<tr><td class="code">${esc(r.no)}</td><td class="name">${esc(r.store)}</td><td class="spec">${esc(r.warehouse)}</td>
+            <thead><tr><th>구분</th><th>주문번호</th><th>매장</th><th>받는창고</th><th>납기일자</th><th>담당자</th><th class="num">품목 수</th><th class="num">수량</th></tr></thead>
+            <tbody>${o.map(r => `<tr><td>${kindChip(r)}</td><td class="code">${esc(r.no)}</td><td class="name">${esc(r.store)}</td><td class="spec">${esc(r.warehouse)}</td>
                 <td>${esc(r.dueDate)}</td><td class="spec">${esc(r.manager)}</td><td class="num">${fmt(r.itemCount)}</td><td class="num qty">${fmt(r.qty)}</td></tr>`).join('')}</tbody>
-            <tfoot><tr><td>합계</td><td>${o.length}건</td><td></td><td></td><td></td>
+            <tfoot><tr><td colspan="2">합계</td><td>${o.length}건</td><td></td><td></td><td></td>
                 <td class="num">${fmt(sum(o, r => r.itemCount))}</td><td class="num">${fmt(sum(o, r => r.qty))}</td></tr></tfoot>
         </table></div>` : emptyState();
 
         const ex = snap.excluded;
         const excluded = ex.length ? `<h2 class="sec">합산하지 않은 진행중 주문 ${ex.length}건</h2>
-            <p class="sec-d">구분이 ${esc(snap.filter.type)}가 아니어서 피킹리스트에 넣지 않았습니다.</p>
+            <p class="sec-d">아래 주문은 구분이 ${esc(snap.filter.type)}이 아니어서 피킹리스트에 넣지 않았습니다.</p>
             <div class="table-wrap"><table>
                 <thead><tr><th>주문번호</th><th>구분</th><th>매장</th><th>납기일자</th></tr></thead>
                 <tbody>${ex.map(r => `<tr><td class="code">${esc(r.no)}</td><td><span class="chip">${esc(r.type)}</span></td>
@@ -516,27 +555,28 @@
         const col = n => String.fromCharCode(64 + n);   // 1 → A (열 26개 이하)
         const SUM = (n, from, to, result) => ({ formula: `SUM(${col(n)}${from}:${col(n)}${to})`, result });
 
+        // 모든 시트 첫 열 = 구분(상품/데모): 꺼내는 창고가 다르다
         // 1) 통합 피킹리스트
-        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '수량'], [16, 46, 34, 10]);
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty], [C, L, L, C], { bold: [4] }));
-        put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty)], [C, L, L, C], { total: true });
-        ws.getCell(`A${last + 3}`).value = '수량은 이카운트 주문서현황의 품목별 수량을 품목코드 기준으로 합친 값입니다.';
+        let ws = sheet('통합 피킹리스트', ['구분', '품목코드', '품목명', '규격', '수량'], [8, 16, 46, 34, 10]);
+        items.forEach((it, i) => put(ws, first + i, [kindOf(it), it.code, it.name, it.spec, it.qty], [C, C, L, L, C], { bold: [5] }));
+        put(ws, last + 1, ['합계', `${items.length}종`, '', '', SUM(5, first, last, snap.totals.qty)], [C, C, L, L, C], { total: true });
+        ws.getCell(`A${last + 3}`).value = '수량은 이카운트 주문서현황의 품목별 수량을 구분(상품/데모)·품목코드 기준으로 합친 값입니다.';
         ws.getCell(`A${last + 3}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
 
         // 2) 매장별 분배
-        ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '합계', ...stores], [16, 46, 34, 9, ...stores.map(() => 16)], true);
-        const da = [C, L, L, C, ...stores.map(() => C)];
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(s => it.byStore[s] || null)], da, { bold: [4] }));
-        put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty),
-            ...stores.map((s, i) => SUM(5 + i, first, last, sum(items, it => it.byStore[s])))], da, { total: true });
+        ws = sheet('매장별 분배', ['구분', '품목코드', '품목명', '규격', '합계', ...stores], [8, 16, 46, 34, 9, ...stores.map(() => 16)], true);
+        const da = [C, C, L, L, C, ...stores.map(() => C)];
+        items.forEach((it, i) => put(ws, first + i, [kindOf(it), it.code, it.name, it.spec, it.qty, ...stores.map(s => it.byStore[s] || null)], da, { bold: [5] }));
+        put(ws, last + 1, ['합계', `${items.length}종`, '', '', SUM(5, first, last, snap.totals.qty),
+            ...stores.map((s, i) => SUM(6 + i, first, last, sum(items, it => it.byStore[s])))], da, { total: true });
 
         // 3) 포함된 주문
-        ws = sheet('포함된 주문', ['주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '수량'], [16, 20, 26, 14, 18, 10, 10]);
-        const oa = [C, L, L, C, L, C, C];
-        orders.forEach((o, i) => put(ws, first + i, [o.no, o.store, o.warehouse, o.dueDate, o.manager, o.itemCount, o.qty], oa));
+        ws = sheet('포함된 주문', ['구분', '주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '수량'], [8, 16, 20, 26, 14, 18, 10, 10]);
+        const oa = [C, C, L, L, C, L, C, C];
+        orders.forEach((o, i) => put(ws, first + i, [kindOf(o), o.no, o.store, o.warehouse, o.dueDate, o.manager, o.itemCount, o.qty], oa));
         const oLast = first + orders.length - 1;
-        put(ws, oLast + 1, ['합계', `${orders.length}건`, '', '', '',
-            SUM(6, first, oLast, sum(orders, o => o.itemCount)), SUM(7, first, oLast, sum(orders, o => o.qty))], oa, { total: true });
+        put(ws, oLast + 1, ['합계', `${orders.length}건`, '', '', '', '',
+            SUM(7, first, oLast, sum(orders, o => o.itemCount)), SUM(8, first, oLast, sum(orders, o => o.qty))], oa, { total: true });
 
         const p = kstParts(dataTime());   // 파일 이름 = 데이터 기준 시각 (내려받은 시각은 시트 3행)
         const blob = new Blob([await wb.xlsx.writeBuffer()],
@@ -563,6 +603,72 @@
     const POLL_MS = 3000;
     const WORKER_GRACE_MS = 20000;   // 요청 후 이만큼 지나도 PC 신호가 없으면 꺼진 것으로 본다
     let pollTimer = null;
+    let cooldownMs = 10 * 60 * 1000; // 마지막 수집 후 다시 가져올 수 있는 간격 (서버가 /api/picking-list로 알려 줌)
+
+    const hhmm = d => { const p = kstParts(d); return `${p.hour}:${p.minute}`; };
+    function agoText(d) {
+        const min = Math.max(0, Math.floor((Date.now() - new Date(d)) / 60000));
+        if (min < 1) return '방금';
+        if (min < 60) return `${min}분 전`;
+        if (min < 60 * 24) return `${Math.floor(min / 60)}시간 전`;
+        return `${Math.floor(min / 1440)}일 전`;
+    }
+
+    // ---------- 확인창 ----------
+    function openModal({ title, body, ok, cancel = '취소', onOk }) {
+        const m = $('#modal');
+        $('#modal-title').textContent = title;
+        $('#modal-body').innerHTML = body;
+        $('#modal-ok').textContent = ok;
+        $('#modal-cancel').hidden = !cancel;
+        if (cancel) $('#modal-cancel').textContent = cancel;
+        const close = () => {
+            m.hidden = true;
+            document.removeEventListener('keydown', onKey);
+            $('#btn-refresh').focus();
+        };
+        const onKey = e => { if (e.key === 'Escape') close(); };
+        document.addEventListener('keydown', onKey);
+        $('#modal-ok').onclick = () => { close(); if (onOk) onOk(); };
+        $('#modal-cancel').onclick = close;
+        m.onclick = e => { if (e.target === m) close(); };
+        m.hidden = false;
+        $('#modal-ok').focus();
+    }
+
+    function showCooldown(last) {
+        const next = new Date(new Date(last).getTime() + cooldownMs);
+        openModal({
+            title: '이미 최신 데이터입니다',
+            body: `<p class="last">마지막으로 가져온 시각: <b>${esc(hhmm(last))}</b> (${agoText(last)})</p>
+                   <p>이카운트 데이터는 ${Math.round(cooldownMs / 60000)}분 간격으로 가져올 수 있습니다.
+                   <b>${esc(hhmm(next))}</b>부터 다시 누를 수 있습니다.</p>`,
+            ok: '확인', cancel: null,
+        });
+    }
+
+    // 버튼 → (10분 안이면 안내만) → 확인창 → 가져오기
+    function onRefreshClick() {
+        const last = snap && snap.collectedAt;
+        if (last && Date.now() - new Date(last) < cooldownMs) return showCooldown(last);
+        openModal({
+            title: '이카운트에서 데이터를 가져올까요?',
+            body: `${last ? `<p class="last">마지막으로 가져온 시각: <b>${esc(kstText(last))}</b> (${agoText(last)})</p>` : ''}
+                   <p>물류 서버 PC가 이카운트에 접속해 진행중인 매장 주문을 새로 가져옵니다.
+                   1~2분 걸리며, 끝나면 화면이 저절로 바뀝니다.</p>`,
+            ok: '가져오기', onOk: requestRefresh,
+        });
+    }
+
+    // 가져오기 전후 비교: 바뀐 게 없어도 "그대로"라고 알려 준다
+    function changeText(before, after) {
+        const now = `주문 ${fmt(after.orders)}건 · ${fmt(after.items)}종 · ${fmt(after.qty)}개`;
+        if (!before) return now;
+        if (before.orders === after.orders && before.items === after.items && before.qty === after.qty) {
+            return `피킹 대상은 이전과 같습니다 (${now}).`;
+        }
+        return `주문 ${fmt(before.orders)}→${fmt(after.orders)}건 · 품목 ${fmt(before.items)}→${fmt(after.items)}종 · 수량 ${fmt(before.qty)}→${fmt(after.qty)}개`;
+    }
 
     function setRefreshStatus(kind, html) {
         const el = $('#refresh-status');
@@ -584,6 +690,12 @@
             const res = await fetch(`${API_BASE}/api/picking-list/refresh`, { method: 'POST' });
             const json = await res.json();
             if (!json.success) throw new Error(json.message || '요청 실패');
+            if (json.cooldown) {   // 이 화면을 연 뒤 다른 곳에서 이미 가져온 경우
+                setRefreshBusy(false);
+                setRefreshStatus(null);
+                await load();
+                return showCooldown(json.lastCollectedAt);
+            }
             watchRefresh(json.request._id);
         } catch (e) {
             setRefreshBusy(false);
@@ -613,8 +725,9 @@
             if (r.status === 'done') {
                 stopped = true;
                 clearInterval(pollTimer);
+                const before = snap ? { ...snap.totals } : null;
                 await load();
-                return finish('ok', `${esc(kstText(r.finishedAt || new Date()))}에 이카운트에서 새로 가져왔습니다.`);
+                return finish('ok', `${esc(hhmm(r.finishedAt || new Date()))}에 이카운트에서 새로 가져왔습니다. ${esc(snap ? changeText(before, snap.totals) : '')}`);
             }
             if (r.status === 'failed' || r.status === 'expired') {
                 return finish('err', `가져오지 못했습니다. ${esc(r.message || '')}`);
@@ -631,7 +744,7 @@
         tick();
     }
 
-    $('#btn-refresh').addEventListener('click', requestRefresh);
+    $('#btn-refresh').addEventListener('click', onRefreshClick);
 
     // 사용 방법 접힘 상태 기억 (이 브라우저에만 저장, 막혀 있으면 늘 펼친 상태)
     (() => {

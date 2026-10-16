@@ -3424,7 +3424,7 @@ app.get('/picking', (req, res) => {
 // 실시간 가져오기: 페이지 버튼 → picking_requests에 요청 1줄 → 물류 서버 PC의 worker.js가 10초마다 집어서 수집
 const pickingDb = () => db.client.db('warehouse');
 const PICKING_REQUEST_TTL = { requested: 5 * 60 * 1000, running: 10 * 60 * 1000 };   // 이 시간이 지나면 만료로 본다
-const PICKING_COOLDOWN_MS = 60 * 1000;     // 방금 가져왔으면 새로 돌리지 않고 그 결과를 쓴다
+const PICKING_COOLDOWN_MS = 10 * 60 * 1000; // 마지막 수집 후 10분 안에는 다시 가져오지 않는다 (페이지도 이 값을 받아 씀)
 const PICKING_WORKER_ALIVE_MS = 60 * 1000;  // worker는 10초마다 신호를 보낸다
 
 async function pickingWorkerStatus() {
@@ -3455,10 +3455,11 @@ app.get('/api/picking-list', async (req, res) => {
         const col = pickingDb().collection('picking_snapshots');
         const [snapshot] = await col.find({}).sort({ collectedAt: -1 }).limit(1).project({ _id: 0 }).toArray();
         const [worker, activeRequest] = await Promise.all([pickingWorkerStatus(), pickingActiveRequest()]);
+        const cooldownMs = PICKING_COOLDOWN_MS;
         if (!snapshot) {
-            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. ‘실시간 데이터 가져오기’를 눌러 주세요.', worker, activeRequest });
+            return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. ‘실시간 데이터 가져오기’를 눌러 주세요.', worker, activeRequest, cooldownMs });
         }
-        res.json({ success: true, snapshot, worker, activeRequest });
+        res.json({ success: true, snapshot, worker, activeRequest, cooldownMs });
     } catch (e) {
         console.error('🔥 피킹리스트 조회 오류:', e);
         res.status(500).json({ success: false, message: '서버 오류', error: e.message });
@@ -3474,9 +3475,15 @@ app.post('/api/picking-list/refresh', async (req, res) => {
         const active = await pickingActiveRequest();
         if (active) return res.json({ success: true, request: active, worker, reused: true });
 
-        const [last] = await requests.find({}).sort({ requestedAt: -1 }).limit(1).toArray();
-        if (last && last.status === 'done' && Date.now() - new Date(last.finishedAt) < PICKING_COOLDOWN_MS) {
-            return res.json({ success: true, request: last, worker, reused: true });
+        // 10분 간격: 버튼이든 run.bat이든 마지막 수집 시각 기준 (여러 사람이 번갈아 눌러도 이카운트 로그인이 반복되지 않게)
+        const [latest] = await pickingDb().collection('picking_snapshots')
+            .find({}).sort({ collectedAt: -1 }).limit(1).project({ collectedAt: 1 }).toArray();
+        if (latest && Date.now() - new Date(latest.collectedAt) < PICKING_COOLDOWN_MS) {
+            return res.json({
+                success: true, cooldown: true, worker,
+                lastCollectedAt: latest.collectedAt,
+                nextAvailableAt: new Date(new Date(latest.collectedAt).getTime() + PICKING_COOLDOWN_MS),
+            });
         }
 
         const doc = { status: 'requested', requestedAt: new Date() };
