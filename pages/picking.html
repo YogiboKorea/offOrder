@@ -40,8 +40,31 @@
         .actions { display: flex; flex-wrap: wrap; gap: 8px; }
         .btn.busy svg { animation: spin 1s linear infinite; }
 
-        .refresh-help { margin: 12px 0 0; font-size: 13px; color: var(--ink-2); line-height: 1.6; }
-        .refresh-help b { color: var(--brand-ink); }
+        /* 사용 방법 (접을 수 있음, 접은 상태는 브라우저에 기억) */
+        .guide { margin: 16px 0 0; border: 1px solid var(--line); border-radius: 10px; background: #fff; }
+        .guide > summary {
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 12px 16px;
+            cursor: pointer; list-style: none; user-select: none;
+        }
+        .guide > summary::-webkit-details-marker { display: none; }
+        .guide-title { font-size: 15px; font-weight: 800; }
+        .guide-sub { flex: 1; min-width: 220px; font-size: 13px; color: var(--ink-2); }
+        .guide-toggle { font-size: 12px; font-weight: 700; color: var(--brand-ink); white-space: nowrap; }
+        .guide-toggle::after { content: '접기 ▲'; }
+        .guide:not([open]) .guide-toggle::after { content: '펼치기 ▼'; }
+        .guide-body { padding: 0 16px 16px; }
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+        .step { position: relative; padding: 12px 14px 12px 46px; border-radius: 8px; background: var(--head); font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+        .step::before {
+            counter-increment: step; content: counter(step);
+            position: absolute; left: 12px; top: 12px; width: 24px; height: 24px; border-radius: 50%;
+            background: var(--brand); color: #fff; font-size: 13px; font-weight: 800; line-height: 24px; text-align: center;
+        }
+        .steps { counter-reset: step; }
+        .step b { display: block; margin-bottom: 2px; font-size: 14px; color: var(--ink); }
+        .step strong { color: var(--ink); }
+        .guide-notes { margin: 12px 0 0; padding: 12px 14px 12px 32px; border-radius: 8px; border: 1px dashed var(--line-strong); font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+        .guide-notes b { color: var(--ink); }
 
         .refresh-status {
             display: flex; align-items: center; gap: 8px; margin: 14px 0 0; padding: 10px 14px;
@@ -157,7 +180,7 @@
         @media print {
             body { font-size: 11pt; }
             .wrap { max-width: none; padding: 0; }
-            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .refresh-help { display: none !important; }
+            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .guide { display: none !important; }
             .print-head { display: block; margin-bottom: 8px; }
             .print-head .t { font-size: 16pt; font-weight: 800; }
             .print-head .m { font-size: 9pt; color: #555; }
@@ -198,10 +221,27 @@
         </div>
     </header>
 
-    <p class="refresh-help">
-        <b>실시간 데이터 가져오기</b>를 누르면 물류 서버 PC가 이카운트에 접속해 지금 진행중인 매장 주문을 새로 가져옵니다.
-        1~2분 걸리며, 끝나면 이 화면이 자동으로 바뀝니다.
-    </p>
+    <details class="guide" id="guide" open>
+        <summary>
+            <span class="guide-title">사용 방법</span>
+            <span class="guide-sub">이카운트의 진행중 매장 주문을 품목별로 합쳐, 창고에서 한 번에 꺼낼 목록을 만듭니다.</span>
+            <span class="guide-toggle" aria-hidden="true"></span>
+        </summary>
+        <div class="guide-body">
+            <ol class="steps">
+                <li class="step"><b>실시간 데이터 가져오기</b>누르면 물류 서버 PC가 이카운트에서 지금 진행중인 주문을 새로 가져옵니다. 1~2분 뒤 화면이 저절로 바뀝니다. 아래 <strong>데이터 기준</strong> 시각을 확인하세요.</li>
+                <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. 창고에서 이 목록대로 한 번에 꺼냅니다.</li>
+                <li class="step"><b>매장별 분배 탭</b>꺼낸 물건을 매장별로 몇 개씩 나눠 담을지 보여 줍니다.</li>
+                <li class="step"><b>포함된 주문 탭</b>합산된 주문서 목록입니다. 이미 출고한 주문이 섞여 있지 않은지 확인합니다.</li>
+                <li class="step"><b>엑셀 다운로드 · 인쇄</b>엑셀은 시트 3개(피킹리스트·매장별 분배·포함된 주문)로 받습니다. 인쇄는 지금 보는 탭만 나갑니다.</li>
+            </ol>
+            <ul class="guide-notes">
+                <li>합치는 주문: 이카운트 주문서 중 <b>진행중</b>이면서 구분이 <b>주문(상품/발주)</b>인 것만. 회수·데모 전환 등은 빼고 ‘포함된 주문’ 탭 아래에 따로 보여 줍니다.</li>
+                <li>출고가 끝난 주문서는 이카운트에서 <b>완료 처리</b>해 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
+                <li>‘물류 서버 PC가 꺼져 있거나…’ 안내가 나오면 서버 PC가 켜져 있는지 확인하거나 본사 담당자에게 알려 주세요.</li>
+            </ul>
+        </div>
+    </details>
 
     <div id="refresh-status" class="refresh-status" role="status" hidden></div>
 
@@ -592,6 +632,16 @@
     }
 
     $('#btn-refresh').addEventListener('click', requestRefresh);
+
+    // 사용 방법 접힘 상태 기억 (이 브라우저에만 저장, 막혀 있으면 늘 펼친 상태)
+    (() => {
+        const guide = $('#guide');
+        const KEY = 'picking.guideOpen';
+        try { if (localStorage.getItem(KEY) === '0') guide.open = false; } catch (e) { }
+        guide.addEventListener('toggle', () => {
+            try { localStorage.setItem(KEY, guide.open ? '1' : '0'); } catch (e) { }
+        });
+    })();
     window.addEventListener('beforeprint', () => {
         const el = document.getElementById('print-time');
         if (el) el.textContent = kstText(new Date());
