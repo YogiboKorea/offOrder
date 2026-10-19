@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
+const realtimeRoutes = require("./realtimeRoutes");
 
 // ==========================================
 // [1] 서버 기본 설정
@@ -36,6 +37,9 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// 📦 realtime 서버에서 옮겨 온 좌수·매니저·게시판·매출·재고 API (realtimeRoutes.js)
+app.use(realtimeRoutes.router);
+
 // ==========================================
 // [2] 환경변수 및 DB 컬렉션 설정
 // ==========================================
@@ -54,9 +58,6 @@ const COLLECTION_COUPON_MAP = "couponProductMap";
 const COLLECTION_DELIVERIES = "deliveryShipments";  // 🚚 출하 매핑용
 const COLLECTION_WORK_HOURS = "workHours";          // 🕐 매니저 근무·시차 관리
 const COLLECTION_STOCK_SNAPSHOT = "stockDailySnapshot"; // 📦 일일 재고 스냅샷 (매일 00시 KST)
-
-// 📦 재고 데이터 원본 서버 (realtime) — 매일 스냅샷 시 여기서 /api/stock/전체 조회
-const REALTIME_URL = process.env.REALTIME_URL || 'https://port-0-realtime-lzgmwhc4d9883c97.sel4.cloudtype.app';
 
 // 🚚 배송완료 추정 일수 (출하 후 N일 경과 시 자동 '배송완료'로 표시)
 const DELIVERY_ESTIMATE_DAYS = 3;
@@ -116,6 +117,7 @@ async function startServer() {
         const client = await MongoClient.connect(MONGODB_URI);
         console.log(`✅ MongoDB Connected to [${DB_NAME}]`);
         db = client.db(DB_NAME);
+        realtimeRoutes.init(client);
 
         try {
             const tokenDoc = await db.collection(COLLECTION_TOKENS).findOne({});
@@ -3309,12 +3311,11 @@ ${productListText}
 // [📦] 일일 재고 스냅샷 (매일 00시 KST 저장 + 일자별 엑셀 다운로드)
 // ==========================================
 
-// 🆕 현재 재고를 realtime 서버에서 조회해 그 날짜(KST)로 1건 upsert 저장
+// 🆕 현재 재고(yogibo_stock.stocks)를 조회해 그 날짜(KST)로 1건 upsert 저장
 async function takeStockSnapshot(forDate) {
     const snapshotDate = forDate || getKSTTodayStr();   // 'YYYY-MM-DD'
     try {
-        const res = await axios.get(`${REALTIME_URL}/api/stock/전체`, { timeout: 30000 });
-        const raw = Array.isArray(res.data) ? res.data : [];
+        const raw = await realtimeRoutes.getStockItems('전체');
         // 필요한 필드만 정규화 저장 (category, code, name, spec, qty)
         const items = raw.map(it => ({
             category: String(it.category || ''),
