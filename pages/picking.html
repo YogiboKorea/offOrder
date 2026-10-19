@@ -153,11 +153,25 @@
         .tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--line); overflow-x: auto; max-width: 100%; }
         .tab {
             appearance: none; background: none; border: 0; border-bottom: 3px solid transparent; cursor: pointer;
-            font: inherit; font-weight: 700; color: var(--ink-2); padding: 10px 14px; min-height: 44px; white-space: nowrap;
+            font: inherit; font-weight: 700; color: var(--ink-2); padding: 8px 14px; min-height: 44px; white-space: nowrap;
         }
         .tab:hover { color: var(--ink); }
         .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--brand); }
         .tab .cnt { margin-left: 4px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
+        /* 탭 이름 아래 짧은 설명 (그 탭이 무엇인지) */
+        .tab-hint { display: block; margin-top: 2px; font-size: 12px; font-weight: 500; color: var(--ink-3); }
+        .tab[aria-selected="true"] .tab-hint { color: var(--brand-ink); }
+        /* 지금 보는 탭을 읽는 법 한 줄 */
+        .tab-desc { margin: 0 2px 12px; font-size: 13px; line-height: 1.6; color: var(--ink-2); }
+        /* 매장별 분배 머리글의 매장 이름 = 그 매장만 보기 버튼 */
+        .st-btn {
+            appearance: none; background: none; border: 0; padding: 0; font: inherit; font-weight: 700; color: var(--brand-ink); cursor: pointer;
+            white-space: nowrap; text-decoration: underline; text-decoration-color: rgba(31, 127, 170, .35); text-underline-offset: 3px;
+        }
+        .st-btn:hover { text-decoration-color: currentColor; }
+        td.total { color: var(--ink-3); }
+        .tab-desc b { color: var(--ink); }
+        .tab-desc:empty { display: none; }
         .search {
             width: 280px; max-width: 100%; min-height: 44px; padding: 0 12px;
             border: 1px solid var(--line-strong); border-radius: 8px; font: inherit; font-size: 14px; color: var(--ink);
@@ -202,7 +216,7 @@
         .print-head { display: none; }
 
         /* 위쪽 고르기: 매장 줄 + 구분 줄 (둘 다 걸리고, 요약·목록·주문서·인쇄가 고른 것만) */
-        .filters { display: grid; gap: 8px; margin: 16px 0 0; }
+        .filters { display: grid; gap: 8px; margin: 0 0 12px; }
         .frow { display: flex; align-items: center; gap: 6px; padding-bottom: 2px; overflow-x: auto; scrollbar-width: none; }
         .frow::-webkit-scrollbar { display: none; }
         .fk { flex: none; width: 34px; font-size: 12px; font-weight: 700; color: var(--ink-2); }
@@ -274,6 +288,11 @@
             .stat { padding: 10px 12px; }
             .stat .v { font-size: 22px; }
             .search { width: 100%; }
+            /* 탭이 옆으로 잘리지 않게 한 줄에 같은 너비로. 개수는 바로 위 숫자 카드에 있어서 숨김 */
+            .tabs { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; width: 100%; overflow: visible; }
+            .tab { padding: 8px 2px; font-size: 13px; line-height: 1.35; white-space: normal; }
+            .tab .cnt { display: none; }
+            .tab-hint { font-size: 11px; }
             td, th { padding: 9px 10px; }
             .table-wrap { max-height: none; }   /* 휴대폰은 표 안이 아니라 페이지를 스크롤 */
 
@@ -324,14 +343,35 @@
 
             /* 매장별 분배는 표 그대로 옆으로 밀어서 본다 */
             .t-dist th, .t-dist td { padding: 8px; font-size: 13px; }
+
+            /* 매장 하나만 볼 때(매장별 분배) → 카드: 코드 / 품목명 / 색상, 오른쪽에 그 매장 수량(크게)과 전체 매장 수량(작게) */
+            .t-one thead { display: none; }
+            .t-one tbody tr {
+                display: grid; grid-template-columns: 1fr auto; column-gap: 10px; row-gap: 3px; align-items: center;
+                grid-template-areas: "code qty" "name qty" "spec tot"; padding: 12px 14px; border-bottom: 1px solid var(--line);
+            }
+            .t-one tbody tr:last-child { border-bottom: 0; }
+            .t-one tbody td { padding: 0; border: 0; background: none !important; }
+            .t-one td.c-code { display: block; grid-area: code; font-size: 12px; }
+            .t-one td.name { grid-area: name; font-size: 15px; line-height: 1.35; }
+            .t-one td.spec { grid-area: spec; font-size: 13px; }
+            .t-one td.qty { grid-area: qty; font-size: 24px; }
+            .t-one td.total { grid-area: tot; font-size: 12px; }
+            .t-one td.total::before { content: '전체 '; }
+            .t-one tbody tr.grp { display: block; padding: 9px 14px; background: var(--head); }
+            .t-one tbody tr.grp td { display: block; }
+            .t-one tfoot tr { display: flex; justify-content: space-between; gap: 8px; padding: 12px 14px; background: var(--brand-tint); }
+            .t-one tfoot td { position: static; padding: 0; border: 0; background: none; }
+            .t-one tfoot td:empty { display: none; }
         }
 
         @page { size: A4; margin: 12mm; }
         @media print {
             body { font-size: 11pt; }
             .wrap { max-width: none; padding: 0; }
-            header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .guide, .modal, .filters, .pick-bar, .toast { display: none !important; }
+            header.top, .stats, .basis, .banner, .toolbar, .tab-desc, .note, .sec-d, .refresh-status, .guide, .modal, .filters, .pick-bar, .toast { display: none !important; }
             td.chk { width: 1%; padding: 3px 5px; }
+            .st-btn { color: inherit; text-decoration: none; }
             .chk-hit { width: auto; height: auto; }
             .pick-chk { width: 14px; height: 14px; }
             .kind { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -389,7 +429,7 @@
             <ol class="steps">
                 <li class="step"><b>최신 주문 가져오기</b>위의 <strong>실시간 데이터 가져오기</strong> → 확인창에서 <strong>가져오기</strong>. 1~2분 뒤 화면이 저절로 바뀝니다. 아래 <strong>데이터 기준</strong> 시각이 방금으로 바뀌었는지 확인하세요.</li>
                 <li class="step"><b>창고에서 꺼내기</b><strong>통합 피킹리스트</strong> 탭은 매장 구분 없는 품목별 총수량입니다. 꺼낸 품목은 왼쪽 칸을 <strong>체크</strong>하면 흐려지고 위에 진행률이 나옵니다. <strong>남은 것만</strong>을 켜면 안 꺼낸 품목만 보입니다.</li>
-                <li class="step"><b>매장별로 나눠 담기</b><strong>매장별 분배</strong> 탭에서 매장마다 몇 개씩인지 봅니다. 위에서 <strong>매장을 고르면</strong> 그 매장 몫만 나오고, 체크는 그 매장 상자에 <strong>담음</strong>으로 따로 셉니다.</li>
+                <li class="step"><b>매장별로 나눠 담기</b><strong>매장별 분배</strong> 탭에서 매장마다 몇 개씩인지 봅니다. 표 위의 <strong>매장 버튼</strong>(또는 표의 매장 이름)을 누르면 그 매장 상자에 담을 품목만 나오고, 체크는 그 매장 <strong>담음</strong>으로 따로 셉니다.</li>
                 <li class="step"><b>주문서 확인</b><strong>포함된 주문</strong> 탭에서 합친 주문서(주문번호·매장·납기일)를 봅니다. 이미 출고한 주문이 섞여 있지 않은지 확인하세요.</li>
                 <li class="step"><b>엑셀 · 인쇄 (필요할 때)</b>엑셀은 고른 매장과 상관없이 <strong>전체</strong>(시트 3개 + 매장마다 시트)로 받습니다. 인쇄는 <strong>지금 보는 탭</strong>만, 매장을 골랐으면 그 매장 몫만 나갑니다.</li>
                 <li class="step"><b>출고 후 완료 처리</b>출고가 끝난 주문서는 이카운트에서 <strong>완료</strong>로 바꿔 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
@@ -432,10 +472,11 @@
     const params = new URLSearchParams(window.location.search);
     const API_BASE = params.get('api') || SERVER_URL;   // 로컬 테스트용 오버라이드
     const NOTICE_AFTER_DAYS = 2;                        // 이보다 오래된 수집이면 안내 표시
+    // hint = 탭 이름 아래 짧은 설명(무엇인지). 탭을 고르면 그 아래 #tab-desc에 읽는 법 한 줄(tabDesc)
     const TABS = [
-        { id: 'pick', label: '통합 피킹리스트' },
-        { id: 'dist', label: '매장별 분배' },
-        { id: 'orders', label: '포함된 주문' },
+        { id: 'pick', label: '통합 피킹리스트', hint: '창고에서 꺼낼 수량' },
+        { id: 'dist', label: '매장별 분배', hint: '매장마다 담을 수량' },
+        { id: 'orders', label: '포함된 주문', hint: '합친 주문서 목록' },
     ];
 
     let snap = null;
@@ -486,7 +527,7 @@
     const viewStores = () => snap.stores.filter(st => viewOrders().some(o => o.store === st));
     const viewItems = () => snap.items
         .filter(i => (!kindSel || kindOf(i) === kindSel) && (!storeSel || i.byStore[storeSel]))
-        .map(i => (storeSel ? { ...i, qty: i.byStore[storeSel], byStore: { [storeSel]: i.byStore[storeSel] } } : i));
+        .map(i => (storeSel ? { ...i, qty: i.byStore[storeSel], total: i.qty, byStore: { [storeSel]: i.byStore[storeSel] } } : i));   // total = 전체 매장 합계 (매장별 분배에서 참고용)
 
     // 구분이 섞여 있으면(구분 '전체') 표 안에서 구분마다 소제목 줄을 넣어 묶는다 — 줄마다 구분을 앞에 쓰지 않는다
     function withGroups(rows, cols, rowHtml, summary) {
@@ -582,12 +623,11 @@
         if (storeSel && !snap.stores.includes(storeSel)) storeSel = null;
         if (kindSel && !kindsAll().includes(kindSel)) kindSel = null;
         if (!viewOrders().length) { kindSel = null; if (!viewOrders().length) storeSel = null; }
-        if (storeSel && activeTab === 'dist') activeTab = 'pick';            // 한 매장만 볼 때는 매장별 분배가 필요 없다
         const vo = viewOrders(), vi = viewItems();
         const t = { orders: vo.length, stores: viewStores().length, items: vi.length, qty: sum(vi, i => i.qty) };
         const age = ageDays();
         const ageText = age <= 0 ? '오늘' : `${age}일 전`;
-        const counts = { pick: `${t.items}종`, dist: `${snap.stores.length}곳`, orders: `${t.orders}건` };
+        const counts = { pick: `${t.items}종`, dist: `${t.stores}곳`, orders: `${t.orders}건` };
 
         $('#sub').textContent = snap.filter.type.startsWith('진행중')
             ? '진행중 주문서를 품목별로 합친 목록' : `진행중 ${snap.filter.type} 주문을 품목별로 합친 목록`;
@@ -602,15 +642,16 @@
         $('#btn-excel').disabled = snap.items.length === 0;   // 엑셀은 늘 전체 + 매장별 시트
         $('#btn-print').disabled = false;
 
-        // 위쪽 고르기: 매장 줄(매장이 둘 이상일 때) + 구분 줄(구분이 둘 이상일 때). 숫자는 다른 줄의 선택을 반영한 주문서 수,
-        // 0건이 되는 버튼은 눌리지 않게 (빈 화면이 나오는 조합을 못 고르게)
+        // 표 바로 위 고르기: 매장 줄(매장이 둘 이상일 때, 전체 = ALL) + 구분 줄(구분이 둘 이상일 때). 고르면 세 탭·요약·인쇄가 모두 그 몫만.
+        // 매장 숫자는 그 매장 상자에 담을 개수, 구분 숫자는 주문서 수. 0이 되는 버튼은 눌리지 않게 (빈 화면이 나오는 조합을 못 고르게)
         const countBy = pred => snap.orders.filter(pred).length;
-        const fchip = (attr, value, label, n, pressed) =>
-            `<button class="fchip" type="button" data-${attr}="${esc(value || '')}" aria-pressed="${pressed}" ${value && !n ? 'disabled' : ''}>${label}<span class="cnt">${n}건</span></button>`;
+        const qtyBy = st => sum(snap.items.filter(i => !kindSel || kindOf(i) === kindSel), i => (st ? i.byStore[st] : i.qty));
+        const fchip = (attr, value, label, n, pressed, unit = '건') =>
+            `<button class="fchip" type="button" data-${attr}="${esc(value || '')}" aria-pressed="${pressed}" ${value && !n ? 'disabled' : ''}>${label}<span class="cnt">${fmt(n)}${unit}</span></button>`;
         const storeRow = snap.stores.length > 1 ? `
             <div class="frow" role="group" aria-label="매장 고르기"><span class="fk">매장</span>
-                ${fchip('store', null, '전체', countBy(o => !kindSel || kindOf(o) === kindSel), !storeSel)}
-                ${snap.stores.map(st => fchip('store', st, esc(st), countBy(o => o.store === st && (!kindSel || kindOf(o) === kindSel)), st === storeSel)).join('')}
+                ${fchip('store', null, '전체', qtyBy(null), !storeSel, '개')}
+                ${snap.stores.map(st => fchip('store', st, esc(st), qtyBy(st), st === storeSel, '개')).join('')}
             </div>` : '';
         const kinds = kindsAll();
         const kindRow = kinds.length > 1 ? `
@@ -630,12 +671,11 @@
                 <div class="item"><span class="k">주문일</span><span class="v">${esc(orderDates())}</span></div>
                 <div class="item"><span class="k">납기일</span><span class="v">${esc(dueDates())}</span></div>
             </section>
-            ${filters}
             <section class="stats" aria-label="요약">
-                <button class="stat" type="button" data-go="orders"><div class="k">포함된 주문<span class="go">›</span></div><div class="v">${fmt(t.orders)}<small>건</small></div></button>
-                <button class="stat" type="button" data-go="dist"><div class="k">매장<span class="go">›</span></div><div class="v">${fmt(t.stores)}<small>곳</small></div></button>
-                <button class="stat" type="button" data-go="pick"><div class="k">품목<span class="go">›</span></div><div class="v">${fmt(t.items)}<small>종</small></div></button>
-                <div class="stat main"><div class="k">총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div>
+                <button class="stat" type="button" data-go="orders" title="합친 주문서 수 — 누르면 포함된 주문 탭"><div class="k">포함된 주문<span class="go">›</span></div><div class="v">${fmt(t.orders)}<small>건</small></div></button>
+                <button class="stat" type="button" data-go="dist" title="주문한 매장 수 — 누르면 매장별 분배 탭"><div class="k">매장<span class="go">›</span></div><div class="v">${fmt(t.stores)}<small>곳</small></div></button>
+                <button class="stat" type="button" data-go="pick" title="꺼낼 품목 가짓수 — 누르면 통합 피킹리스트 탭"><div class="k">품목<span class="go">›</span></div><div class="v">${fmt(t.items)}<small>종</small></div></button>
+                <div class="stat main" title="창고에서 꺼낼 전체 개수"><div class="k">총수량</div><div class="v">${fmt(t.qty)}<small>개</small></div>
                     ${groupSplit ? `<div class="split">${esc(groupSplit)}</div>` : ''}</div>
             </section>
             ${age >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
@@ -644,10 +684,12 @@
             <div class="toolbar">
                 <div class="tabs" role="tablist" aria-label="보기">
                     ${TABS.map(tab => `<button class="tab" role="tab" type="button" id="tab-${tab.id}" aria-controls="panel-${tab.id}"
-                        aria-selected="${tab.id === activeTab}" data-tab="${tab.id}" ${tab.id === 'dist' && storeSel ? 'hidden' : ''}>${tab.label}<span class="cnt">${counts[tab.id]}</span></button>`).join('')}
+                        aria-selected="${tab.id === activeTab}" data-tab="${tab.id}">${tab.label}<span class="cnt">${counts[tab.id]}</span><span class="tab-hint">${tab.hint}</span></button>`).join('')}
                 </div>
                 <input class="search" id="search" type="search" placeholder="품목코드, 품목명, 색상 검색" aria-label="품목 검색" value="${esc(query)}">
             </div>
+            ${filters}
+            <p class="tab-desc" id="tab-desc"></p>
             ${TABS.map(tab => `<div role="tabpanel" id="panel-${tab.id}" aria-labelledby="tab-${tab.id}" ${tab.id === activeTab ? '' : 'hidden'}></div>`).join('')}
         `;
 
@@ -660,14 +702,20 @@
             kindSel = b.dataset.kind || null;
             render();
         }));
-        // 요약 카드 = 탭 바로가기. 매장 카드는 매장별 분배라 매장 하나를 고른 상태면 전체 매장으로 풀어 준다
+        // 요약 카드 = 탭 바로가기
         document.querySelectorAll('button.stat[data-go]').forEach(c => c.addEventListener('click', () => {
-            if (c.dataset.go === 'dist' && storeSel) { storeSel = null; activeTab = 'dist'; render(); }
-            else selectTab(c.dataset.go);
+            selectTab(c.dataset.go);
             $('.toolbar').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }));
         $('#search').addEventListener('input', e => { query = e.target.value; renderPanels(); });
         renderPanels();
+        // 휴대폰에서 매장 버튼 줄이 화면보다 길면 고른 버튼이 보이게 옆으로 밀어 둔다
+        document.querySelectorAll('.frow').forEach(row => {
+            const on = row.querySelector('.fchip[aria-pressed="true"]');
+            if (on && row.scrollWidth > row.clientWidth) {
+                row.scrollLeft = Math.max(0, on.offsetLeft - row.offsetLeft - (row.clientWidth - on.offsetWidth) / 2);
+            }
+        });
     }
 
     function selectTab(id) {
@@ -676,9 +724,11 @@
         document.querySelectorAll('button.stat[data-go]').forEach(c => c.classList.toggle('on', c.dataset.go === id));
         TABS.forEach(tab => { $(`#panel-${tab.id}`).hidden = tab.id !== id; });
         $('#search').hidden = id === 'orders';   // 주문서 탭에는 품목 검색이 필요 없다 (휴대폰에서 빈 자리도 남기지 않게)
+        $('#tab-desc').innerHTML = tabDesc(id);
         $('#print-title').textContent = TABS.find(tab => tab.id === id).label
             + (storeSel ? ` · ${storeSel}` : '') + (kindSel ? ` · ${shortKind(kindSel)}` : '');
-        $('#print-page').textContent = id === 'dist' ? '@page { size: A4 landscape; margin: 10mm; }' : '';
+        // 매장별 분배(전체 매장)는 열이 많아 가로 인쇄, 매장 하나를 고르면 세로
+        $('#print-page').textContent = id === 'dist' && !storeSel ? '@page { size: A4 landscape; margin: 10mm; }' : '';
     }
 
     function renderPanels() {
@@ -695,6 +745,21 @@
     const noMatch = () => `<div class="table-wrap"><div class="empty"><div class="d">${query.trim()
         ? `‘${esc(query)}’에 맞는 품목이 없습니다.` : '고른 매장·구분에 맞는 품목이 없습니다.'}</div></div></div>`;
     const itemSummary = part => `${part.length}종 · ${fmt(sum(part, r => r.qty))}개`;
+    // 지금 보는 탭을 어떻게 읽는지 한 줄 (탭 이름 아래 짧은 설명보다 조금 자세히). 합친 주문서가 없으면 비움
+    function tabDesc(id) {
+        if (!snap.orders.length) return '';
+        const st = storeSel ? `<b>${esc(storeSel)}</b>` : '';
+        if (id === 'pick') return storeSel
+            ? `${st} 매장 몫만 보고 있습니다. 이 수량만큼 그 매장 상자에 담고, 담은 품목은 왼쪽 칸을 체크하세요.`
+            : '모든 매장 주문을 품목별로 합친 수량입니다. 이 수량만큼 창고에서 꺼내고, 꺼낸 품목은 왼쪽 칸을 체크하세요.';
+        if (id === 'dist') return storeSel
+            ? `${st} 매장 상자에 담을 품목만 보고 있습니다. <b>전체 매장</b>은 모든 매장을 합친 수량입니다. 담은 품목 체크는 ‘통합 피킹리스트’ 탭에서 합니다.`
+            : '꺼낸 물건을 매장마다 몇 개씩 나눠 담을지 보여 줍니다. 칸의 숫자 = 그 매장 상자에 담을 개수, <b>합계</b> = 창고에서 꺼낼 총수량. 매장 이름을 누르면 그 매장 것만 봅니다.';
+        const ex = storeSel ? snap.excluded.filter(e => e.store === storeSel) : snap.excluded;
+        return `${storeSel ? `${st} 매장의 ` : ''}이 주문서들을 합쳐 피킹리스트를 만들었습니다. 이미 출고한 주문이 섞여 있으면 이카운트에서 완료 처리해 주세요.`
+            + (ex.length ? ' 합치지 않은 회수·데모 주문은 아래에 따로 있습니다.' : '');
+    }
+
     // 지금 보고 있는 범위를 한 줄로 (예: "롯데평촌 · 회수 상품 몫만 보고 있습니다")
     const scopeNote = () => (storeSel || kindSel)
         ? ` <b>${esc([storeSel, kindSel && shortKind(kindSel)].filter(Boolean).join(' · '))}</b> 몫만 보고 있습니다.` : '';
@@ -749,15 +814,28 @@
         if (!snap.items.length) return emptyState();
         const rows = filteredItems();
         if (!rows.length) return noMatch();
+        const label = query.trim() ? '검색 합계' : '합계';
+        // 매장을 고르면 그 매장 상자에 담을 품목만: 그 매장 수량(크게) + 전체 매장 합계(참고)
+        if (storeSel) {
+            return `<div class="table-wrap"><table class="t-dist t-one">
+                <thead><tr><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">${esc(storeSel)}</th><th class="num">전체 매장</th></tr></thead>
+                <tbody>${withGroups(rows, 5, it => `<tr>
+                    <td class="code c-code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
+                    <td class="num qty sum">${fmt(it.qty)}</td><td class="num total">${fmt(it.total)}</td></tr>`, itemSummary)}</tbody>
+                <tfoot><tr><td class="c-code"></td><td>${label} · ${rows.length}종</td><td></td>
+                    <td class="num">${fmt(sum(rows, r => r.qty))}</td><td class="num total">${fmt(sum(rows, r => r.total))}</td></tr></tfoot>
+            </table></div>`;
+        }
         const stores = viewStores();
         const cell = q => q ? `<td class="num">${fmt(q)}</td>` : `<td class="num zero">·</td>`;
+        // 매장 이름을 누르면 그 매장 것만 (표 위 매장 버튼과 같음)
         return `<div class="table-wrap"><table class="t-dist">
             <thead><tr><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
-                ${stores.map(s => `<th class="num">${esc(s)}</th>`).join('')}</tr></thead>
+                ${stores.map(s => `<th class="num"><button class="st-btn" type="button" data-store="${esc(s)}" title="${esc(s)} 매장 것만 보기">${esc(s)}</button></th>`).join('')}</tr></thead>
             <tbody>${withGroups(rows, 4 + stores.length, it => `<tr>
                 <td class="code c-code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
                 <td class="num qty sum">${fmt(it.qty)}</td>${stores.map(s => cell(it.byStore[s])).join('')}</tr>`, itemSummary)}</tbody>
-            <tfoot><tr><td class="c-code"></td><td>${query.trim() ? '검색 합계' : '합계'} · ${rows.length}종</td><td></td>
+            <tfoot><tr><td class="c-code"></td><td>${label} · ${rows.length}종</td><td></td>
                 <td class="num">${fmt(sum(rows, r => r.qty))}</td>
                 ${stores.map(s => `<td class="num">${fmt(sum(rows, r => r.byStore[s]))}</td>`).join('')}</tr></tfoot>
         </table></div>`;
@@ -1123,6 +1201,14 @@
             pendingChecks--;
         }
     }
+
+    // 매장별 분배 표의 매장 이름 = 그 매장만 보기 (표 위 매장 버튼과 같은 선택)
+    $('#app').addEventListener('click', e => {
+        const b = e.target.closest('.st-btn');
+        if (!b) return;
+        storeSel = b.dataset.store || null;
+        render();
+    });
 
     $('#app').addEventListener('change', e => {
         const t = e.target;
