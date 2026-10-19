@@ -74,7 +74,15 @@
         .guide-toggle::after { content: '접기 ▲'; }
         .guide:not([open]) .guide-toggle::after { content: '펼치기 ▼'; }
         .guide-body { padding: 0 16px 16px; }
-        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
+        .guide-new {
+            display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 14px; padding: 10px 14px;
+            border-radius: 8px; border: 1px solid #BFE3F2; background: var(--brand-tint); font-size: 13px; line-height: 1.6; color: var(--ink);
+        }
+        .guide-new .tag { flex: none; padding: 1px 8px; border-radius: 999px; background: var(--brand); color: #fff; font-size: 12px; font-weight: 800; }
+        .guide-h { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: var(--ink-2); }
+        .steps + .guide-h { margin-top: 16px; }
+        /* 휴대폰(360px)에서도 넘치지 않게 min(100%, …) — PC에서는 3칸 × 2줄 */
+        .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr)); gap: 10px; margin: 0; padding: 0; list-style: none; }
         .step { position: relative; padding: 12px 14px 12px 46px; border-radius: 8px; background: var(--head); font-size: 13px; line-height: 1.55; color: var(--ink-2); }
         .step::before {
             counter-increment: step; content: counter(step);
@@ -84,7 +92,8 @@
         .steps { counter-reset: step; }
         .step b { display: block; margin-bottom: 2px; font-size: 14px; color: var(--ink); }
         .step strong { color: var(--ink); }
-        .guide-notes { margin: 12px 0 0; padding: 12px 14px 12px 32px; border-radius: 8px; border: 1px dashed var(--line-strong); font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+        .guide-notes { margin: 0; padding: 12px 14px 12px 32px; border-radius: 8px; border: 1px dashed var(--line-strong); font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+        .guide-notes li + li { margin-top: 2px; }
         .guide-notes b { color: var(--ink); }
 
         .refresh-status {
@@ -369,22 +378,30 @@
     <details class="guide" id="guide" open>
         <summary>
             <span class="guide-title">사용 방법</span>
-            <span class="guide-sub">이카운트 주문서조회의 진행중 매장 주문을 품목별로 합쳐, 창고에서 꺼낼 품목과 매장별로 나눠 담을 수량을 봅니다.</span>
+            <span class="guide-sub">진행중인 매장 주문을 품목별로 합친 목록입니다. 창고에서 꺼낼 품목과 매장별로 나눠 담을 수량을 한 화면에서 봅니다.</span>
             <span class="guide-toggle" aria-hidden="true"></span>
         </summary>
         <div class="guide-body">
+            <p class="guide-new"><span class="tag">10/19 바뀐 점</span>
+                <span>이제 <strong>주문(상품/발주)</strong>만 합칩니다(회수·데모 주문은 ‘포함된 주문’ 탭 아래에 따로). 꺼낸 품목을 <strong>체크</strong>할 수 있습니다.</span></p>
+
+            <h3 class="guide-h">작업 순서</h3>
             <ol class="steps">
-                <li class="step"><b>실시간 데이터 가져오기</b>누르고 확인창에서 <strong>가져오기</strong>를 누르면 물류 서버 PC가 이카운트에서 진행중인 주문을 새로 가져옵니다. 1~2분 뒤 화면이 저절로 바뀝니다. 10분 간격으로 가져올 수 있습니다.</li>
-                <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. 창고에서 꺼낸 품목은 왼쪽 <strong>체크</strong>를 누르면 흐려지고 위에 진행률이 나옵니다. <strong>남은 것만</strong>을 켜면 아직 안 꺼낸 품목만 보입니다.</li>
-                <li class="step"><b>매장별 분배 · 매장 고르기</b>꺼낸 물건을 매장별로 몇 개씩 나눠 담을지 보여 줍니다. 위에서 매장을 고르면 그 매장 몫만 나오고, 체크는 그 매장 상자에 <strong>담음</strong>으로 따로 셉니다.</li>
-                <li class="step"><b>포함된 주문 탭</b>합산된 주문서 목록입니다. 이미 출고한 주문이 섞여 있지 않은지 확인합니다.</li>
-                <li class="step"><b>엑셀 다운로드 · 인쇄</b>엑셀은 시트 3개(피킹리스트·매장별 분배·포함된 주문)와 매장별 시트로 받습니다. 인쇄는 지금 보는 탭만 나갑니다.</li>
+                <li class="step"><b>최신 주문 가져오기</b>위의 <strong>실시간 데이터 가져오기</strong> → 확인창에서 <strong>가져오기</strong>. 1~2분 뒤 화면이 저절로 바뀝니다. 아래 <strong>데이터 기준</strong> 시각이 방금으로 바뀌었는지 확인하세요.</li>
+                <li class="step"><b>창고에서 꺼내기</b><strong>통합 피킹리스트</strong> 탭은 매장 구분 없는 품목별 총수량입니다. 꺼낸 품목은 왼쪽 칸을 <strong>체크</strong>하면 흐려지고 위에 진행률이 나옵니다. <strong>남은 것만</strong>을 켜면 안 꺼낸 품목만 보입니다.</li>
+                <li class="step"><b>매장별로 나눠 담기</b><strong>매장별 분배</strong> 탭에서 매장마다 몇 개씩인지 봅니다. 위에서 <strong>매장을 고르면</strong> 그 매장 몫만 나오고, 체크는 그 매장 상자에 <strong>담음</strong>으로 따로 셉니다.</li>
+                <li class="step"><b>주문서 확인</b><strong>포함된 주문</strong> 탭에서 합친 주문서(주문번호·매장·납기일)를 봅니다. 이미 출고한 주문이 섞여 있지 않은지 확인하세요.</li>
+                <li class="step"><b>엑셀 · 인쇄 (필요할 때)</b>엑셀은 고른 매장과 상관없이 <strong>전체</strong>(시트 3개 + 매장마다 시트)로 받습니다. 인쇄는 <strong>지금 보는 탭</strong>만, 매장을 골랐으면 그 매장 몫만 나갑니다.</li>
+                <li class="step"><b>출고 후 완료 처리</b>출고가 끝난 주문서는 이카운트에서 <strong>완료</strong>로 바꿔 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
             </ol>
+
+            <h3 class="guide-h">알아 두기</h3>
             <ul class="guide-notes">
-                <li>페이지를 열거나 새로고침하면 <b>마지막으로 가져온 데이터</b>를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 것은 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐입니다.</li>
-                <li>합치는 주문서: 이카운트 주문서조회 <b>진행중</b> 주문서 중 구분이 <b>주문(상품/발주)</b>인 것. 회수·데모 발주·데모 전환은 합치지 않고 <b>포함된 주문</b> 탭 아래에 따로 보여 줍니다. <b>완료</b>된 주문서는 들어가지 않습니다.</li>
-                <li>체크는 이 페이지를 보는 <b>모든 사람에게 같이</b> 보입니다(다른 화면에는 15초 안에 반영). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 유지되고, 수량이 바뀐 품목만 체크가 풀립니다.</li>
-                <li>출고가 끝난 주문서는 이카운트에서 <b>완료 처리</b>해 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
+                <li><b>새로고침</b>하면 마지막으로 가져온 데이터를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 건 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐이고, <b>10분에 한 번</b> 가져올 수 있습니다.</li>
+                <li><b>합치는 주문서</b>: 이카운트 주문서조회에서 <b>진행중</b>이고 구분이 <b>주문(상품/발주)</b>인 것만. 완료된 주문서는 들어가지 않습니다.</li>
+                <li><b>체크</b>는 이 페이지를 보는 모든 사람에게 같이 보입니다(다른 화면에는 15초 안에). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 남고, 바뀐 품목만 풀립니다.</li>
+                <li>위의 <b>숫자 카드</b>(포함된 주문·매장·품목)를 누르면 그 목록으로 바로 갑니다.</li>
+                <li><b>휴대폰</b>으로 같은 주소를 열면 카드 모양으로 보이고, 내려도 진행률 막대가 위에 붙어 있습니다.</li>
                 <li>‘물류 서버 PC가 꺼져 있거나…’ 안내가 나오면 서버 PC가 켜져 있는지 확인하거나 본사 담당자에게 알려 주세요.</li>
             </ul>
         </div>
@@ -1142,7 +1159,7 @@
     // 사용 방법 접힘 상태 기억 (이 브라우저에만 저장, 막혀 있으면 늘 펼친 상태)
     (() => {
         const guide = $('#guide');
-        const KEY = 'picking.guideOpen';
+        const KEY = 'picking.guideOpen.1019';   // 안내를 고치면 키를 바꾼다 → 전에 접어 둔 사람에게도 새 안내가 한 번 펼쳐져 보임
         try { if (localStorage.getItem(KEY) === '0') guide.open = false; } catch (e) { }
         guide.addEventListener('toggle', () => {
             try { localStorage.setItem(KEY, guide.open ? '1' : '0'); } catch (e) { }
