@@ -219,20 +219,10 @@
         .grp-name { margin-left: 8px; font-size: 13px; font-weight: 700; color: var(--ink); }
         .grp-sum { margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--ink-2); }
 
-        /* 꺼냄(담음) 체크 + 선반 위치 */
+        /* 꺼냄(담음) 체크 */
         td.chk { width: 52px; padding: 0 0 0 6px; }
         .chk-hit { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; cursor: pointer; }
         .pick-chk { width: 22px; height: 22px; margin: 0; accent-color: var(--brand); cursor: pointer; }
-        td.loc { width: 104px; padding-left: 4px; padding-right: 4px; }
-        .loc-in {
-            width: 92px; min-height: 34px; padding: 0 8px; border: 1px dashed var(--line-strong); border-radius: 6px;
-            font: inherit; font-size: 13px; font-weight: 700; color: var(--brand-ink); background: #fff;
-        }
-        .loc-in::placeholder { color: var(--ink-3); font-weight: 500; }
-        .loc-in:not(:placeholder-shown) { border: 1px solid #BFE3F2; background: var(--brand-tint); }
-        .loc-in:focus { outline: none; border: 1px solid var(--brand); background: #fff; box-shadow: 0 0 0 3px rgba(63, 166, 211, .25); }
-        .loc-in.saving { opacity: .5; }
-        td.loc-ro { font-weight: 700; color: var(--brand-ink); white-space: nowrap; }
         tr.done td { background: #FAFBFC; }
         tr.done td.code, tr.done td.name, tr.done td.spec, tr.done td.qty { color: var(--ink-3); text-decoration: line-through; }
 
@@ -249,7 +239,6 @@
         .pick-bar.all .prog-t b { color: #067647; }
         .remain { display: inline-flex; align-items: center; gap: 8px; min-height: 40px; font-size: 14px; font-weight: 700; cursor: pointer; user-select: none; }
         .remain input { width: 20px; height: 20px; margin: 0; accent-color: var(--brand); }
-        .btn.sm { min-height: 36px; padding: 0 12px; font-size: 13px; }
 
         .toast {
             position: fixed; left: 50%; bottom: 20px; z-index: 60; transform: translateX(-50%);
@@ -287,18 +276,16 @@
             }
             .t-items tbody tr:last-child, .t-orders tbody tr:last-child { border-bottom: 0; }
             .t-items tbody td, .t-orders tbody td { padding: 0; border: 0; background: none !important; }
-            /* 품목 카드: 왼쪽 체크 / 위치·코드, 품목명, 색상 / 오른쪽 큰 수량 */
+            /* 품목 카드: 왼쪽 체크 / 코드, 품목명, 색상 / 오른쪽 큰 수량 */
             .t-items tbody tr {
-                grid-template-columns: 40px auto 1fr auto; column-gap: 8px;
-                grid-template-areas: "chk loc code qty" "chk name name qty" "chk spec spec qty";
+                grid-template-columns: 40px 1fr auto; column-gap: 8px;
+                grid-template-areas: "chk code qty" "chk name qty" "chk spec qty";
                 padding: 10px 12px 10px 6px;
             }
             .t-items tbody tr.done { background: #FAFBFC; }
             .t-items td.chk { grid-area: chk; width: auto; }
             .t-items .chk-hit { width: 40px; height: 52px; }
-            .t-items td.loc { grid-area: loc; width: auto; }
-            .t-items .loc-in { width: 76px; min-height: 30px; font-size: 13px; }
-            .t-items td.code { grid-area: code; align-self: center; }
+            .t-items td.code { grid-area: code; }
             .t-items td.name { grid-area: name; font-size: 15px; line-height: 1.35; }
             .t-items td.spec { grid-area: spec; font-size: 13px; }
             .t-items td.qty { grid-area: qty; font-size: 24px; }
@@ -335,9 +322,7 @@
             body { font-size: 11pt; }
             .wrap { max-width: none; padding: 0; }
             header.top, .stats, .basis, .banner, .toolbar, .note, .sec-d, .refresh-status, .guide, .modal, .filters, .pick-bar, .toast { display: none !important; }
-            .loc-in { width: 6em; min-height: 0; padding: 0; border: 0 !important; background: none !important; color: #000; font-size: 10pt; }
-            .loc-in::placeholder { color: transparent; }
-            td.chk, td.loc { width: 1%; padding: 3px 5px; }
+            td.chk { width: 1%; padding: 3px 5px; }
             .chk-hit { width: auto; height: auto; }
             .pick-chk { width: 14px; height: 14px; }
             .kind { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
@@ -391,7 +376,6 @@
             <ol class="steps">
                 <li class="step"><b>실시간 데이터 가져오기</b>누르고 확인창에서 <strong>가져오기</strong>를 누르면 물류 서버 PC가 이카운트에서 진행중인 주문을 새로 가져옵니다. 1~2분 뒤 화면이 저절로 바뀝니다. 10분 간격으로 가져올 수 있습니다.</li>
                 <li class="step"><b>통합 피킹리스트 탭</b>매장 구분 없이 품목별 총수량입니다. 창고에서 꺼낸 품목은 왼쪽 <strong>체크</strong>를 누르면 흐려지고 위에 진행률이 나옵니다. <strong>남은 것만</strong>을 켜면 아직 안 꺼낸 품목만 보입니다.</li>
-                <li class="step"><b>위치 적기</b>위치 칸에 선반 번호(예: A-03)를 적고 Enter. 위치를 적은 품목은 위치 순으로 앞에 정렬돼 <strong>동선대로</strong> 꺼낼 수 있습니다. 한 번 적으면 다음 목록에도 남습니다.</li>
                 <li class="step"><b>매장별 분배 · 매장 고르기</b>꺼낸 물건을 매장별로 몇 개씩 나눠 담을지 보여 줍니다. 위에서 매장을 고르면 그 매장 몫만 나오고, 체크는 그 매장 상자에 <strong>담음</strong>으로 따로 셉니다.</li>
                 <li class="step"><b>포함된 주문 탭</b>합산된 주문서 목록입니다. 이미 출고한 주문이 섞여 있지 않은지 확인합니다.</li>
                 <li class="step"><b>엑셀 다운로드 · 인쇄</b>엑셀은 시트 3개(피킹리스트·매장별 분배·포함된 주문)와 매장별 시트로 받습니다. 인쇄는 지금 보는 탭만 나갑니다.</li>
@@ -399,7 +383,7 @@
             <ul class="guide-notes">
                 <li>페이지를 열거나 새로고침하면 <b>마지막으로 가져온 데이터</b>를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 것은 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐입니다.</li>
                 <li>합치는 주문서: 이카운트 주문서조회 <b>진행중</b> 주문서 중 구분이 <b>주문(상품/발주)</b>인 것. 회수·데모 발주·데모 전환은 합치지 않고 <b>포함된 주문</b> 탭 아래에 따로 보여 줍니다. <b>완료</b>된 주문서는 들어가지 않습니다.</li>
-                <li>체크·위치는 이 페이지를 보는 <b>모든 사람에게 같이</b> 보입니다(다른 화면에는 15초 안에 반영). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 유지되고, 수량이 바뀐 품목만 체크가 풀립니다.</li>
+                <li>체크는 이 페이지를 보는 <b>모든 사람에게 같이</b> 보입니다(다른 화면에는 15초 안에 반영). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 유지되고, 수량이 바뀐 품목만 체크가 풀립니다.</li>
                 <li>출고가 끝난 주문서는 이카운트에서 <b>완료 처리</b>해 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
                 <li>‘물류 서버 PC가 꺼져 있거나…’ 안내가 나오면 서버 PC가 켜져 있는지 확인하거나 본사 담당자에게 알려 주세요.</li>
             </ul>
@@ -443,10 +427,8 @@
     let storeSel = null;   // 위쪽 '매장' 고르기: null = 전체
     let kindSel = null;    // 위쪽 '구분' 고르기: null = 전체
     let snapKey = null;        // 꺼냄 표시를 묶는 키 (스냅샷 수집 시각). 새로 가져오면 바뀐다
-    let locations = {};        // 품목코드 → 선반 위치 (물류팀이 적어 둔 것, 모두가 같이 봄)
     let checks = new Set();    // 꺼낸 품목 키 (구분|품목코드)
     let remainOnly = false;    // 남은 것만 보기 (이 브라우저에 기억)
-    let locDirty = false;      // 위치를 고쳤지만 아직 다시 정렬하지 않음 (적는 도중에 줄이 움직이지 않게)
     let pendingChecks = 0;     // 저장 중인 체크 수 (그동안은 서버 체크 목록으로 덮어쓰지 않는다)
     try { remainOnly = localStorage.getItem('picking.remainOnly') === '1'; } catch (e) { }
 
@@ -551,7 +533,6 @@
             if (!json.success) return showError(json.message || '피킹리스트를 불러오지 못했습니다.');
             snap = json.snapshot;
             snapKey = json.snapKey || null;
-            locations = json.locations || {};
             checks = new Set(json.checks || []);
             render();
         } catch (e) {
@@ -567,22 +548,15 @@
     // 체크 키: 전체 = 구분|품목코드 (창고에서 꺼냄), 매장을 골랐을 때 = 구분|품목코드|매장 (그 매장 상자에 담음)
     const checkKey = it => `${kindOf(it)}|${it.code}${storeSel ? `|${storeSel}` : ''}`;
     const checkVerb = () => (storeSel ? '담음' : '꺼냄');
-    const locOf = it => locations[it.code] || '';
-    // 위치가 있는 품목은 위치 순(동선 순, A-2 < A-10)으로 앞에, 위치가 없는 품목은 원래 순서(품목코드)로 뒤에
-    function byLocation(a, b) {
-        const la = locOf(a), lb = locOf(b);
-        if (la && lb) return la.localeCompare(lb, 'ko', { numeric: true });
-        return la ? -1 : lb ? 1 : 0;
-    }
 
     function filteredItems() {
         const keys = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
         const base = viewItems();
-        const hits = !keys.length ? base : base.filter(it => {
-            const t = `${kindOf(it)} ${it.code} ${it.name} ${it.spec} ${locOf(it)}`.toLowerCase();
+        if (!keys.length) return base;
+        return base.filter(it => {
+            const t = `${kindOf(it)} ${it.code} ${it.name} ${it.spec}`.toLowerCase();
             return keys.every(k => t.includes(k));
         });
-        return [...hits].sort(byLocation);
     }
 
     // ---------- 화면 ----------
@@ -655,7 +629,7 @@
                     ${TABS.map(tab => `<button class="tab" role="tab" type="button" id="tab-${tab.id}" aria-controls="panel-${tab.id}"
                         aria-selected="${tab.id === activeTab}" data-tab="${tab.id}" ${tab.id === 'dist' && storeSel ? 'hidden' : ''}>${tab.label}<span class="cnt">${counts[tab.id]}</span></button>`).join('')}
                 </div>
-                <input class="search" id="search" type="search" placeholder="품목코드, 품목명, 색상, 위치 검색" aria-label="품목 검색" value="${esc(query)}">
+                <input class="search" id="search" type="search" placeholder="품목코드, 품목명, 색상 검색" aria-label="품목 검색" value="${esc(query)}">
             </div>
             ${TABS.map(tab => `<div role="tabpanel" id="panel-${tab.id}" aria-labelledby="tab-${tab.id}" ${tab.id === activeTab ? '' : 'hidden'}></div>`).join('')}
         `;
@@ -733,7 +707,6 @@
         const p = progress(), verb = checkVerb();
         const bar = `<div class="pick-bar${p.finished ? ' all' : ''}" id="pick-bar">
             <div class="prog" id="pick-prog">${p.html}</div>
-            <button class="btn sm" id="btn-resort" type="button"${locDirty ? '' : ' hidden'}>위치 순으로 다시 정렬</button>
             <label class="remain"><input type="checkbox" id="remain-only"${remainOnly ? ' checked' : ''}>남은 것만</label>
         </div>`;
         const found = filteredItems();
@@ -742,20 +715,17 @@
         if (!rows.length) return bar + `<div class="table-wrap"><div class="empty"><div class="t">남은 품목이 없습니다</div>
             <div class="d">${query.trim() ? '검색한 품목은' : '이 목록의 품목은'} 모두 ${storeSel ? '담았습니다' : '꺼냈습니다'}. ‘남은 것만’을 끄면 전체가 보입니다.</div></div></div>`;
         return bar + `<div class="table-wrap"><table class="t-items">
-            <thead><tr><th>${verb}</th><th>위치</th><th>품목코드</th><th>품목명</th><th>규격</th><th class="num">수량</th></tr></thead>
-            <tbody>${withGroups(rows, 6, it => {
+            <thead><tr><th>${verb}</th><th>품목코드</th><th>품목명</th><th>규격</th><th class="num">수량</th></tr></thead>
+            <tbody>${withGroups(rows, 5, it => {
                 const key = checkKey(it), done = checks.has(key);
                 return `<tr data-key="${esc(key)}"${done ? ' class="done"' : ''}>
                 <td class="chk"><label class="chk-hit"><input type="checkbox" class="pick-chk" aria-label="${esc(it.name)} ${verb}"${done ? ' checked' : ''}></label></td>
-                <td class="loc"><input class="loc-in" type="text" data-code="${esc(it.code)}" value="${esc(locOf(it))}" placeholder="위치" maxlength="30"
-                    autocomplete="off" enterkeyhint="next" aria-label="${esc(it.name)} 선반 위치"></td>
                 <td class="code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td>
                 <td class="spec">${esc(it.spec)}</td><td class="num qty">${fmt(it.qty)}</td></tr>`;
             }, itemSummary)}</tbody>
-            <tfoot><tr><td colspan="3">${remainOnly ? '남은 합계' : query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
+            <tfoot><tr><td colspan="2">${remainOnly ? '남은 합계' : query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
         </table></div>
-        <p class="note">수량은 이카운트 주문서현황의 품목별 수량을 ${showKind() ? '구분·' : ''}품목코드 기준으로 합친 값입니다.
-            위치를 적은 품목은 위치 순으로 앞에, 나머지는 품목코드 순으로 뒤에 옵니다.${scopeNote()}</p>`;
+        <p class="note">수량은 이카운트 주문서현황의 품목별 수량을 ${showKind() ? '구분·' : ''}품목코드 기준으로 합친 값입니다.${scopeNote()}</p>`;
     }
 
     function renderDist() {
@@ -763,16 +733,14 @@
         const rows = filteredItems();
         if (!rows.length) return noMatch();
         const stores = viewStores();
-        const hasLoc = rows.some(it => locOf(it));   // 위치는 적어 둔 게 있을 때만 (여기서는 보기만, 적는 곳은 통합 피킹리스트 탭)
         const cell = q => q ? `<td class="num">${fmt(q)}</td>` : `<td class="num zero">·</td>`;
         return `<div class="table-wrap"><table class="t-dist">
-            <thead><tr>${hasLoc ? '<th>위치</th>' : ''}<th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
+            <thead><tr><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
                 ${stores.map(s => `<th class="num">${esc(s)}</th>`).join('')}</tr></thead>
-            <tbody>${withGroups(rows, 4 + stores.length + (hasLoc ? 1 : 0), it => `<tr>
-                ${hasLoc ? `<td class="loc-ro">${esc(locOf(it))}</td>` : ''}
+            <tbody>${withGroups(rows, 4 + stores.length, it => `<tr>
                 <td class="code c-code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
                 <td class="num qty sum">${fmt(it.qty)}</td>${stores.map(s => cell(it.byStore[s])).join('')}</tr>`, itemSummary)}</tbody>
-            <tfoot><tr>${hasLoc ? '<td></td>' : ''}<td class="c-code"></td><td>${query.trim() ? '검색 합계' : '합계'} · ${rows.length}종</td><td></td>
+            <tfoot><tr><td class="c-code"></td><td>${query.trim() ? '검색 합계' : '합계'} · ${rows.length}종</td><td></td>
                 <td class="num">${fmt(sum(rows, r => r.qty))}</td>
                 ${stores.map(s => `<td class="num">${fmt(sum(rows, r => r.byStore[s]))}</td>`).join('')}</tr></tfoot>
         </table></div>`;
@@ -857,34 +825,29 @@
             row.height = 22;
         }
 
-        // 품목 순서는 화면과 같다: 위치를 적은 품목이 위치 순으로 앞에, 나머지는 품목코드 순
-        const items = [...snap.items].sort(byLocation), stores = snap.stores, orders = snap.orders;
+        const items = snap.items, stores = snap.stores, orders = snap.orders;
         const first = 5, last = first + items.length - 1;
         const col = n => String.fromCharCode(64 + n);   // 1 → A (열 26개 이하)
         const SUM = (n, from, to, result) => ({ formula: `SUM(${col(n)}${from}:${col(n)}${to})`, result });
 
-        // 구분(발주/반납) 열은 구분이 둘 이상 섞일 때만, 위치 열은 적어 둔 위치가 있을 때만 맨 뒤에 붙인다
-        // → 앞쪽 열·합계 수식 위치는 늘 시제품과 같다. 주문서 시트는 품목이 아니라서 위치 없음
-        const K = showKind(), LOC = items.some(it => locOf(it));
+        // 구분(발주/반납) 열은 구분이 둘 이상 섞일 때만 맨 뒤에 붙인다 → 앞쪽 열·합계 수식 위치는 늘 시제품과 같다
+        const K = showKind();
         const kh = K ? ['구분'] : [], kw = K ? [20] : [], ka = K ? [C] : [], kb = K ? [''] : [];
         const kv = x => (K ? [kindOf(x)] : []);
-        const ih = [...kh, ...(LOC ? ['위치'] : [])], iw = [...kw, ...(LOC ? [12] : [])];
-        const ia = [...ka, ...(LOC ? [C] : [])], ib = [...kb, ...(LOC ? [''] : [])];
-        const iv = it => [...kv(it), ...(LOC ? [locOf(it) || null] : [])];
 
         // 1) 통합 피킹리스트
-        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '수량', ...ih], [16, 46, 34, 10, ...iw]);
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...iv(it)], [C, L, L, C, ...ia], { bold: [4] }));
-        put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty), ...ib], [C, L, L, C, ...ia], { total: true });
+        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '수량', ...kh], [16, 46, 34, 10, ...kw]);
+        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...kv(it)], [C, L, L, C, ...ka], { bold: [4] }));
+        put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty), ...kb], [C, L, L, C, ...ka], { total: true });
         ws.getCell(`A${last + 3}`).value = `수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(발주/반납)·' : ''}품목코드 기준으로 합친 값입니다.`;
         ws.getCell(`A${last + 3}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
 
         // 2) 매장별 분배
-        ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '합계', ...stores, ...ih], [16, 46, 34, 9, ...stores.map(() => 16), ...iw], true);
-        const da = [C, L, L, C, ...stores.map(() => C), ...ia];
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(st => it.byStore[st] || null), ...iv(it)], da, { bold: [4] }));
+        ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '합계', ...stores, ...kh], [16, 46, 34, 9, ...stores.map(() => 16), ...kw], true);
+        const da = [C, L, L, C, ...stores.map(() => C), ...ka];
+        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(st => it.byStore[st] || null), ...kv(it)], da, { bold: [4] }));
         put(ws, last + 1, ['합계', `${items.length}종`, '', SUM(4, first, last, snap.totals.qty),
-            ...stores.map((st, i) => SUM(5 + i, first, last, sum(items, it => it.byStore[st]))), ...ib], da, { total: true });
+            ...stores.map((st, i) => SUM(5 + i, first, last, sum(items, it => it.byStore[st]))), ...kb], da, { total: true });
 
         // 3) 포함된 주문
         ws = sheet('포함된 주문', ['주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '수량', ...kh], [16, 20, 26, 14, 18, 10, 10, ...kw]);
@@ -902,13 +865,13 @@
             used.add(name);
             const its = items.filter(it => it.byStore[st]);
             const ords = orders.filter(o => o.store === st);
-            ws = sheet(name, ['품목코드', '품목명', '규격', '수량', ...ih], [16, 46, 34, 10, ...iw]);
+            ws = sheet(name, ['품목코드', '품목명', '규격', '수량', ...kh], [16, 46, 34, 10, ...kw]);
             ws.getCell('A1').value = `${st} 매장`;
             ws.getCell('A2').value = `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / ${st} 주문서 ${ords.length}건` +
                 (ords.length ? ` / 주문일 ${orderDates(ords)} / 납기 ${dueDates(ords)}` : '');
-            its.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.byStore[st], ...iv(it)], [C, L, L, C, ...ia], { bold: [4] }));
+            its.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.byStore[st], ...kv(it)], [C, L, L, C, ...ka], { bold: [4] }));
             const sLast = first + its.length - 1;
-            put(ws, sLast + 1, ['합계', `${its.length}종`, '', SUM(4, first, sLast, sum(its, it => it.byStore[st])), ...ib], [C, L, L, C, ...ia], { total: true });
+            put(ws, sLast + 1, ['합계', `${its.length}종`, '', SUM(4, first, sLast, sum(its, it => it.byStore[st])), ...kb], [C, L, L, C, ...ka], { total: true });
             ws.getCell(`A${sLast + 3}`).value = `주문서: ${ords.map(o => `${o.no}${K ? ` ${kindOf(o)}` : ''} (납기 ${o.dueDate})`).join(' / ')}`;
             ws.getCell(`A${sLast + 3}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
         }
@@ -1084,7 +1047,7 @@
 
     $('#btn-refresh').addEventListener('click', onRefreshClick);
 
-    // ---------- 꺼냄 체크 · 선반 위치 (물류팀 모두가 같이 봄, 서버에 저장) ----------
+    // ---------- 꺼냄 체크 (물류팀 모두가 같이 봄, 서버에 저장) ----------
     const CHECK_POLL_MS = 15000;   // 다른 사람이 켠 체크를 이 간격으로 다시 읽는다
     let toastTimer = null;
     let noticedSnapKey = null;     // '새 데이터가 있습니다' 안내는 새 데이터마다 한 번만
@@ -1108,13 +1071,11 @@
         return json;
     }
 
-    const editingLocation = () => !!document.activeElement?.classList.contains('loc-in');
-
-    // 체크가 바뀌면 줄 모양만 고친다 (표를 다시 그리면 휴대폰에서 스크롤·입력 중인 칸이 흔들림). '남은 것만'일 때만 다시 그림
+    // 체크가 바뀌면 줄 모양만 고친다 (표를 다시 그리면 휴대폰에서 스크롤이 흔들림). '남은 것만'일 때만 다시 그림
     function applyChecks() {
         if (!snap || !$('#panel-pick')) return;
         if (remainOnly) {
-            if (!editingLocation()) $('#panel-pick').innerHTML = renderPick();
+            $('#panel-pick').innerHTML = renderPick();
             return;
         }
         document.querySelectorAll('#panel-pick tr[data-key]').forEach(tr => {
@@ -1146,62 +1107,17 @@
         }
     }
 
-    // 위치는 품목코드마다 하나. 적고 나서 바로 줄을 옮기지 않고 '위치 순으로 다시 정렬' 버튼을 띄운다 (연달아 적을 때 줄이 튀지 않게)
-    async function saveLocation(inp) {
-        const code = inp.dataset.code, before = locations[code] || '';
-        const location = inp.value.trim().slice(0, 30);
-        inp.value = location;
-        if (location === before) return;
-        inp.classList.add('saving');
-        try {
-            await postJson('/api/picking-list/location', { code, location });
-            if (location) locations[code] = location; else delete locations[code];
-            document.querySelectorAll('.loc-in').forEach(x => { if (x.dataset.code === code) x.value = location; });
-            $('#panel-dist').innerHTML = renderDist();
-            locDirty = true;
-            if ($('#btn-resort')) $('#btn-resort').hidden = false;
-            showToast(location ? `${code} 위치 ‘${location}’ 저장` : `${code} 위치 지움`);
-        } catch (e) {
-            inp.value = before;
-            showToast('위치를 저장하지 못했습니다. 다시 적어 주세요.', { kind: 'err', ms: 4000 });
-        } finally {
-            inp.classList.remove('saving');
-        }
-    }
-
-    const app = $('#app');
-    app.addEventListener('change', e => {
+    $('#app').addEventListener('change', e => {
         const t = e.target;
         if (t.classList.contains('pick-chk')) toggleCheck(t);
-        else if (t.classList.contains('loc-in')) saveLocation(t);
         else if (t.id === 'remain-only') {
             remainOnly = t.checked;
             try { localStorage.setItem('picking.remainOnly', remainOnly ? '1' : '0'); } catch (err) { }
             $('#panel-pick').innerHTML = renderPick();
         }
     });
-    // 위치 칸: Enter = 저장하고 다음 품목 위치 칸으로, Esc = 고치기 전으로
-    app.addEventListener('keydown', e => {
-        const t = e.target;
-        if (!t.classList || !t.classList.contains('loc-in')) return;
-        if (e.key === 'Enter') {
-            e.preventDefault();
-            const all = [...document.querySelectorAll('#panel-pick .loc-in')];
-            const next = all[all.indexOf(t) + 1];
-            if (next) next.focus(); else t.blur();
-        } else if (e.key === 'Escape') {
-            t.value = locations[t.dataset.code] || '';
-            t.blur();
-        }
-    });
-    app.addEventListener('click', e => {
-        if (!e.target.closest('#btn-resort')) return;
-        locDirty = false;
-        $('#panel-pick').innerHTML = renderPick();
-        $('#panel-dist').innerHTML = renderDist();
-    });
 
-    // 다른 사람이 켠 체크 다시 읽기 (화면이 보일 때만, 내가 저장 중이거나 위치를 적는 중이면 건너뜀)
+    // 다른 사람이 켠 체크 다시 읽기 (화면이 보일 때만, 내가 저장 중이거나 가져오는 중이면 건너뜀)
     async function syncChecks() {
         if (!snapKey || document.visibilityState !== 'visible' || pendingChecks || pollTimer) return;
         const at = snapKey;
