@@ -248,14 +248,18 @@
         .pick-chk { width: 22px; height: 22px; margin: 0; accent-color: var(--brand); cursor: pointer; }
         tr.done td { background: #FAFBFC; }
         tr.done td.code, tr.done td.name, tr.done td.spec, tr.done td.qty { color: var(--ink-3); text-decoration: line-through; }
+        tr.done td.num { color: var(--ink-3); }
 
+        /* 체크 진행률: 탭 위에 두어 어느 탭에서든 보인다 */
         .pick-bar {
-            display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 0 0 10px; padding: 10px 14px;
+            display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 12px 0 0; padding: 10px 14px;
             border: 1px solid var(--line); border-radius: 10px; background: #fff;
         }
+        .pick-bar + .toolbar { margin-top: 16px; }
         .prog { flex: 1; min-width: 220px; }
         .prog-t { font-size: 14px; font-weight: 600; color: var(--ink-2); font-variant-numeric: tabular-nums; }
-        .prog-t b { font-size: 15px; font-weight: 800; color: var(--ink); }
+        .prog-t b { font-size: 15px; font-weight: 800; color: var(--ink); white-space: nowrap; }
+        .prog-q { white-space: nowrap; }   /* 매장 이름이 길어도 "· 3 / 78개"가 한 덩어리로 줄바꿈 */
         .prog-bar { height: 8px; margin-top: 6px; border-radius: 999px; background: var(--head); overflow: hidden; }
         .prog-bar i { display: block; height: 100%; background: var(--brand); transition: width .2s; }
         .pick-bar.all .prog-bar i { background: #12B76A; }
@@ -344,14 +348,17 @@
             /* 매장별 분배는 표 그대로 옆으로 밀어서 본다 */
             .t-dist th, .t-dist td { padding: 8px; font-size: 13px; }
 
-            /* 매장 하나만 볼 때(매장별 분배) → 카드: 코드 / 품목명 / 색상, 오른쪽에 그 매장 수량(크게)과 전체 매장 수량(작게) */
+            /* 매장 하나만 볼 때(매장별 분배) → 카드: 왼쪽 담음 체크 / 코드, 품목명, 색상 / 오른쪽에 그 매장 수량(크게)과 전체 매장 수량(작게) */
             .t-one thead { display: none; }
             .t-one tbody tr {
-                display: grid; grid-template-columns: 1fr auto; column-gap: 10px; row-gap: 3px; align-items: center;
-                grid-template-areas: "code qty" "name qty" "spec tot"; padding: 12px 14px; border-bottom: 1px solid var(--line);
+                display: grid; grid-template-columns: 40px 1fr auto; column-gap: 8px; row-gap: 3px; align-items: center;
+                grid-template-areas: "chk code qty" "chk name qty" "chk spec tot"; padding: 10px 12px 10px 6px; border-bottom: 1px solid var(--line);
             }
             .t-one tbody tr:last-child { border-bottom: 0; }
+            .t-one tbody tr.done { background: #FAFBFC; }
             .t-one tbody td { padding: 0; border: 0; background: none !important; }
+            .t-one td.chk { grid-area: chk; width: auto; }
+            .t-one .chk-hit { width: 40px; height: 52px; }
             .t-one td.c-code { display: block; grid-area: code; font-size: 12px; }
             .t-one td.name { grid-area: name; font-size: 15px; line-height: 1.35; }
             .t-one td.spec { grid-area: spec; font-size: 13px; }
@@ -439,7 +446,7 @@
             <ul class="guide-notes">
                 <li><b>새로고침</b>하면 마지막으로 가져온 데이터를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 건 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐이고, <b>10분에 한 번</b> 가져올 수 있습니다.</li>
                 <li><b>합치는 주문서</b>: 이카운트 주문서조회에서 <b>진행중</b>이고 구분이 <b>주문(상품/발주)</b>인 것만. 완료된 주문서는 들어가지 않습니다.</li>
-                <li><b>체크</b>는 이 페이지를 보는 모든 사람에게 같이 보입니다(다른 화면에는 15초 안에). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 남고, 바뀐 품목만 풀립니다.</li>
+                <li><b>체크</b>는 통합 피킹리스트·매장별 분배 어디서 해도 같은 체크이고, 진행률은 어느 탭에서든 위에 보입니다. 이 페이지를 보는 모든 사람에게 같이 보입니다(다른 화면에는 15초 안에). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 남고, 바뀐 품목만 풀립니다.</li>
                 <li>위의 <b>숫자 카드</b>(포함된 주문·매장·품목)를 누르면 그 목록으로 바로 갑니다.</li>
                 <li><b>휴대폰</b>으로 같은 주소를 열면 카드 모양으로 보이고, 내려도 진행률 막대가 위에 붙어 있습니다.</li>
                 <li>‘물류 서버 PC가 꺼져 있거나…’ 안내가 나오면 서버 PC가 켜져 있는지 확인하거나 본사 담당자에게 알려 주세요.</li>
@@ -681,6 +688,10 @@
             ${age >= NOTICE_AFTER_DAYS ? `<div class="banner" role="status">
                 이 목록은 <b>${age}일 전</b>(${esc(kstText(dataTime()))})에 이카운트에서 가져온 것입니다. 그 뒤에 들어온 주문은 빠져 있습니다.
                 최신 주문이 필요하면 위의 ‘실시간 데이터 가져오기’를 눌러 주세요.</div>` : ''}
+            ${snap.items.length ? `<section class="pick-bar" id="pick-bar" aria-label="체크 진행률">
+                <div class="prog" id="pick-prog"></div>
+                <label class="remain" id="remain-wrap"><input type="checkbox" id="remain-only"${remainOnly ? ' checked' : ''}>남은 것만</label>
+            </section>` : ''}
             <div class="toolbar">
                 <div class="tabs" role="tablist" aria-label="보기">
                     ${TABS.map(tab => `<button class="tab" role="tab" type="button" id="tab-${tab.id}" aria-controls="panel-${tab.id}"
@@ -724,6 +735,7 @@
         document.querySelectorAll('button.stat[data-go]').forEach(c => c.classList.toggle('on', c.dataset.go === id));
         TABS.forEach(tab => { $(`#panel-${tab.id}`).hidden = tab.id !== id; });
         $('#search').hidden = id === 'orders';   // 주문서 탭에는 품목 검색이 필요 없다 (휴대폰에서 빈 자리도 남기지 않게)
+        if ($('#remain-wrap')) $('#remain-wrap').hidden = id === 'orders';   // 주문서 탭에는 품목 줄이 없어 진행률만
         $('#tab-desc').innerHTML = tabDesc(id);
         $('#print-title').textContent = TABS.find(tab => tab.id === id).label
             + (storeSel ? ` · ${storeSel}` : '') + (kindSel ? ` · ${shortKind(kindSel)}` : '');
@@ -736,6 +748,7 @@
         $('#panel-dist').innerHTML = renderDist();
         $('#panel-orders').innerHTML = renderOrders();
         selectTab(activeTab);
+        updateProgress();
     }
 
     const emptyState = () => `<div class="table-wrap"><div class="empty">
@@ -753,8 +766,8 @@
             ? `${st} 매장 몫만 보고 있습니다. 이 수량만큼 그 매장 상자에 담고, 담은 품목은 왼쪽 칸을 체크하세요.`
             : '모든 매장 주문을 품목별로 합친 수량입니다. 이 수량만큼 창고에서 꺼내고, 꺼낸 품목은 왼쪽 칸을 체크하세요.';
         if (id === 'dist') return storeSel
-            ? `${st} 매장 상자에 담을 품목만 보고 있습니다. <b>전체 매장</b>은 모든 매장을 합친 수량입니다. 담은 품목 체크는 ‘통합 피킹리스트’ 탭에서 합니다.`
-            : '꺼낸 물건을 매장마다 몇 개씩 나눠 담을지 보여 줍니다. 칸의 숫자 = 그 매장 상자에 담을 개수, <b>합계</b> = 창고에서 꺼낼 총수량. 매장 이름을 누르면 그 매장 것만 봅니다.';
+            ? `${st} 매장 상자에 담을 품목만 보고 있습니다. 담은 품목은 왼쪽 칸을 체크하세요. <b>전체 매장</b>은 모든 매장을 합친 수량입니다.`
+            : '꺼낸 물건을 매장마다 몇 개씩 나눠 담을지 보여 줍니다. 칸의 숫자 = 그 매장 상자에 담을 개수, <b>합계</b> = 창고에서 꺼낼 총수량. 매장 이름을 누르면 그 매장 것만 봅니다. 왼쪽 체크는 통합 피킹리스트와 같은 체크입니다.';
         const ex = storeSel ? snap.excluded.filter(e => e.store === storeSel) : snap.excluded;
         return `${storeSel ? `${st} 매장의 ` : ''}이 주문서들을 합쳐 피킹리스트를 만들었습니다. 이미 출고한 주문이 섞여 있으면 이카운트에서 완료 처리해 주세요.`
             + (ex.length ? ' 합치지 않은 회수·데모 주문은 아래에 따로 있습니다.' : '');
@@ -772,7 +785,7 @@
         const who = storeSel ? `${esc(storeSel)} 담음` : '꺼냄';
         return {
             finished,
-            html: `<div class="prog-t">${who} <b>${fmt(done.length)} / ${fmt(all.length)}종</b> · ${fmt(sum(done, r => r.qty))} / ${fmt(sum(all, r => r.qty))}개${finished ? ' · 모두 끝났습니다' : ''}</div>
+            html: `<div class="prog-t">${who} <b>${fmt(done.length)} / ${fmt(all.length)}종</b> <span class="prog-q">· ${fmt(sum(done, r => r.qty))} / ${fmt(sum(all, r => r.qty))}개</span>${finished ? ' · 모두 끝났습니다' : ''}</div>
                 <div class="prog-bar" aria-hidden="true"><i style="width:${pct}%"></i></div>`,
         };
     }
@@ -784,45 +797,50 @@
         bar.classList.toggle('all', p.finished);
     }
 
+    // ---- 통합 피킹리스트·매장별 분배 공통: 같은 품목은 같은 체크(전체 = 꺼냄, 매장을 고르면 그 매장 담음)를 쓴다 ----
+    // '남은 것만'이면 체크한 품목을 뺀다
+    const remainRows = rows => (remainOnly ? rows.filter(it => !checks.has(checkKey(it))) : rows);
+    const allDone = () => `<div class="table-wrap"><div class="empty"><div class="t">남은 품목이 없습니다</div>
+        <div class="d">${query.trim() ? '검색한 품목은' : '이 목록의 품목은'} 모두 ${storeSel ? '담았습니다' : '꺼냈습니다'}. 위의 ‘남은 것만’을 끄면 전체가 보입니다.</div></div></div>`;
+    const sumLabel = () => (remainOnly ? '남은 합계' : query.trim() ? '검색 합계' : '합계');
+    const rowAttrs = it => {
+        const key = checkKey(it);
+        return `data-key="${esc(key)}"${checks.has(key) ? ' class="done"' : ''}`;
+    };
+    const chkCell = (it, verb) => `<td class="chk"><label class="chk-hit"><input type="checkbox" class="pick-chk" aria-label="${esc(it.name)} ${verb}"${checks.has(checkKey(it)) ? ' checked' : ''}></label></td>`;
+
     function renderPick() {
         if (!snap.items.length) return emptyState();
-        const p = progress(), verb = checkVerb();
-        const bar = `<div class="pick-bar${p.finished ? ' all' : ''}" id="pick-bar">
-            <div class="prog" id="pick-prog">${p.html}</div>
-            <label class="remain"><input type="checkbox" id="remain-only"${remainOnly ? ' checked' : ''}>남은 것만</label>
-        </div>`;
         const found = filteredItems();
-        if (!found.length) return bar + noMatch();
-        const rows = remainOnly ? found.filter(it => !checks.has(checkKey(it))) : found;
-        if (!rows.length) return bar + `<div class="table-wrap"><div class="empty"><div class="t">남은 품목이 없습니다</div>
-            <div class="d">${query.trim() ? '검색한 품목은' : '이 목록의 품목은'} 모두 ${storeSel ? '담았습니다' : '꺼냈습니다'}. ‘남은 것만’을 끄면 전체가 보입니다.</div></div></div>`;
-        return bar + `<div class="table-wrap"><table class="t-items">
+        if (!found.length) return noMatch();
+        const rows = remainRows(found);
+        if (!rows.length) return allDone();
+        const verb = checkVerb();
+        return `<div class="table-wrap"><table class="t-items">
             <thead><tr><th>${verb}</th><th>품목코드</th><th>품목명</th><th>규격</th><th class="num">수량</th></tr></thead>
-            <tbody>${withGroups(rows, 5, it => {
-                const key = checkKey(it), done = checks.has(key);
-                return `<tr data-key="${esc(key)}"${done ? ' class="done"' : ''}>
-                <td class="chk"><label class="chk-hit"><input type="checkbox" class="pick-chk" aria-label="${esc(it.name)} ${verb}"${done ? ' checked' : ''}></label></td>
+            <tbody>${withGroups(rows, 5, it => `<tr ${rowAttrs(it)}>${chkCell(it, verb)}
                 <td class="code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td>
-                <td class="spec">${esc(it.spec)}</td><td class="num qty">${fmt(it.qty)}</td></tr>`;
-            }, itemSummary)}</tbody>
-            <tfoot><tr><td colspan="2">${remainOnly ? '남은 합계' : query.trim() ? '검색 합계' : '합계'}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
+                <td class="spec">${esc(it.spec)}</td><td class="num qty">${fmt(it.qty)}</td></tr>`, itemSummary)}</tbody>
+            <tfoot><tr><td colspan="2">${sumLabel()}</td><td>${rows.length}종</td><td></td><td class="num">${fmt(sum(rows, r => r.qty))}</td></tr></tfoot>
         </table></div>
         <p class="note">수량은 이카운트 주문서현황의 품목별 수량을 ${showKind() ? '구분·' : ''}품목코드 기준으로 합친 값입니다.${scopeNote()}</p>`;
     }
 
     function renderDist() {
         if (!snap.items.length) return emptyState();
-        const rows = filteredItems();
-        if (!rows.length) return noMatch();
-        const label = query.trim() ? '검색 합계' : '합계';
-        // 매장을 고르면 그 매장 상자에 담을 품목만: 그 매장 수량(크게) + 전체 매장 합계(참고)
+        const found = filteredItems();
+        if (!found.length) return noMatch();
+        const rows = remainRows(found);
+        if (!rows.length) return allDone();
+        const label = sumLabel(), verb = checkVerb();
+        // 매장을 고르면 그 매장 상자에 담을 품목만: 담음 체크 + 그 매장 수량(크게) + 전체 매장 합계(참고)
         if (storeSel) {
             return `<div class="table-wrap"><table class="t-dist t-one">
-                <thead><tr><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">${esc(storeSel)}</th><th class="num">전체 매장</th></tr></thead>
-                <tbody>${withGroups(rows, 5, it => `<tr>
+                <thead><tr><th>${verb}</th><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">${esc(storeSel)}</th><th class="num">전체 매장</th></tr></thead>
+                <tbody>${withGroups(rows, 6, it => `<tr ${rowAttrs(it)}>${chkCell(it, verb)}
                     <td class="code c-code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
                     <td class="num qty sum">${fmt(it.qty)}</td><td class="num total">${fmt(it.total)}</td></tr>`, itemSummary)}</tbody>
-                <tfoot><tr><td class="c-code"></td><td>${label} · ${rows.length}종</td><td></td>
+                <tfoot><tr><td></td><td class="c-code"></td><td>${label} · ${rows.length}종</td><td></td>
                     <td class="num">${fmt(sum(rows, r => r.qty))}</td><td class="num total">${fmt(sum(rows, r => r.total))}</td></tr></tfoot>
             </table></div>`;
         }
@@ -830,12 +848,12 @@
         const cell = q => q ? `<td class="num">${fmt(q)}</td>` : `<td class="num zero">·</td>`;
         // 매장 이름을 누르면 그 매장 것만 (표 위 매장 버튼과 같음)
         return `<div class="table-wrap"><table class="t-dist">
-            <thead><tr><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
+            <thead><tr><th>${verb}</th><th class="c-code">품목코드</th><th>품목명</th><th>규격</th><th class="num sum">합계</th>
                 ${stores.map(s => `<th class="num"><button class="st-btn" type="button" data-store="${esc(s)}" title="${esc(s)} 매장 것만 보기">${esc(s)}</button></th>`).join('')}</tr></thead>
-            <tbody>${withGroups(rows, 4 + stores.length, it => `<tr>
+            <tbody>${withGroups(rows, 5 + stores.length, it => `<tr ${rowAttrs(it)}>${chkCell(it, verb)}
                 <td class="code c-code">${esc(it.code)}</td><td class="name">${esc(it.name)}</td><td class="spec">${esc(it.spec)}</td>
                 <td class="num qty sum">${fmt(it.qty)}</td>${stores.map(s => cell(it.byStore[s])).join('')}</tr>`, itemSummary)}</tbody>
-            <tfoot><tr><td class="c-code"></td><td>${label} · ${rows.length}종</td><td></td>
+            <tfoot><tr><td></td><td class="c-code"></td><td>${label} · ${rows.length}종</td><td></td>
                 <td class="num">${fmt(sum(rows, r => r.qty))}</td>
                 ${stores.map(s => `<td class="num">${fmt(sum(rows, r => r.byStore[s]))}</td>`).join('')}</tr></tfoot>
         </table></div>`;
@@ -1166,28 +1184,29 @@
         return json;
     }
 
-    // 체크가 바뀌면 줄 모양만 고친다 (표를 다시 그리면 휴대폰에서 스크롤이 흔들림). '남은 것만'일 때만 다시 그림
-    function applyChecks() {
-        if (!snap || !$('#panel-pick')) return;
-        if (remainOnly) {
-            $('#panel-pick').innerHTML = renderPick();
-            return;
-        }
-        document.querySelectorAll('#panel-pick tr[data-key]').forEach(tr => {
+    // 체크가 바뀌면 줄 모양만 고친다 — 통합 피킹리스트·매장별 분배 두 표 모두 (표를 다시 그리면 휴대폰에서 스크롤이 흔들림)
+    function paintChecks() {
+        document.querySelectorAll('[role="tabpanel"] tr[data-key]').forEach(tr => {
             const done = checks.has(tr.dataset.key);
             tr.classList.toggle('done', done);
-            tr.querySelector('.pick-chk').checked = done;
+            const box = tr.querySelector('.pick-chk');
+            if (box) box.checked = done;
         });
         updateProgress();
+    }
+    // '남은 것만'일 때는 체크한 줄을 빼야 하니 표를 다시 그림
+    function applyChecks() {
+        if (!snap || !$('#panel-pick')) return;
+        if (remainOnly) renderPanels();
+        else paintChecks();
     }
 
     async function toggleCheck(box) {
         const tr = box.closest('tr'), key = tr.dataset.key, picked = box.checked, at = snapKey;
         if (picked) checks.add(key); else checks.delete(key);
-        tr.classList.toggle('done', picked);
-        updateProgress();
+        paintChecks();   // 다른 탭 표의 같은 품목 줄도 같이
         // '남은 것만'이면 체크된 모습을 잠깐 보여 준 뒤 목록에서 뺀다
-        if (remainOnly && picked) setTimeout(() => { if (remainOnly && at === snapKey) applyChecks(); }, 350);
+        if (remainOnly && picked) setTimeout(() => { if (remainOnly && at === snapKey) renderPanels(); }, 350);
         pendingChecks++;
         try {
             await postJson('/api/picking-list/check', { snap: at, key, picked });
@@ -1216,7 +1235,7 @@
         else if (t.id === 'remain-only') {
             remainOnly = t.checked;
             try { localStorage.setItem('picking.remainOnly', remainOnly ? '1' : '0'); } catch (err) { }
-            $('#panel-pick').innerHTML = renderPick();
+            renderPanels();
         }
     });
 
