@@ -227,7 +227,7 @@
         }
         .fchip:hover:not(:disabled) { border-color: var(--brand); color: var(--brand-ink); }
         .fchip .cnt { margin-left: 6px; font-size: 12px; font-weight: 600; color: var(--ink-3); }
-        .fchip[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: #fff; }
+        .fchip[aria-pressed="true"], .fchip[aria-pressed="true"]:hover:not(:disabled) { background: var(--brand); border-color: var(--brand); color: #fff; }   /* 고른 버튼에 마우스를 올려도 흰 글자 유지 */
         .fchip[aria-pressed="true"] .cnt { color: rgba(255, 255, 255, .85); }
         .fchip:disabled { opacity: .4; cursor: not-allowed; }
         .fchip .dot { width: 8px; height: 8px; margin-right: 6px; border-radius: 50%; }
