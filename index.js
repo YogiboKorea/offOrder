@@ -47,7 +47,6 @@ const MONGODB_URI = process.env.MONGODB_URI;
 const DB_NAME = "OFFLINE_ORDER"; 
 
 const COLLECTION_ORDERS = "ordersOffData";
-const COLLECTION_TOKENS = "tokens";
 const COLLECTION_STORES = "ecountStores";
 const COLLECTION_STATIC_MANAGERS = "staticManagers";
 const COLLECTION_WAREHOUSES = "ecountWarehouses";
@@ -76,9 +75,14 @@ function getStandardHoursByDate(/* dateStr */) {
 }
 
 const CAFE24_MALLID = process.env.CAFE24_MALLID;
-const CAFE24_CLIENT_ID = process.env.CAFE24_CLIENT_ID;
-const CAFE24_CLIENT_SECRET = process.env.CAFE24_CLIENT_SECRET;
 const CAFE24_API_VERSION = '2025-12-01';
+
+// 🔑 Cafe24 토큰 — adminChat과 같은 공용 토큰(yogibo DB의 tokens)을 읽어서 쓴다 (2026-10)
+//    예전엔 이 서버가 자기 Cafe24 앱 토큰을 OFFLINE_ORDER.tokens에 따로 두고 갱신했다.
+//    공용 토큰은 adminChat이 매시 미리 갱신하고 401 때도 갱신한다. 이 서버는 읽기만 한다
+//    (다른 앱의 토큰이라 이 서버의 CLIENT_ID로는 갱신할 수 없다).
+const SHARED_TOKEN_DB = process.env.CAFE24_TOKEN_DB || 'yogibo';
+const SHARED_TOKEN_COLLECTION = process.env.CAFE24_TOKEN_COLLECTION || 'tokens';
 
 const BIZM_USER_ID = process.env.BIZM_USER_ID;
 const BIZM_PROFILE_KEY = process.env.BIZM_PROFILE_KEY;
@@ -87,7 +91,6 @@ const MY_DOMAIN = process.env.MY_DOMAIN || "https://yogibo.kr";
 
 let db;
 let accessToken = process.env.ACCESS_TOKEN;
-let refreshToken = process.env.REFRESH_TOKEN;
 
 // ==========================================
 // [2-1] 🆕 주문 상태 머신 상수
@@ -120,12 +123,12 @@ async function startServer() {
         realtimeRoutes.init(client);
 
         try {
-            const tokenDoc = await db.collection(COLLECTION_TOKENS).findOne({});
-            if (tokenDoc) {
-                accessToken = tokenDoc.accessToken;
-                refreshToken = tokenDoc.refreshToken;
-            }
-        } catch (e) {}
+            await loadSharedToken();
+        } catch (e) {
+            console.error('⚠️ 공용 Cafe24 토큰 읽기 실패:', e.message);
+        }
+        // adminChat이 갱신하면 들고 있던 토큰은 낡는다 — 5분마다 공용 토큰을 다시 읽는다
+        setInterval(() => loadSharedToken().catch(() => {}), 5 * 60 * 1000);
 
         await initializeWarehouseDB(); 
         await initializeGlobalPin(); 
@@ -250,20 +253,28 @@ async function ensureOrderIndexes() {
     }
 }
 
-async function refreshAccessToken() {
-    try {
-        const basicAuth = Buffer.from(`${CAFE24_CLIENT_ID}:${CAFE24_CLIENT_SECRET}`).toString('base64');
-        const response = await axios.post(
-            `https://${CAFE24_MALLID}.cafe24api.com/api/v2/oauth/token`,
-            `grant_type=refresh_token&refresh_token=${refreshToken}`,
-            { headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Authorization': `Basic ${basicAuth}` } }
-        );
-        accessToken = response.data.access_token;
-        refreshToken = response.data.refresh_token;
-        if (db) await db.collection(COLLECTION_TOKENS).updateOne({}, { $set: { accessToken, refreshToken, updatedAt: new Date() } }, { upsert: true });
-        return accessToken;
-    } catch (error) { throw error; }
+// 공용 토큰(adminChat이 관리)을 DB에서 읽어 온다
+async function loadSharedToken() {
+    const doc = await db.client.db(SHARED_TOKEN_DB).collection(SHARED_TOKEN_COLLECTION)
+        .findOne({}, { projection: { accessToken: 1 } });
+    if (doc && doc.accessToken) accessToken = doc.accessToken;
+    return accessToken;
 }
+
+// Cafe24 호출이 401이면 부른다 — 갱신은 adminChat 몫이라 공용 토큰을 다시 읽어 오기만 한다
+async function refreshAccessToken() {
+    const before = accessToken;
+    await loadSharedToken();
+    if (accessToken === before) {
+        console.warn('⚠️ 공용 Cafe24 토큰이 아직 그대로입니다 — adminChat이 갱신하면 다음 요청부터 정상');
+    }
+    return accessToken;
+}
+
+// 🩺 배포·상태 확인용 — 어떤 Cafe24 토큰 저장소를 쓰는지만 알려 준다(토큰 값은 내보내지 않는다)
+app.get('/api/health', (req, res) => {
+    res.json({ ok: true, cafe24Token: `${SHARED_TOKEN_DB}.${SHARED_TOKEN_COLLECTION}` });
+});
 
 // ==========================================
 // [4] 매장 접속 권한 및 통합 PIN 검증 API
