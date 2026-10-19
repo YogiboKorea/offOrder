@@ -3450,16 +3450,67 @@ async function pickingActiveRequest() {
     return view && view.status !== 'expired' ? view : null;
 }
 
+// 선반 위치(품목코드 → 위치)와 꺼냄 표시 — 물류팀이 페이지에서 입력하고 모두가 같이 본다
+//   위치: warehouse.picking_locations { _id: 품목코드, location } — 데이터를 새로 가져와도 유지
+//   꺼냄: warehouse.picking_checks { _id: `${snap}|${key}`, snap, key, picked } — snap = 스냅샷 수집 시각
+//         key = `구분|품목코드` (전체 = 창고에서 꺼냄) 또는 `구분|품목코드|매장` (매장을 골랐을 때 = 그 매장 몫을 담음)
+const PICK_LOCATION_MAX = 30;
+const pickingSnapKey = s => new Date(s.collectedAt).toISOString();
+
+async function pickingLocations(codes) {
+    const docs = await pickingDb().collection('picking_locations').find({ _id: { $in: codes } }).toArray();
+    return Object.fromEntries(docs.map(d => [d._id, d.location]));
+}
+async function pickingChecks(snap) {
+    if (!snap) return [];
+    const docs = await pickingDb().collection('picking_checks').find({ snap, picked: true }).project({ key: 1 }).toArray();
+    return docs.map(d => d.key);
+}
+
+// 체크 하나가 가리키는 것: 그 품목의 매장별 수량 + 그 매장들의 주문서 번호. 이게 같으면 같은 일이다
+function pickingCheckSig(s, key) {
+    const [kind, code, store] = key.split('|');
+    const it = s.items.find(i => (i.kind || '상품') === kind && i.code === code);
+    if (!it || (store && !it.byStore[store])) return null;
+    const stores = store ? [store] : Object.keys(it.byStore).sort();
+    return JSON.stringify(stores.map(st => [st, it.byStore[st],
+        s.orders.filter(o => o.store === st && (o.kind || '상품') === kind).map(o => o.no).sort()]));
+}
+
+// 새로 가져오면 바로 전 스냅샷의 체크 중 수량·주문서가 그대로인 것만 이어 받는다
+// (피킹 도중에 누가 새로 가져와도 체크가 통째로 풀리지 않게. 수량이 바뀐 품목만 다시 확인)
+async function pickingCarryChecks(snapshot, prev) {
+    if (!prev) return;
+    const col = pickingDb().collection('picking_checks');
+    const snap = pickingSnapKey(snapshot), prevSnap = pickingSnapKey(prev);
+    const decided = new Set((await col.find({ snap }).project({ key: 1 }).toArray()).map(d => d.key));   // 새 스냅샷에서 이미 누가 켜거나 끈 것
+    const carry = (await col.find({ snap: prevSnap, picked: true }).project({ key: 1 }).toArray())
+        .map(d => d.key)
+        .filter(k => !decided.has(k) && pickingCheckSig(prev, k) !== null && pickingCheckSig(prev, k) === pickingCheckSig(snapshot, k));
+    if (!carry.length) return;
+    await col.bulkWrite(carry.map(key => ({
+        updateOne: {
+            filter: { _id: `${snap}|${key}` },
+            update: { $setOnInsert: { snap, key, picked: true, at: new Date(), carriedFrom: prevSnap } },
+            upsert: true,
+        },
+    })));
+}
+
 app.get('/api/picking-list', async (req, res) => {
     try {
         const col = pickingDb().collection('picking_snapshots');
-        const [snapshot] = await col.find({}).sort({ collectedAt: -1 }).limit(1).project({ _id: 0 }).toArray();
+        const [snapshot, prev] = await col.find({}).sort({ collectedAt: -1 }).limit(2).project({ _id: 0 }).toArray();
         const [worker, activeRequest] = await Promise.all([pickingWorkerStatus(), pickingActiveRequest()]);
         const cooldownMs = PICKING_COOLDOWN_MS;
         if (!snapshot) {
             return res.json({ success: false, message: '수집된 피킹리스트가 없습니다. ‘실시간 데이터 가져오기’를 눌러 주세요.', worker, activeRequest, cooldownMs });
         }
-        res.json({ success: true, snapshot, worker, activeRequest, cooldownMs });
+        const snapKey = pickingSnapKey(snapshot);
+        await pickingCarryChecks(snapshot, prev);
+        const [locations, checks] = await Promise.all([
+            pickingLocations([...new Set(snapshot.items.map(i => i.code))]), pickingChecks(snapKey)]);
+        res.json({ success: true, snapshot, snapKey, locations, checks, worker, activeRequest, cooldownMs });
     } catch (e) {
         console.error('🔥 피킹리스트 조회 오류:', e);
         res.status(500).json({ success: false, message: '서버 오류', error: e.message });
@@ -3491,6 +3542,51 @@ app.post('/api/picking-list/refresh', async (req, res) => {
         res.json({ success: true, request: { ...doc, _id: insertedId }, worker });
     } catch (e) {
         console.error('🔥 피킹리스트 가져오기 요청 오류:', e);
+        res.status(500).json({ success: false, message: '서버 오류', error: e.message });
+    }
+});
+
+// 위치 저장 (빈 값이면 지움)
+app.post('/api/picking-list/location', async (req, res) => {
+    try {
+        const code = String(req.body?.code ?? '').trim();
+        const location = String(req.body?.location ?? '').trim().slice(0, PICK_LOCATION_MAX);
+        if (!code || code.length > 60) return res.status(400).json({ success: false, message: '품목코드가 없습니다.' });
+        const col = pickingDb().collection('picking_locations');
+        if (location) await col.updateOne({ _id: code }, { $set: { location, updatedAt: new Date() } }, { upsert: true });
+        else await col.deleteOne({ _id: code });
+        res.json({ success: true, code, location });
+    } catch (e) {
+        console.error('🔥 피킹 위치 저장 오류:', e);
+        res.status(500).json({ success: false, message: '서버 오류', error: e.message });
+    }
+});
+
+// 꺼냄 표시 켜기/끄기, 그리고 다른 사람이 표시한 것을 다시 읽기
+app.post('/api/picking-list/check', async (req, res) => {
+    try {
+        const snap = String(req.body?.snap ?? ''), key = String(req.body?.key ?? '');
+        if (!snap || !key || snap.length > 40 || key.length > 120) return res.status(400).json({ success: false, message: '잘못된 요청' });
+        await pickingDb().collection('picking_checks').updateOne(
+            { _id: `${snap}|${key}` },
+            { $set: { snap, key, picked: !!req.body.picked, at: new Date() } },
+            { upsert: true });
+        res.json({ success: true });
+    } catch (e) {
+        console.error('🔥 꺼냄 표시 저장 오류:', e);
+        res.status(500).json({ success: false, message: '서버 오류', error: e.message });
+    }
+});
+
+// 페이지가 15초마다 부른다: 다른 사람이 켠 체크 + 그사이 누가 새로 가져왔는지(latestSnapKey가 다르면 안내)
+app.get('/api/picking-list/checks', async (req, res) => {
+    try {
+        const [checks, [latest]] = await Promise.all([
+            pickingChecks(String(req.query.snap ?? '')),
+            pickingDb().collection('picking_snapshots').find({}).sort({ collectedAt: -1 }).limit(1).project({ collectedAt: 1 }).toArray(),
+        ]);
+        res.json({ success: true, checks, latestSnapKey: latest ? pickingSnapKey(latest) : null });
+    } catch (e) {
         res.status(500).json({ success: false, message: '서버 오류', error: e.message });
     }
 });
