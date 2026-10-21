@@ -1026,69 +1026,80 @@
 
         // 화면과 같은 범위: 매장을 골랐으면 품목 수량 = 그 매장 몫 (viewItems가 바꿔 줌)
         const items = viewItems(), stores = viewStores(), orders = viewOrders();
-        const first = 5, last = first + items.length - 1;
+        const first = 5;
         const col = n => String.fromCharCode(64 + n);   // 1 → A (열 26개 이하)
         const SUM = (n, from, to, result) => ({ formula: `SUM(${col(n)}${from}:${col(n)}${to})`, result });
 
-        // 구분(발주/반납) 열은 받는 범위에 구분이 둘 이상 섞일 때만 맨 뒤에 붙인다 → 앞쪽 열·합계 수식 위치는 늘 시제품과 같다
-        const K = new Set([...items, ...orders].map(kindOf)).size > 1;
-        const kh = K ? ['구분'] : [], kw = K ? [20] : [], ka = K ? [C] : [], kb = K ? [''] : [];
-        const kv = x => (K ? [kindOf(x)] : []);
+        // 받는 범위에 구분(상품·데모)이 섞였는지. 섞이면 화면처럼 구분마다 소제목 → 줄들 → 그 구분 합계 (물류팀 요청 10/21:
+        // 줄마다 구분 칸은 복잡해 보이고, 합계는 상품 끝·데모 끝에 각각). A·B 글자는 전체 구분 순서로 고정 (상품 = A, 데모 = B)
+        const allKinds = [...new Set([...items, ...orders].map(kindOf))].sort(compareKind);
+        const K = allKinds.length > 1;
         // 재고 열(물류센터, 매장 시트는 매장 재고도)은 수량·합계 열 바로 뒤에 — 재고를 못 읽었으면 빼고
         const SK = !!stock;
         const sh = list => (SK ? [centerLabel(list)] : []), sw = SK ? [14] : [], sa = SK ? [C] : [], sb = SK ? [''] : [];
         const sv = it => (SK ? [centerQty(it)] : []);
-        // 합계 줄: 구분이 둘 이상이면 구분마다 따로 '상품(A) 합계' / '데모(B) 합계' (화면과 같음).
-        // 품목은 구분 순으로 붙어 있으므로 구분마다 행 범위가 이어진다 → 범위별 SUM
-        const xlParts = list => {
-            const ks = [...new Set(list.map(kindOf))];
-            if (ks.length < 2) return [{ label: '합계', from: 0, to: list.length - 1, part: list }];
-            return ks.map((k, i) => {
-                const idx = list.reduce((a, x, j) => (kindOf(x) === k ? [...a, j] : a), []);
-                return { label: `${kindName(k)}(${letter(i)}) 합계`, from: idx[0], to: idx[idx.length - 1], part: list.filter(x => kindOf(x) === k) };
-            });
-        };
+        const fillGroup = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F7FA' } };
+
+        // 줄 쓰기: 구분이 섞였으면 [구분] 소제목(가로로 합친 칸) → 그 구분 줄들 → '상품(A) 합계' 줄, 다음 구분 …
+        // 하나뿐이면 줄들 → '합계' 한 줄. 합계 수식은 그 구분의 행 범위만 더한다. 다음에 쓸 행 번호를 돌려준다
+        function writeGroups(ws, list, { row, total, title, aligns, bold = [4] }) {
+            const ks = K ? allKinds.filter(k => list.some(x => kindOf(x) === k)) : [null];
+            let r = first;
+            for (const k of ks) {
+                const part = k ? list.filter(x => kindOf(x) === k) : list;
+                if (k) {
+                    ws.mergeCells(r, 1, r, aligns.length);
+                    const c = ws.getCell(r, 1);
+                    c.value = title(k, part);
+                    c.font = { name: FONT, size: 11, bold: true, color: { argb: 'FF1F2933' } };
+                    c.fill = fillGroup; c.alignment = L; c.border = border;
+                    ws.getRow(r).height = 22;
+                    r++;
+                }
+                const from = r;
+                part.forEach(x => put(ws, r++, row(x), aligns, { bold }));
+                put(ws, r, total(k ? `${kindName(k)}(${letter(allKinds.indexOf(k))}) 합계` : '합계', part, from, r - 1), aligns, { total: true });
+                r++;
+            }
+            return r;
+        }
+        // 품목 시트 소제목: [주문 상품] 주문(상품/발주) · 16종 · 78개 · 재고: 보유재고(물류센터)
+        const itemTitle = qtyOf => (k, part) => `[${shortKind(k)}] ${k} · ${part.length}종 · ${fmt(sum(part, qtyOf))}개` + (SK ? ` · 재고: ${centerWh(part[0])}` : '');
 
         // 1) 통합 피킹리스트 — 매장을 골랐으면 화면처럼 물류센터 재고 옆에 그 매장 재고
         const ph = [...sh(items), ...(SK && ST ? ['매장 재고'] : [])], pw = [...sw, ...(SK && ST ? [12] : [])];
         const pa = [...sa, ...(SK && ST ? [C] : [])], pb = [...sb, ...(SK && ST ? [''] : [])];
         const pv = it => [...sv(it), ...(SK && ST ? [storeQty(it, ST)] : [])];
-        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '주문수량', ...ph, ...kh], [16, 46, 34, 10, ...pw, ...kw]);
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...pv(it), ...kv(it)], [C, L, L, C, ...pa, ...ka], { bold: [4] }));
-        const p1 = xlParts(items);
-        p1.forEach((p, t) => put(ws, last + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.qty)), ...pb, ...kb],
-            [C, L, L, C, ...pa, ...ka], { total: true }));
-        ws.getCell(`A${last + 2 + p1.length}`).value = `주문수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(발주/반납)·' : ''}품목코드 기준으로 합친 값입니다.` +
+        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '주문수량', ...ph], [16, 46, 34, 10, ...pw]);
+        let next = writeGroups(ws, items, {
+            row: it => [it.code, it.name, it.spec, it.qty, ...pv(it)],
+            total: (label, part, from, to) => [label, `${part.length}종`, '', SUM(4, from, to, sum(part, it => it.qty)), ...pb],
+            title: itemTitle(it => it.qty), aligns: [C, L, L, C, ...pa],
+        });
+        ws.getCell(`A${next + 1}`).value = `주문수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(발주/반납)·' : ''}품목코드 기준으로 합친 값입니다.` +
             (ST ? ` ${ST} 매장 몫만 담았습니다.` : '');
-        ws.getCell(`A${last + 2 + p1.length}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
+        ws.getCell(`A${next + 1}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
 
         // 2) 매장별 분배 — 매장을 하나 골랐으면 나눌 매장이 없어 이 시트는 넣지 않는다
         if (!ST) {
-            ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '주문수량', ...stores, ...sh(items), ...kh], [16, 46, 34, 9, ...stores.map(() => 16), ...sw, ...kw], true);
-            const da = [C, L, L, C, ...stores.map(() => C), ...sa, ...ka];
-            items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(st => it.byStore[st] || null), ...sv(it), ...kv(it)], da, { bold: [4] }));
-            p1.forEach((p, t) => put(ws, last + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.qty)),
-                ...stores.map((st, i) => SUM(5 + i, first + p.from, first + p.to, sum(p.part, it => it.byStore[st]))), ...sb, ...kb], da, { total: true }));
+            ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '주문수량', ...stores, ...sh(items)], [16, 46, 34, 9, ...stores.map(() => 16), ...sw], true);
+            writeGroups(ws, items, {
+                row: it => [it.code, it.name, it.spec, it.qty, ...stores.map(st => it.byStore[st] || null), ...sv(it)],
+                total: (label, part, from, to) => [label, `${part.length}종`, '', SUM(4, from, to, sum(part, it => it.qty)),
+                    ...stores.map((st, i) => SUM(5 + i, from, to, sum(part, it => it.byStore[st]))), ...sb],
+                title: itemTitle(it => it.qty), aligns: [C, L, L, C, ...stores.map(() => C), ...sa],
+            });
         }
 
-        // 3) 포함된 주문
-        ws = sheet('포함된 주문', ['주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '주문수량', ...kh], [16, 20, 26, 14, 18, 10, 10, ...kw]);
-        const oa = [C, L, L, C, L, C, C, ...ka];
-        orders.forEach((o, i) => put(ws, first + i, [o.no, o.store, o.warehouse, o.dueDate, o.manager, o.itemCount, o.qty, ...kv(o)], oa));
-        const oLast = first + orders.length - 1;
-        // 주문서는 주문번호 순이라 구분이 섞여 있다 → 구분이 둘 이상이면 구분 열(H) 기준 SUMIF로 상품(A)/데모(B) 합계
-        const SUMIF = (n, k, result) => ({ formula: `SUMIF(H${first}:H${oLast},"${k}",${col(n)}${first}:${col(n)}${oLast})`, result });
-        const okinds = [...new Set(orders.map(kindOf))].sort(compareKind);
-        if (K && okinds.length > 1) {
-            okinds.forEach((k, t) => {
-                const part = orders.filter(o => kindOf(o) === k);
-                put(ws, oLast + 1 + t, [`${kindName(k)}(${letter(t)}) 합계`, `${part.length}건`, '', '', '',
-                    SUMIF(6, k, sum(part, o => o.itemCount)), SUMIF(7, k, sum(part, o => o.qty)), ''], oa, { total: true });
-            });
-        } else {
-            put(ws, oLast + 1, ['합계', `${orders.length}건`, '', '', '',
-                SUM(6, first, oLast, sum(orders, o => o.itemCount)), SUM(7, first, oLast, sum(orders, o => o.qty)), ...kb], oa, { total: true });
-        }
+        // 3) 포함된 주문 — 같은 방식 (구분마다 소제목 → 주문서 → 합계)
+        ws = sheet('포함된 주문', ['주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '주문수량'], [16, 20, 26, 14, 18, 10, 10]);
+        writeGroups(ws, orders, {
+            row: o => [o.no, o.store, o.warehouse, o.dueDate, o.manager, o.itemCount, o.qty],
+            total: (label, part, from, to) => [label, `${part.length}건`, '', '', '',
+                SUM(6, from, to, sum(part, o => o.itemCount)), SUM(7, from, to, sum(part, o => o.qty))],
+            title: (k, part) => `[${shortKind(k)}] ${k} · ${part.length}건 · ${fmt(sum(part, o => o.qty))}개`,
+            aligns: [C, L, L, C, L, C, C], bold: [],
+        });
 
         // 4) 매장마다 시트 하나: 그 매장 몫만 (매장별로 출력해 나눠 담을 때). 매장을 고르지 않았고 매장이 둘 이상일 때만
         const used = new Set(wb.worksheets.map(w => w.name));
@@ -1101,17 +1112,17 @@
             // 매장 시트: 수량 뒤에 물류센터 재고 + 이 매장 재고
             const mh = SK ? [...sh(its), '매장 재고'] : [], mw = SK ? [14, 12] : [], ma = SK ? [C, C] : [], mb = SK ? ['', ''] : [];
             const mv = it => (SK ? [centerQty(it), storeQty(it, st)] : []);
-            ws = sheet(name, ['품목코드', '품목명', '규격', '주문수량', ...mh, ...kh], [16, 46, 34, 10, ...mw, ...kw]);
+            ws = sheet(name, ['품목코드', '품목명', '규격', '주문수량', ...mh], [16, 46, 34, 10, ...mw]);
             ws.getCell('A1').value = `${st} 매장${kindSel ? ` · ${shortKind(kindSel)}` : ''}`;
             ws.getCell('A2').value = `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / ${st} 주문서 ${ords.length}건` +
                 (ords.length ? ` / 주문일 ${orderDates(ords)} / 납기 ${dueDates(ords)}` : '') + (SK ? ` / 재고 ${stockTime()} 기준` : '');
-            its.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.byStore[st], ...mv(it), ...kv(it)], [C, L, L, C, ...ma, ...ka], { bold: [4] }));
-            const sLast = first + its.length - 1;
-            const ps = xlParts(its);
-            ps.forEach((p, t) => put(ws, sLast + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.byStore[st])), ...mb, ...kb],
-                [C, L, L, C, ...ma, ...ka], { total: true }));
-            ws.getCell(`A${sLast + 2 + ps.length}`).value = `주문서: ${ords.map(o => `${o.no}${K ? ` ${kindOf(o)}` : ''} (납기 ${o.dueDate})`).join(' / ')}`;
-            ws.getCell(`A${sLast + 2 + ps.length}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
+            next = writeGroups(ws, its, {
+                row: it => [it.code, it.name, it.spec, it.byStore[st], ...mv(it)],
+                total: (label, part, from, to) => [label, `${part.length}종`, '', SUM(4, from, to, sum(part, it => it.byStore[st])), ...mb],
+                title: itemTitle(it => it.byStore[st]), aligns: [C, L, L, C, ...ma],
+            });
+            ws.getCell(`A${next + 1}`).value = `주문서: ${ords.map(o => `${o.no}${K ? ` ${kindOf(o)}` : ''} (납기 ${o.dueDate})`).join(' / ')}`;
+            ws.getCell(`A${next + 1}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
         }
 
         const p = kstParts(dataTime());   // 파일 이름 = 범위 + 데이터 기준 시각 (내려받은 시각은 시트 3행)
