@@ -459,7 +459,7 @@
                 <li class="step"><b>창고에서 꺼내기</b><strong>통합 피킹리스트</strong> 탭은 매장 구분 없는 품목별 총수량입니다. 꺼낸 품목은 왼쪽 칸을 <strong>체크</strong>하면 흐려지고 위에 진행률이 나옵니다. <strong>남은 것만</strong>을 켜면 안 꺼낸 품목만 보입니다.</li>
                 <li class="step"><b>매장별로 나눠 담기</b><strong>매장별 분배</strong> 탭에서 매장마다 몇 개씩인지 봅니다. 표 위의 <strong>매장 버튼</strong>(또는 표의 매장 이름)을 누르면 그 매장 상자에 담을 품목만 나오고, 체크는 그 매장 <strong>담음</strong>으로 따로 셉니다.</li>
                 <li class="step"><b>주문서 확인</b><strong>포함된 주문</strong> 탭에서 합친 주문서(주문번호·매장·납기일)를 봅니다. 이미 출고한 주문이 섞여 있지 않은지 확인하세요.</li>
-                <li class="step"><b>엑셀 · 인쇄 (필요할 때)</b>엑셀은 고른 매장과 상관없이 <strong>전체</strong>(시트 3개 + 매장마다 시트)로 받습니다. 인쇄는 <strong>지금 보는 탭</strong>만, 매장을 골랐으면 그 매장 몫만 나갑니다.</li>
+                <li class="step"><b>엑셀 · 인쇄 (필요할 때)</b>엑셀은 <strong>지금 고른 매장·구분 그대로</strong> 받습니다(예: 데모만 고르면 데모만). 둘 다 ‘전체’면 시트 3개 + 매장마다 시트입니다. 인쇄는 <strong>지금 보는 탭</strong>만 나갑니다.</li>
                 <li class="step"><b>출고 후 완료 처리</b>출고가 끝난 주문서는 이카운트에서 <strong>완료</strong>로 바꿔 주세요. 진행중으로 남아 있으면 다음 목록에 또 합쳐집니다.</li>
             </ol>
 
@@ -704,7 +704,10 @@
         const qtyCard = qkinds.length > 1
             ? `<div class="v-split">${qkinds.map((k, i) => `<span><em>${esc(kindName(k))}(${letter(i)})</em><b>${fmt(kindQty[k])}</b><small>개</small></span>`).join('')}</div>`
             : `<div class="v">${fmt(t.qty)}<small>개</small></div>`;
-        $('#btn-excel').disabled = snap.items.length === 0;   // 엑셀은 늘 전체 + 매장별 시트
+        $('#btn-excel').disabled = vi.length === 0;   // 엑셀은 지금 고른 매장·구분 그대로
+        $('#btn-excel').title = (storeSel || kindSel)
+            ? `지금 고른 ${[storeSel, kindSel && shortKind(kindSel)].filter(Boolean).join(' · ')} 그대로 엑셀로 받습니다`
+            : '전체(통합 피킹리스트·매장별 분배·포함된 주문 + 매장마다 시트)를 엑셀로 받습니다';
         $('#btn-print').disabled = false;
 
         // 표 바로 위 고르기: 매장 줄(매장이 둘 이상일 때, 전체 = ALL) + 구분 줄(구분이 둘 이상일 때). 고르면 세 탭·요약·인쇄가 모두 그 몫만.
@@ -959,7 +962,10 @@
         return main + excluded;
     }
 
-    // ---------- 엑셀 (늘 전체 기준: 통합 피킹리스트 / 매장별 분배 / 포함된 주문 + 매장마다 시트 하나) ----------
+    // ---------- 엑셀: 화면에서 고른 구분·매장 그대로 (물류팀 요청 10/21) ----------
+    //   전체·전체 = 통합 피킹리스트 / 매장별 분배 / 포함된 주문 + 매장마다 시트 하나
+    //   구분을 고르면 그 구분만, 매장을 고르면 그 매장 몫만(매장 재고 열 추가, 매장별 분배·매장 시트는 없음)
+    //   검색어와 '남은 것만'은 작업용 보기라 엑셀에는 적용하지 않는다
     async function downloadExcel() {
         const FONT = '맑은 고딕';
         const thin = { style: 'thin', color: { argb: 'FFBFBFBF' } };
@@ -968,8 +974,11 @@
         const fillTotal = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEAF5FA' } };
         const C = { horizontal: 'center', vertical: 'middle', wrapText: true };
         const L = { horizontal: 'left', vertical: 'middle', wrapText: true };
-        const basis = basisText(true);
+        const basis = basisText();   // 지금 보는 범위 (고른 매장·구분 포함)
         const downloaded = `엑셀 다운로드: ${kstText(new Date())}`;
+        const ST = storeSel;
+        // 시트 제목 뒤에 붙는 범위 (예: " · 신세계센텀시티몰 · 주문 데모")
+        const scope = [ST, kindSel && shortKind(kindSel)].filter(Boolean).map(s => ` · ${s}`).join('');
 
         const wb = new ExcelJS.Workbook();
         wb.creator = '요기보 통합 피킹리스트';
@@ -985,7 +994,7 @@
                     printTitlesRow: '4:4',
                 },
             });
-            ws.getCell('A1').value = name;
+            ws.getCell('A1').value = name + scope;
             ws.getCell('A1').font = { name: FONT, size: 16, bold: true };
             ws.getRow(1).height = 28;
             ws.getCell('A2').value = basis;
@@ -1015,13 +1024,14 @@
             row.height = 22;
         }
 
-        const items = snap.items, stores = snap.stores, orders = snap.orders;
+        // 화면과 같은 범위: 매장을 골랐으면 품목 수량 = 그 매장 몫 (viewItems가 바꿔 줌)
+        const items = viewItems(), stores = viewStores(), orders = viewOrders();
         const first = 5, last = first + items.length - 1;
         const col = n => String.fromCharCode(64 + n);   // 1 → A (열 26개 이하)
         const SUM = (n, from, to, result) => ({ formula: `SUM(${col(n)}${from}:${col(n)}${to})`, result });
 
-        // 구분(발주/반납) 열은 구분이 둘 이상 섞일 때만 맨 뒤에 붙인다 → 앞쪽 열·합계 수식 위치는 늘 시제품과 같다
-        const K = showKind();
+        // 구분(발주/반납) 열은 받는 범위에 구분이 둘 이상 섞일 때만 맨 뒤에 붙인다 → 앞쪽 열·합계 수식 위치는 늘 시제품과 같다
+        const K = new Set([...items, ...orders].map(kindOf)).size > 1;
         const kh = K ? ['구분'] : [], kw = K ? [20] : [], ka = K ? [C] : [], kb = K ? [''] : [];
         const kv = x => (K ? [kindOf(x)] : []);
         // 재고 열(물류센터, 매장 시트는 매장 재고도)은 수량·합계 열 바로 뒤에 — 재고를 못 읽었으면 빼고
@@ -1039,21 +1049,27 @@
             });
         };
 
-        // 1) 통합 피킹리스트
-        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '주문수량', ...sh(items), ...kh], [16, 46, 34, 10, ...sw, ...kw]);
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...sv(it), ...kv(it)], [C, L, L, C, ...sa, ...ka], { bold: [4] }));
+        // 1) 통합 피킹리스트 — 매장을 골랐으면 화면처럼 물류센터 재고 옆에 그 매장 재고
+        const ph = [...sh(items), ...(SK && ST ? ['매장 재고'] : [])], pw = [...sw, ...(SK && ST ? [12] : [])];
+        const pa = [...sa, ...(SK && ST ? [C] : [])], pb = [...sb, ...(SK && ST ? [''] : [])];
+        const pv = it => [...sv(it), ...(SK && ST ? [storeQty(it, ST)] : [])];
+        let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '주문수량', ...ph, ...kh], [16, 46, 34, 10, ...pw, ...kw]);
+        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...pv(it), ...kv(it)], [C, L, L, C, ...pa, ...ka], { bold: [4] }));
         const p1 = xlParts(items);
-        p1.forEach((p, t) => put(ws, last + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.qty)), ...sb, ...kb],
-            [C, L, L, C, ...sa, ...ka], { total: true }));
-        ws.getCell(`A${last + 2 + p1.length}`).value = `주문수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(발주/반납)·' : ''}품목코드 기준으로 합친 값입니다.`;
+        p1.forEach((p, t) => put(ws, last + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.qty)), ...pb, ...kb],
+            [C, L, L, C, ...pa, ...ka], { total: true }));
+        ws.getCell(`A${last + 2 + p1.length}`).value = `주문수량은 이카운트 주문서현황의 품목별 수량을 ${K ? '구분(발주/반납)·' : ''}품목코드 기준으로 합친 값입니다.` +
+            (ST ? ` ${ST} 매장 몫만 담았습니다.` : '');
         ws.getCell(`A${last + 2 + p1.length}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
 
-        // 2) 매장별 분배
-        ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '주문수량', ...stores, ...sh(items), ...kh], [16, 46, 34, 9, ...stores.map(() => 16), ...sw, ...kw], true);
-        const da = [C, L, L, C, ...stores.map(() => C), ...sa, ...ka];
-        items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(st => it.byStore[st] || null), ...sv(it), ...kv(it)], da, { bold: [4] }));
-        p1.forEach((p, t) => put(ws, last + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.qty)),
-            ...stores.map((st, i) => SUM(5 + i, first + p.from, first + p.to, sum(p.part, it => it.byStore[st]))), ...sb, ...kb], da, { total: true }));
+        // 2) 매장별 분배 — 매장을 하나 골랐으면 나눌 매장이 없어 이 시트는 넣지 않는다
+        if (!ST) {
+            ws = sheet('매장별 분배', ['품목코드', '품목명', '규격', '주문수량', ...stores, ...sh(items), ...kh], [16, 46, 34, 9, ...stores.map(() => 16), ...sw, ...kw], true);
+            const da = [C, L, L, C, ...stores.map(() => C), ...sa, ...ka];
+            items.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.qty, ...stores.map(st => it.byStore[st] || null), ...sv(it), ...kv(it)], da, { bold: [4] }));
+            p1.forEach((p, t) => put(ws, last + 1 + t, [p.label, `${p.part.length}종`, '', SUM(4, first + p.from, first + p.to, sum(p.part, it => it.qty)),
+                ...stores.map((st, i) => SUM(5 + i, first + p.from, first + p.to, sum(p.part, it => it.byStore[st]))), ...sb, ...kb], da, { total: true }));
+        }
 
         // 3) 포함된 주문
         ws = sheet('포함된 주문', ['주문번호', '매장', '받는창고', '납기일자', '담당자', '품목 수', '주문수량', ...kh], [16, 20, 26, 14, 18, 10, 10, ...kw]);
@@ -1074,9 +1090,9 @@
                 SUM(6, first, oLast, sum(orders, o => o.itemCount)), SUM(7, first, oLast, sum(orders, o => o.qty)), ...kb], oa, { total: true });
         }
 
-        // 4) 매장마다 시트 하나: 그 매장 몫만 (매장별로 출력해 나눠 담거나 회수를 맞춰 볼 때). 매장이 둘 이상일 때만
+        // 4) 매장마다 시트 하나: 그 매장 몫만 (매장별로 출력해 나눠 담을 때). 매장을 고르지 않았고 매장이 둘 이상일 때만
         const used = new Set(wb.worksheets.map(w => w.name));
-        for (const st of stores.length > 1 ? stores : []) {
+        for (const st of !ST && stores.length > 1 ? stores : []) {
             let name = st.replace(/[:\\/?*[\]]/g, ' ').slice(0, 31);
             while (used.has(name)) name = `${name.slice(0, 29)}_`;
             used.add(name);
@@ -1086,7 +1102,7 @@
             const mh = SK ? [...sh(its), '매장 재고'] : [], mw = SK ? [14, 12] : [], ma = SK ? [C, C] : [], mb = SK ? ['', ''] : [];
             const mv = it => (SK ? [centerQty(it), storeQty(it, st)] : []);
             ws = sheet(name, ['품목코드', '품목명', '규격', '주문수량', ...mh, ...kh], [16, 46, 34, 10, ...mw, ...kw]);
-            ws.getCell('A1').value = `${st} 매장`;
+            ws.getCell('A1').value = `${st} 매장${kindSel ? ` · ${shortKind(kindSel)}` : ''}`;
             ws.getCell('A2').value = `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / ${st} 주문서 ${ords.length}건` +
                 (ords.length ? ` / 주문일 ${orderDates(ords)} / 납기 ${dueDates(ords)}` : '') + (SK ? ` / 재고 ${stockTime()} 기준` : '');
             its.forEach((it, i) => put(ws, first + i, [it.code, it.name, it.spec, it.byStore[st], ...mv(it), ...kv(it)], [C, L, L, C, ...ma, ...ka], { bold: [4] }));
@@ -1098,12 +1114,13 @@
             ws.getCell(`A${sLast + 2 + ps.length}`).font = { name: FONT, size: 10, color: { argb: 'FF595959' } };
         }
 
-        const p = kstParts(dataTime());   // 파일 이름 = 데이터 기준 시각 (내려받은 시각은 시트 3행)
+        const p = kstParts(dataTime());   // 파일 이름 = 범위 + 데이터 기준 시각 (내려받은 시각은 시트 3행)
+        const fileScope = [ST, kindSel && kindName(kindSel)].filter(Boolean).map(s => s.replace(/[\\/:*?"<>|\s]+/g, '')).join('_');
         const blob = new Blob([await wb.xlsx.writeBuffer()],
             { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `통합피킹리스트_${p.year}${p.month}${p.day}_${p.hour}${p.minute}.xlsx`;
+        a.download = `통합피킹리스트_${fileScope ? `${fileScope}_` : ''}${p.year}${p.month}${p.day}_${p.hour}${p.minute}.xlsx`;
         document.body.appendChild(a);
         a.click();
         a.remove();
