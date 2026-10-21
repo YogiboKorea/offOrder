@@ -354,6 +354,20 @@
             .t-orders td.o-cnt::after { content: '줄'; }
             .t-orders td.o-qty { grid-column: 2; grid-row: 2 / 4; font-size: 22px; }
 
+            /* 합치지 않은 주문서(회수·전환) → 카드: 주문번호 / 매장 / 납기, 오른쪽에 구분 */
+            .t-ex thead { display: none; }
+            .t-ex tbody tr {
+                display: grid; grid-template-columns: 1fr auto; align-items: center; column-gap: 10px; row-gap: 3px;
+                padding: 12px 14px; border-bottom: 1px solid var(--line);
+            }
+            .t-ex tbody tr:last-child { border-bottom: 0; }
+            .t-ex tbody td { padding: 0; border: 0; background: none !important; }
+            .t-ex td.x-no { grid-column: 1; grid-row: 1; }
+            .t-ex td.x-store { grid-column: 1; grid-row: 2; font-size: 15px; }
+            .t-ex td.x-due { grid-column: 1; grid-row: 3; font-size: 13px; color: var(--ink-2); }
+            .t-ex td.x-due::before { content: '납기 '; }
+            .t-ex td.x-kind { grid-column: 2; grid-row: 1 / 4; }
+
             /* 구분 소제목 줄: 카드 사이 띠 */
             .t-items tbody tr.grp, .t-orders tbody tr.grp { display: block; padding: 9px 14px; background: var(--head); }
             .t-items tbody tr.grp td, .t-orders tbody tr.grp td { display: block; }
@@ -813,10 +827,21 @@
         updateProgress();
     }
 
-    const emptyState = () => `<div class="table-wrap"><div class="empty">
+    // 합칠 주문이 없을 때. 이카운트 진행중 탭에 회수·전환 주문서가 남아 있으면 "진행중 주문서가 없다"고 쓰지 않고
+    // 몇 건이 왜 빠졌는지 말한 뒤 그 목록(excludedSection)을 바로 아래에 둔다 (10/21 '이카운트엔 있는데 0건' 문의)
+    const exGroup = t => (kindGroup(t) === '기타' && t.includes('전환') ? '전환' : kindGroup(t));   // 회수 / 전환 / 주문 / 기타
+    function emptyState() {
+        const ex = snap.excluded;
+        const groups = ['주문', '회수', '전환', '기타'].filter(g => ex.some(e => exGroup(e.type) === g))
+            .map(g => `${g} ${ex.filter(e => exGroup(e.type) === g).length}건`);
+        return `<div class="table-wrap"><div class="empty">
         <div class="t">지금 피킹할 주문이 없습니다</div>
-        <div class="d">이카운트 주문서조회에 지금 진행중인 주문서가 없습니다 (대상: ${esc(targetLabel())}).${snap.excluded.length ? ` 다른 구분 ${snap.excluded.length}건은 합산하지 않았습니다.` : ''}</div>
+        <div class="d">${ex.length
+            ? `이카운트 진행중 주문서 ${ex.length}건(${esc(groups.join(' · '))})은 피킹 대상 구분이 아니어서 합치지 않았습니다. 아래 목록이 그 ${ex.length}건입니다.`
+            : '이카운트 주문서조회에 진행중인 주문서가 없습니다. 출고한 주문은 이카운트에서 완료 처리되면 여기서 빠집니다.'}</div>
+        <div class="d">피킹 대상: ${esc(targetLabel())}</div>
     </div></div>`;
+    }
     const noMatch = () => `<div class="table-wrap"><div class="empty"><div class="d">${query.trim()
         ? `‘${esc(query)}’에 맞는 품목이 없습니다.` : '고른 매장·구분에 맞는 품목이 없습니다.'}</div></div></div>`;
     const itemSummary = part => `${part.length}종 · ${fmt(sum(part, r => r.qty))}개`;
@@ -847,7 +872,7 @@
             : '꺼낸 물건을 매장마다 몇 개씩 나눠 담을지 보여 줍니다. 칸의 숫자 = 그 매장 상자에 담을 개수, <b>주문수량</b> = 창고에서 꺼낼 총수량. 매장 이름을 누르면 그 매장 것만 봅니다. 왼쪽 체크는 통합 피킹리스트와 같은 체크입니다.';
         const ex = storeSel ? snap.excluded.filter(e => e.store === storeSel) : snap.excluded;
         return `${storeSel ? `${st} 매장의 ` : ''}이 주문서들을 합쳐 피킹리스트를 만들었습니다. 이미 출고한 주문이 섞여 있으면 이카운트에서 완료 처리해 주세요.`
-            + (ex.length ? ' 합치지 않은 회수·데모 주문은 아래에 따로 있습니다.' : '');
+            + (ex.length ? ' 합치지 않은 회수·전환 주문은 아래에 따로 있습니다.' : '');
     }
 
     // 지금 보고 있는 범위를 한 줄로 (예: "롯데평촌 · 회수 상품 몫만 보고 있습니다")
@@ -887,7 +912,7 @@
     const chkCell = (it, verb) => `<td class="chk"><label class="chk-hit"><input type="checkbox" class="pick-chk" aria-label="${esc(it.name)} ${verb}"${checks.has(checkKey(it)) ? ' checked' : ''}></label></td>`;
 
     function renderPick() {
-        if (!snap.items.length) return emptyState();
+        if (!snap.items.length) return emptyState() + excludedSection();
         const found = filteredItems();
         if (!found.length) return noMatch();
         const rows = remainRows(found);
@@ -906,7 +931,7 @@
     }
 
     function renderDist() {
-        if (!snap.items.length) return emptyState();
+        if (!snap.items.length) return emptyState() + excludedSection();
         const found = filteredItems();
         if (!found.length) return noMatch();
         const rows = remainRows(found);
@@ -950,16 +975,23 @@
             ${tfootOf(o, '합계', (label, part) => `<tr><td>${label}</td><td>${part.length}건</td><td></td><td></td><td></td>
                 <td class="num o-cnt">${fmt(sum(part, r => r.itemCount))}</td><td class="num">${fmt(sum(part, r => r.qty))}</td></tr>`)}
         </table></div>` : emptyState();
+        return main + excludedSection();
+    }
 
+    // 합치지 않은 진행중 주문서(회수·전환 등) — 이카운트 진행중 탭과 그대로 맞춰 볼 수 있게.
+    // 포함된 주문 탭에는 늘, 합칠 주문이 없을 때는 모든 탭에 보여 준다
+    function excludedSection() {
         const ex = storeSel ? snap.excluded.filter(e => e.store === storeSel) : snap.excluded;
-        const excluded = ex.length ? `<h2 class="sec">합산하지 않은 진행중 주문 ${ex.length}건</h2>
-            <p class="sec-d">아래 주문은 구분이 ${esc(snap.filter.type)}이 아니어서 피킹리스트에 넣지 않았습니다.</p>
-            <div class="table-wrap"><table>
+        if (!ex.length) return '';
+        const why = [ex.some(e => exGroup(e.type) === '회수') && '회수는 매장에서 물류센터로 돌아오는 주문',
+            ex.some(e => exGroup(e.type) === '전환') && '전환은 매장 안에서 상품·데모 구분을 바꾸는 주문'].filter(Boolean);
+        return `<h2 class="sec">합산하지 않은 진행중 주문 ${ex.length}건</h2>
+            <p class="sec-d">아래 주문은 구분이 ${esc(snap.filter.type)}이 아니어서 피킹리스트에 넣지 않았습니다.${why.length ? ` ${why.join(', ')}이라 창고에서 꺼낼 것이 없습니다.` : ''}</p>
+            <div class="table-wrap"><table class="t-ex">
                 <thead><tr><th>주문번호</th><th>구분</th><th>매장</th><th>납기일자</th></tr></thead>
-                <tbody>${ex.map(r => `<tr><td class="code">${esc(r.no)}</td><td><span class="chip">${esc(r.type)}</span></td>
-                    <td class="name">${esc(r.store)}</td><td>${esc(r.dueDate)}</td></tr>`).join('')}</tbody>
-            </table></div>` : '';
-        return main + excluded;
+                <tbody>${ex.map(r => `<tr><td class="code x-no">${esc(r.no)}</td><td class="x-kind"><span class="chip">${esc(r.type)}</span></td>
+                    <td class="name x-store">${esc(r.store)}</td><td class="x-due">${esc(r.dueDate)}</td></tr>`).join('')}</tbody>
+            </table></div>`;
     }
 
     // ---------- 엑셀: 화면에서 고른 구분·매장 그대로 (물류팀 요청 10/21) ----------
