@@ -17733,5 +17733,60 @@
     "code": "화물비",
     "name": "화물비",
     "spec": ""
+  },
+  {
+    "code": "243501",
+    "name": "[포켓몬스터]냅 엑스 / [Pocket Monsters]NAP X",
+    "spec": "피카츄 / Pikachu"
+  },
+  {
+    "code": "243502",
+    "name": "[포켓몬스터]냅 엑스 / [Pocket Monsters]NAP X",
+    "spec": "푸린 / Jigglypuff"
+  },
+  {
+    "code": "243503",
+    "name": "[포켓몬스터]냅 엑스 / [Pocket Monsters]NAP X",
+    "spec": "팬텀 / Gengar"
+  },
+  {
+    "code": "243504",
+    "name": "[포켓몬스터]문 필로우 / [Pocket Monsters] Moon Pillow",
+    "spec": "피카츄 / Pikachu"
+  },
+  {
+    "code": "243505",
+    "name": "[포켓몬스터]문 필로우 / [Pocket Monsters] Moon Pillow",
+    "spec": "님피아 / Sylveon"
+  },
+  {
+    "code": "243506",
+    "name": "[포켓몬스터]문 필로우 / [Pocket Monsters] Moon Pillow",
+    "spec": "블래키 / Umbreon"
+  },
+  {
+    "code": "243507",
+    "name": "[포켓몬스터]스퀴지보 / [Pocket Monstes]Squeezibo",
+    "spec": "피카츄 / Pikachu"
+  },
+  {
+    "code": "243508",
+    "name": "[포켓몬스터]스퀴지보 / [Pocket Monstes]Squeezibo",
+    "spec": "뮤 / Mew"
+  },
+  {
+    "code": "243509",
+    "name": "[포켓몬스터]스퀴지보 / [Pocket Monstes]Squeezibo",
+    "spec": "고오스 / Gastly"
+  },
+  {
+    "code": "243510",
+    "name": "[포켓몬스터]스퀴지보 / [Pocket Monstes]Squeezibo",
+    "spec": "잉어킹 / Magikartk"
+  },
+  {
+    "code": "243511",
+    "name": "[포켓몬스터]스퀴지보 / [Pocket Monstes]Squeezibo",
+    "spec": "Vulpix / 식스테일"
   }
 ]
