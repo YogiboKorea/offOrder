@@ -419,7 +419,19 @@ function firstOptionName(p) {
     return v ? String(v.value_name || v.option_text || v.name || '') : '';
 }
 
-// 이 상품의 EPP 버전 품번(…SHPre / …SHPre+)이 이카운트 품목에 있는지 — 상품명+옵션 단위로 기억
+// 이카운트 품목코드 → 품목명 (EPP 품목인지 이름으로 확인용)
+let _itemNameByCode = null;
+function itemNameOf(code) {
+    if (!_itemNameByCode) {
+        try { _itemNameByCode = new Map(require('./ITEM_CODES.json').map(o => [String(o.code), String(o.name || '')])); }
+        catch (e) { _itemNameByCode = new Map(); }
+    }
+    return _itemNameByCode.get(code) || '';
+}
+
+// 이 상품의 EPP 버전이 이카운트 품목에 있는지 — 상품명+옵션 단위로 기억
+//   · 빈백류: 품번이 …SHPre / …SHPre+
+//   · 리필 비즈 등: 품번 모양은 달라도(EPPPILL05 등) 품목명에 'EPP' 가 들어 있음
 const _eppItemCache = new Map();
 function hasEppItemCode(eppName, optionName) {
     const key = eppName + '|' + optionName;
@@ -427,7 +439,8 @@ function hasEppItemCode(eppName, optionName) {
     let ok = false;
     try {
         const r = require('./utils/itemMatcher').matchItemCode(eppName, optionName);
-        ok = /SHPre\+?$/.test(String((r && r.code) || ''));
+        const code = String((r && r.code) || '');
+        ok = /SHPre\+?$/.test(code) || /EPP/i.test(itemNameOf(code));
     } catch (e) { ok = false; }
     _eppItemCache.set(key, ok);
     return ok;
