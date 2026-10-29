@@ -108,6 +108,9 @@ function matchByHardcodedRules(orderFullText) {
         if (t.includes('프리미엄')) {
             if (t.includes('0.35')) return 'HFILL035';
             if (t.includes('0.65')) return 'HFILL065';
+            // 프리미엄 리필은 EPP 0.3 / 0.5kg 로 바뀜 ('0.35' 가 '0.3' 을 포함하므로 위 규칙 다음에 둔다)
+            if (t.includes('0.5'))  return 'EPPPILL05';
+            if (t.includes('0.3'))  return 'EPPPILL03';
         }
         if (t.includes('스탠다드')) {
             if (t.includes('0.4'))  return 'EFILL04';

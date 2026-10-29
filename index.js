@@ -409,25 +409,46 @@ function normalizeCafe24ProductName(name) {
     return r;
 }
 
-// 🆕 "프리미엄" 포함 상품은 EPP 복사본 추가
-//   - 프리미엄 / 프리미엄 플러스 둘 다 대상 (이카운트에 SHPre = 프리미엄(EPP), SHPre+ = 프리미엄 플러스(EPP) 품목이 있다)
-//   - 같은 product_no 유지 (옵션 조회는 동일 Cafe24 상품에서 가져옴)
-//   - product_name 끝에 " EPP" 부착
-//   - is_epp 플래그로 구분 가능
+// 상품의 대표 옵션명 (EPP 품번 존재 확인용) — 정리된 목록 / cafe24 원본 둘 다 수용, 색상 옵션 우선
+function firstOptionName(p) {
+    const o = p && p.options;
+    if (Array.isArray(o) && o.length && o[0] && o[0].option_name && !o[0].option_value) return String(o[0].option_name);
+    const groups = Array.isArray(o) ? o : (o && Array.isArray(o.options) ? o.options : []);
+    const g = groups.find(x => /색상|color/i.test(String((x && (x.option_name || x.name)) || ''))) || groups[0];
+    const v = g && Array.isArray(g.option_value) ? g.option_value[0] : null;
+    return v ? String(v.value_name || v.option_text || v.name || '') : '';
+}
+
+// 이 상품의 EPP 버전 품번(…SHPre / …SHPre+)이 이카운트 품목에 있는지 — 상품명+옵션 단위로 기억
+const _eppItemCache = new Map();
+function hasEppItemCode(eppName, optionName) {
+    const key = eppName + '|' + optionName;
+    if (_eppItemCache.has(key)) return _eppItemCache.get(key);
+    let ok = false;
+    try {
+        const r = require('./utils/itemMatcher').matchItemCode(eppName, optionName);
+        ok = /SHPre\+?$/.test(String((r && r.code) || ''));
+    } catch (e) { ok = false; }
+    _eppItemCache.set(key, ok);
+    return ok;
+}
+
+// 🆕 "프리미엄" 상품은 EPP 버전으로 노출 (2026-10: 이카운트에서 일반 프리미엄(HRF) 품번 SPre·SPre+ 가 판매종료되고
+//     EPP 품번 SHPre·SHPre+ 로 통합됨)
+//   - EPP 품번이 있는 상품 → 'OO 프리미엄 EPP' 만 보여주고 일반 프리미엄은 숨김 (프리미엄 플러스도 동일)
+//   - EPP 품번이 없는 상품(리필 비즈 등) → 원래 상품 그대로 (없는 'EPP' 항목을 만들지 않음)
+//   - 같은 product_no 유지 (옵션 조회는 동일 Cafe24 상품에서 가져옴), is_epp 플래그로 구분 가능
 function expandPremiumWithEPP(products) {
     if (!Array.isArray(products)) return products;
     const out = [];
     products.forEach(p => {
-        out.push(p);
-        if (!p || !p.product_name) return;
-        const name = p.product_name;
-        // 프리미엄 포함 + 이미 EPP 아님
-        if (/프리미엄/.test(name) && !/EPP/i.test(name)) {
-            out.push({
-                ...p,
-                product_name: `${name} EPP`,
-                is_epp: true
-            });
+        const name = p && p.product_name;
+        if (!name || !/프리미엄/.test(name) || /EPP/i.test(name)) { out.push(p); return; }
+        const eppName = `${name} EPP`;
+        if (hasEppItemCode(eppName, firstOptionName(p))) {
+            out.push({ ...p, product_name: eppName, is_epp: true });
+        } else {
+            out.push(p);
         }
     });
     return out;
