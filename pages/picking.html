@@ -228,6 +228,8 @@
             background: var(--head); color: var(--ink-2); border: 1px solid var(--line); white-space: nowrap;
         }
 
+        .t-ex td.x-why { color: var(--ink-2); font-size: 13px; white-space: nowrap; }
+
         .print-head { display: none; }
 
         /* 위쪽 고르기: 매장 줄 + 구분 줄 (둘 다 걸리고, 요약·목록·주문서·인쇄가 고른 것만) */
@@ -327,7 +329,7 @@
             /* 품목 카드: 왼쪽 체크 / 코드, 품목명, 색상, 재고(물류센터 · 매장) / 오른쪽 큰 수량 */
             .t-items tbody tr {
                 grid-template-columns: 40px auto 1fr auto; column-gap: 8px;
-                grid-template-areas: "chk code code qty" "chk name name qty" "chk spec spec qty" "chk stkc stks qty";
+                grid-template-areas: "chk code code qty" "chk name name qty" "chk spec spec qty" "chk stkc stks qty" "chk stkx stkx qty";
                 padding: 10px 12px 10px 6px;
             }
             .t-items td.stk-c, .t-one td.stk-c { grid-area: stkc; }
@@ -335,6 +337,9 @@
             .t-items td.stk, .t-one td.stk { text-align: left; font-size: 12px; }
             .t-items td.stk-c::before, .t-one td.stk-c::before { content: '물류센터 '; font-weight: 500; color: var(--ink-3); }
             .t-items td.stk-s::before, .t-one td.stk-s::before { content: '· 매장 '; font-weight: 500; color: var(--ink-3); }
+            /* 매장을 고르면 재고 아래 줄에 최근 7일 판매 */
+            .t-items td.stk-x, .t-one td.stk-x { grid-area: stkx; }
+            .t-items td.stk-x::before, .t-one td.stk-x::before { content: '최근 7일 판매 '; font-weight: 500; color: var(--ink-3); }
             .t-items tbody tr.done { background: #FAFBFC; }
             .t-items td.chk { grid-area: chk; width: auto; }
             .t-items .chk-hit { width: 40px; height: 52px; }
@@ -366,7 +371,8 @@
             .t-ex td.x-store { grid-column: 1; grid-row: 2; font-size: 15px; }
             .t-ex td.x-due { grid-column: 1; grid-row: 3; font-size: 13px; color: var(--ink-2); }
             .t-ex td.x-due::before { content: '납기 '; }
-            .t-ex td.x-kind { grid-column: 2; grid-row: 1 / 4; }
+            .t-ex td.x-kind { grid-column: 2; grid-row: 1 / 3; }
+            .t-ex td.x-why { grid-column: 2; grid-row: 3; text-align: right; font-size: 12px; }
 
             /* 구분 소제목 줄: 카드 사이 띠 */
             .t-items tbody tr.grp, .t-orders tbody tr.grp { display: block; padding: 9px 14px; background: var(--head); }
@@ -387,7 +393,7 @@
             .t-one thead { display: none; }
             .t-one tbody tr {
                 display: grid; grid-template-columns: 40px auto 1fr auto; column-gap: 8px; row-gap: 3px; align-items: center;
-                grid-template-areas: "chk code code qty" "chk name name qty" "chk spec spec tot" "chk stkc stks ."; padding: 10px 12px 10px 6px; border-bottom: 1px solid var(--line);
+                grid-template-areas: "chk code code qty" "chk name name qty" "chk spec spec tot" "chk stkc stks ." "chk stkx stkx ."; padding: 10px 12px 10px 6px; border-bottom: 1px solid var(--line);
             }
             .t-one tbody tr:last-child { border-bottom: 0; }
             .t-one tbody tr.done { background: #FAFBFC; }
@@ -464,8 +470,8 @@
             <span class="guide-toggle" aria-hidden="true"></span>
         </summary>
         <div class="guide-body">
-            <p class="guide-new"><span class="tag">10/19 바뀐 점</span>
-                <span><strong>주문(상품/발주)</strong>와 <strong>주문(데모/발주)</strong>를 함께 합칩니다. 상품과 데모는 표 위 <strong>구분</strong> 버튼으로 나눠 보고, ‘전체’에서는 소제목으로 나뉩니다. 규격 옆에 <strong>물류센터 재고</strong>(매장을 고르면 <strong>매장 재고</strong>도)가 나옵니다. 꺼낸 품목은 <strong>체크</strong>할 수 있습니다.</span></p>
+            <p class="guide-new"><span class="tag">10/29 바뀐 점</span>
+                <span><strong>매장 주문만</strong> 합칩니다. 요기보 본사처럼 매장이 아닌 거래처의 주문은 아래 ‘합산하지 않은 진행중 주문’에 따로 나옵니다. 매장을 고르면 매장 재고 옆에 그 매장의 <strong>최근 7일 판매량</strong>(어제까지, 상품만)이 나와 출고 수량을 정할 때 볼 수 있습니다. 엑셀의 매장 시트에도 같은 열이 들어갑니다.</span></p>
 
             <h3 class="guide-h">작업 순서</h3>
             <ol class="steps">
@@ -480,8 +486,9 @@
             <h3 class="guide-h">알아 두기</h3>
             <ul class="guide-notes">
                 <li><b>새로고침</b>하면 마지막으로 가져온 데이터를 그대로 보여 줍니다. 이카운트에서 새로 가져오는 건 <b>실시간 데이터 가져오기</b>를 눌렀을 때뿐이고, <b>10분에 한 번</b> 가져올 수 있습니다.</li>
-                <li><b>합치는 주문서</b>: 이카운트 주문서조회에서 <b>진행중</b>이고 구분이 <b>주문(상품/발주)</b>·<b>주문(데모/발주)</b>인 것. 같은 품목이라도 상품과 데모는 줄을 나눕니다. 회수·데모 전환은 합치지 않고 포함된 주문 탭 아래에 따로 보여 줍니다. 완료된 주문서는 들어가지 않습니다.</li>
+                <li><b>합치는 주문서</b>: 이카운트 주문서조회에서 <b>진행중</b>이고 구분이 <b>주문(상품/발주)</b>·<b>주문(데모/발주)</b>인 <b>매장</b> 주문. 같은 품목이라도 상품과 데모는 줄을 나눕니다. 회수·데모 전환과 매장 외 거래처(요기보 본사 등)의 주문은 합치지 않고 포함된 주문 탭 아래에 따로 보여 줍니다. 완료된 주문서는 들어가지 않습니다. 매장 = 이카운트에서 ‘매장-○○’·‘데모-○○’ 창고로 주문을 받는 거래처입니다.</li>
                 <li><b>재고</b>: 물류센터 재고는 상품 = 보유재고(물류센터), 데모 = 데모(물류센터)이고, 매장 재고는 그 매장의 상품(또는 데모) 창고입니다. 이카운트 창고별재고현황을 매일 저장한 값이라 위 <b>재고 기준</b> 시각을 확인하세요. 물류센터 재고가 전체 주문 수량보다 적으면 빨간색입니다.</li>
+                <li><b>최근 7일 판매</b>: 매장을 고르면 품목마다 그 매장에서 어제까지 7일 동안 팔린 수량(반품은 뺀 값)이 나옵니다. 이카운트 매장 판매 기록 기준이며, 데모는 진열용이라 ‘-’로 둡니다. 위 <b>판매 기준</b>에 기간이 나옵니다.</li>
                 <li><b>출고 수량 조정</b>은 이카운트 주문서에서 고쳐 주세요(이 페이지는 이카운트를 읽기만 합니다). 고친 뒤 <b>실시간 데이터 가져오기</b>를 누르면 반영됩니다.</li>
                 <li><b>체크</b>는 통합 피킹리스트·매장별 분배 어디서 해도 같은 체크이고, 진행률은 어느 탭에서든 위에 보입니다. 이 페이지를 보는 모든 사람에게 같이 보입니다(다른 화면에는 15초 안에). 새로 가져와도 수량·주문서가 그대로인 품목은 체크가 남고, 바뀐 품목만 풀립니다.</li>
                 <li>위의 <b>숫자 카드</b>(포함된 주문·매장·품목)를 누르면 그 목록으로 바로 갑니다.</li>
@@ -533,6 +540,7 @@
     let remainOnly = false;    // 남은 것만 보기 (이 브라우저에 기억)
     let pendingChecks = 0;     // 저장 중인 체크 수 (그동안은 서버 체크 목록으로 덮어쓰지 않는다)
     let stock = null;          // 재고 { date, at, byCode: { 품목코드: { 창고명: 수량 } } } — 이카운트 창고별재고현황 스냅샷
+    let sales = null;          // 매장 판매량 { from, to, byStore: { 매장: { 품목코드: 수량 } } } — 최근 7일(어제까지), 오프라인 매출 원본
     try { remainOnly = localStorage.getItem('picking.remainOnly') === '1'; } catch (e) { }
 
     const $ = sel => document.querySelector(sel);
@@ -624,7 +632,8 @@
             (stores.length ? ` (${stores.join(', ')})` : '') +
             (!all && kindSel ? ` / 구분 ${kindSel}` : '') +
             (orders.length ? ` / 주문일 ${orderDates(orders)} / 납기 ${dueDates(orders)}` : '') +
-            (stock ? ` / 재고 ${stockTime()} 기준` : '');
+            (stock ? ` / 재고 ${stockTime()} 기준` : '') +
+            (!all && storeSel && sales ? ` / 판매 ${salesRange()} 최근 7일` : '');
     };
 
     // ---------- 데이터 ----------
@@ -640,6 +649,7 @@
             snapKey = json.snapKey || null;
             checks = new Set(json.checks || []);
             stock = json.stock || null;
+            sales = json.sales || null;
             render();
         } catch (e) {
             showError('서버에 연결하지 못했습니다. 잠시 후 새로고침해 주세요.');
@@ -677,11 +687,23 @@
         if (n == null) return '<td class="num stk stk-s">-</td>';
         return `<td class="num stk stk-s${n <= 0 ? ' none' : ''}" title="${esc(storeWh(storeSel, kindOf(it)))}">${fmt(n)}</td>`;
     };
-    // 재고 열 머리·칸·빈칸·열 수 (재고를 못 읽었으면 열 자체를 뺀다). withStore = 매장 재고 열도
-    const stockHeads = (rows, withStore) => (!stock ? '' : `<th class="num stk-h">${esc(centerLabel(rows))}</th>${withStore ? '<th class="num stk-h">매장 재고</th>' : ''}`);
-    const stockCells = (it, withStore) => (!stock ? '' : centerCell(it) + (withStore ? storeCell(it) : ''));
-    const stockBlanks = withStore => (!stock ? '' : withStore ? '<td></td><td></td>' : '<td></td>');
-    const stockCols = withStore => (!stock ? 0 : withStore ? 2 : 1);
+    // ---- 매장 판매량 (매장을 골랐을 때 매장 재고 옆) — 물류팀 요청 10/29: 판매량과 매장 재고를 보고 출고 수량 조절 ----
+    // 최근 7일 = 어제까지 7일. 데모는 진열용이라 판매량을 보이지 않는다(-). 판매 기록이 없는 품목 = 0개
+    const salesOf = (it, st = storeSel) => (!sales || isDemoKind(kindOf(it)) ? null : Number(sales.byStore[st]?.[it.code] ?? 0));
+    const md = d => d.slice(5).replace('-', '/');   // "2026-10-22" → "10/22"
+    const salesRange = () => (sales ? `${md(sales.from)} ~ ${md(sales.to)}` : '');
+    const salesCell = it => {
+        const n = salesOf(it);
+        if (n == null) return '<td class="num stk stk-x none">-</td>';
+        return `<td class="num stk stk-x${n <= 0 ? ' none' : ''}" title="${esc(storeSel)} 최근 7일(${salesRange()}) 판매">${fmt(n)}</td>`;
+    };
+    // 재고·판매 열 머리·칸·빈칸·열 수 (못 읽은 것은 열 자체를 뺀다). withStore = 매장을 고른 화면(매장 재고 + 최근 7일 판매 열도)
+    const salesOn = withStore => withStore && !!sales;
+    const stockHeads = (rows, withStore) => (!stock ? '' : `<th class="num stk-h">${esc(centerLabel(rows))}</th>${withStore ? '<th class="num stk-h">매장 재고</th>' : ''}`)
+        + (salesOn(withStore) ? `<th class="num stk-h" title="이 매장의 최근 7일(${salesRange()}) 판매량">최근 7일 판매</th>` : '');
+    const stockCells = (it, withStore) => (!stock ? '' : centerCell(it) + (withStore ? storeCell(it) : '')) + (salesOn(withStore) ? salesCell(it) : '');
+    const stockCols = withStore => (!stock ? 0 : withStore ? 2 : 1) + (salesOn(withStore) ? 1 : 0);
+    const stockBlanks = withStore => '<td></td>'.repeat(stockCols(withStore));
 
     // 체크 키: 전체 = 구분|품목코드 (창고에서 꺼냄), 매장을 골랐을 때 = 구분|품목코드|매장 (그 매장 상자에 담음)
     const checkKey = it => `${kindOf(it)}|${it.code}${storeSel ? `|${storeSel}` : ''}`;
@@ -710,7 +732,7 @@
         const counts = { pick: `${t.items}종`, dist: `${t.stores}곳`, orders: `${t.orders}건` };
 
         $('#sub').textContent = snap.filter.type.startsWith('진행중')
-            ? '진행중 주문서를 품목별로 합친 목록' : `진행중 ${snap.filter.type} 주문을 품목별로 합친 목록`;
+            ? '진행중 주문서를 품목별로 합친 목록' : `${snap.filter.storesOnly ? '매장의 ' : ''}진행중 ${snap.filter.type} 주문을 품목별로 합친 목록`;
         // 주문수량 카드: 구분이 둘 이상이면 상품(A)·데모(B)를 따로 (합친 수는 보이지 않게 — 물류팀 요청), 하나면 그 수량
         const kindQty = {};
         for (const i of vi) kindQty[kindOf(i)] = (kindQty[kindOf(i)] || 0) + i.qty;
@@ -754,6 +776,8 @@
                 <div class="item"><span class="k">납기일</span><span class="v">${esc(dueDates())}</span></div>
                 <div class="item" title="물류센터·매장 재고는 이카운트 창고별재고현황(매일 밤 저장)을 기준으로 보여 줍니다"><span class="k">재고 기준</span>
                     <span class="v">${stock ? `${esc(stockTime())}<small>이카운트 창고별재고현황</small>` : '<small>재고 정보를 불러오지 못했습니다</small>'}</span></div>
+                ${sales ? `<div class="item" title="매장을 고르면 품목마다 그 매장의 최근 7일(어제까지) 판매량이 매장 재고 옆에 나옵니다"><span class="k">판매 기준</span>
+                    <span class="v">${esc(salesRange())}<small>최근 7일 매장 판매${storeSel ? '' : ' · 매장을 고르면 보입니다'}</small></span></div>` : ''}
             </section>
             <section class="stats" aria-label="요약">
                 <button class="stat" type="button" data-go="orders" title="합친 주문서 수 — 누르면 포함된 주문 탭"><div class="k">포함된 주문<span class="go">›</span></div><div class="v">${fmt(t.orders)}<small>건</small></div></button>
@@ -829,15 +853,16 @@
 
     // 합칠 주문이 없을 때. 이카운트 진행중 탭에 회수·전환 주문서가 남아 있으면 "진행중 주문서가 없다"고 쓰지 않고
     // 몇 건이 왜 빠졌는지 말한 뒤 그 목록(excludedSection)을 바로 아래에 둔다 (10/21 '이카운트엔 있는데 0건' 문의)
-    const exGroup = t => (kindGroup(t) === '기타' && t.includes('전환') ? '전환' : kindGroup(t));   // 회수 / 전환 / 주문 / 기타
+    // 빠진 이유 묶음: 회수 / 전환 / 매장 외 거래처(10/29~, 수집기가 reason을 붙임) / 주문 / 기타
+    const exGroup = e => (e.reason ? e.reason : kindGroup(e.type) === '기타' && e.type.includes('전환') ? '전환' : kindGroup(e.type));
     function emptyState() {
         const ex = snap.excluded;
-        const groups = ['주문', '회수', '전환', '기타'].filter(g => ex.some(e => exGroup(e.type) === g))
-            .map(g => `${g} ${ex.filter(e => exGroup(e.type) === g).length}건`);
+        const groups = ['회수', '전환', '매장 외 거래처', '주문', '기타'].filter(g => ex.some(e => exGroup(e) === g))
+            .map(g => `${g} ${ex.filter(e => exGroup(e) === g).length}건`);
         return `<div class="table-wrap"><div class="empty">
         <div class="t">지금 피킹할 주문이 없습니다</div>
         <div class="d">${ex.length
-            ? `이카운트 진행중 주문서 ${ex.length}건(${esc(groups.join(' · '))})은 피킹 대상 구분이 아니어서 합치지 않았습니다. 아래 목록이 그 ${ex.length}건입니다.`
+            ? `이카운트 진행중 주문서 ${ex.length}건(${esc(groups.join(' · '))})은 피킹 대상이 아니어서 합치지 않았습니다. 아래 목록이 그 ${ex.length}건입니다.`
             : '이카운트 주문서조회에 진행중인 주문서가 없습니다. 출고한 주문은 이카운트에서 완료 처리되면 여기서 빠집니다.'}</div>
         <div class="d">피킹 대상: ${esc(targetLabel())}</div>
     </div></div>`;
@@ -865,14 +890,14 @@
         if (!snap.orders.length) return '';
         const st = storeSel ? `<b>${esc(storeSel)}</b>` : '';
         if (id === 'pick') return storeSel
-            ? `${st} 매장 몫만 보고 있습니다. 이 수량만큼 그 매장 상자에 담고, 담은 품목은 왼쪽 칸을 체크하세요. 규격 옆에 물류센터 재고와 이 매장의 재고가 나옵니다.`
+            ? `${st} 매장 몫만 보고 있습니다. 이 수량만큼 그 매장 상자에 담고, 담은 품목은 왼쪽 칸을 체크하세요. 규격 옆에 물류센터 재고, 이 매장의 재고${sales ? '와 최근 7일 판매량' : ''}이 나옵니다.`
             : '모든 매장 주문을 품목별로 합친 수량입니다. 이 수량만큼 창고에서 꺼내고, 꺼낸 품목은 왼쪽 칸을 체크하세요. 규격 옆은 물류센터 재고입니다.';
         if (id === 'dist') return storeSel
             ? `${st} 매장 상자에 담을 품목만 보고 있습니다. 담은 품목은 왼쪽 칸을 체크하세요. <b>전체 매장</b>은 모든 매장을 합친 수량입니다.`
             : '꺼낸 물건을 매장마다 몇 개씩 나눠 담을지 보여 줍니다. 칸의 숫자 = 그 매장 상자에 담을 개수, <b>주문수량</b> = 창고에서 꺼낼 총수량. 매장 이름을 누르면 그 매장 것만 봅니다. 왼쪽 체크는 통합 피킹리스트와 같은 체크입니다.';
         const ex = storeSel ? snap.excluded.filter(e => e.store === storeSel) : snap.excluded;
         return `${storeSel ? `${st} 매장의 ` : ''}이 주문서들을 합쳐 피킹리스트를 만들었습니다. 이미 출고한 주문이 섞여 있으면 이카운트에서 완료 처리해 주세요.`
-            + (ex.length ? ' 합치지 않은 회수·전환 주문은 아래에 따로 있습니다.' : '');
+            + (ex.length ? ' 합치지 않은 주문(회수·전환·매장 외 거래처)은 아래에 따로 있습니다.' : '');
     }
 
     // 지금 보고 있는 범위를 한 줄로 (예: "롯데평촌 · 회수 상품 몫만 보고 있습니다")
@@ -983,14 +1008,15 @@
     function excludedSection() {
         const ex = storeSel ? snap.excluded.filter(e => e.store === storeSel) : snap.excluded;
         if (!ex.length) return '';
-        const why = [ex.some(e => exGroup(e.type) === '회수') && '회수는 매장에서 물류센터로 돌아오는 주문',
-            ex.some(e => exGroup(e.type) === '전환') && '전환은 매장 안에서 상품·데모 구분을 바꾸는 주문'].filter(Boolean);
+        const has = g => ex.some(e => exGroup(e) === g);
+        const why = [has('회수') && '회수는 매장에서 물류센터로 돌아오는 주문', has('전환') && '전환은 매장 안에서 상품·데모 구분을 바꾸는 주문'].filter(Boolean);
         return `<h2 class="sec">합산하지 않은 진행중 주문 ${ex.length}건</h2>
-            <p class="sec-d">아래 주문은 구분이 ${esc(snap.filter.type)}이 아니어서 피킹리스트에 넣지 않았습니다.${why.length ? ` ${why.join(', ')}이라 창고에서 꺼낼 것이 없습니다.` : ''}</p>
+            <p class="sec-d">아래 주문은 피킹리스트에 넣지 않았습니다. 피킹 대상은 ${snap.filter.storesOnly ? '매장의 ' : ''}${esc(snap.filter.type)} 주문입니다.${why.length ? ` ${why.join(', ')}이라 창고에서 꺼낼 것이 없습니다.` : ''}${has('매장 외 거래처') ? ' 매장 외 거래처(요기보 본사 등)의 주문은 물류팀 요청으로 따로 둡니다.' : ''}</p>
             <div class="table-wrap"><table class="t-ex">
-                <thead><tr><th>주문번호</th><th>구분</th><th>매장</th><th>납기일자</th></tr></thead>
+                <thead><tr><th>주문번호</th><th>구분</th><th>거래처</th><th>납기일자</th><th>빠진 이유</th></tr></thead>
                 <tbody>${ex.map(r => `<tr><td class="code x-no">${esc(r.no)}</td><td class="x-kind"><span class="chip">${esc(r.type)}</span></td>
-                    <td class="name x-store">${esc(r.store)}</td><td class="x-due">${esc(r.dueDate)}</td></tr>`).join('')}</tbody>
+                    <td class="name x-store">${esc(r.store)}</td><td class="x-due">${esc(r.dueDate)}</td>
+                    <td class="x-why">${r.reason ? esc(r.reason) : '피킹 대상 구분 아님'}</td></tr>`).join('')}</tbody>
             </table></div>`;
     }
 
@@ -1099,9 +1125,13 @@
         const itemTitle = qtyOf => (k, part) => `[${shortKind(k)}] ${k} · ${part.length}종 · ${fmt(sum(part, qtyOf))}개` + (SK ? ` · 재고: ${centerWh(part[0])}` : '');
 
         // 1) 통합 피킹리스트 — 매장을 골랐으면 화면처럼 물류센터 재고 옆에 그 매장 재고
-        const ph = [...sh(items), ...(SK && ST ? ['매장 재고'] : [])], pw = [...sw, ...(SK && ST ? [12] : [])];
-        const pa = [...sa, ...(SK && ST ? [C] : [])], pb = [...sb, ...(SK && ST ? [''] : [])];
-        const pv = it => [...sv(it), ...(SK && ST ? [storeQty(it, ST)] : [])];
+        // 매장 몫을 보는 시트(매장을 고른 엑셀·매장마다 시트)에는 매장 재고 뒤에 최근 7일 판매 (데모는 빈칸)
+        const SS = !!sales;
+        const salesV = (it, st) => salesOf(it, st) ?? '';
+        const ph = [...sh(items), ...(SK && ST ? ['매장 재고'] : []), ...(SS && ST ? ['최근 7일 판매'] : [])];
+        const pw = [...sw, ...(SK && ST ? [12] : []), ...(SS && ST ? [12] : [])];
+        const pa = [...sa, ...(SK && ST ? [C] : []), ...(SS && ST ? [C] : [])], pb = [...sb, ...(SK && ST ? [''] : []), ...(SS && ST ? [''] : [])];
+        const pv = it => [...sv(it), ...(SK && ST ? [storeQty(it, ST)] : []), ...(SS && ST ? [salesV(it, ST)] : [])];
         let ws = sheet('통합 피킹리스트', ['품목코드', '품목명', '규격', '주문수량', ...ph], [16, 46, 34, 10, ...pw]);
         let next = writeGroups(ws, items, {
             row: it => [it.code, it.name, it.spec, it.qty, ...pv(it)],
@@ -1142,12 +1172,14 @@
             const its = items.filter(it => it.byStore[st]);
             const ords = orders.filter(o => o.store === st);
             // 매장 시트: 수량 뒤에 물류센터 재고 + 이 매장 재고
-            const mh = SK ? [...sh(its), '매장 재고'] : [], mw = SK ? [14, 12] : [], ma = SK ? [C, C] : [], mb = SK ? ['', ''] : [];
-            const mv = it => (SK ? [centerQty(it), storeQty(it, st)] : []);
+            const mh = [...(SK ? [...sh(its), '매장 재고'] : []), ...(SS ? ['최근 7일 판매'] : [])];
+            const mw = [...(SK ? [14, 12] : []), ...(SS ? [12] : [])], ma = [...(SK ? [C, C] : []), ...(SS ? [C] : [])], mb = mw.map(() => '');
+            const mv = it => [...(SK ? [centerQty(it), storeQty(it, st)] : []), ...(SS ? [salesV(it, st)] : [])];
             ws = sheet(name, ['품목코드', '품목명', '규격', '주문수량', ...mh], [16, 46, 34, 10, ...mw]);
             ws.getCell('A1').value = `${st} 매장${kindSel ? ` · ${shortKind(kindSel)}` : ''}`;
             ws.getCell('A2').value = `데이터 기준: ${kstText(dataTime())} 이카운트에서 가져옴 / ${st} 주문서 ${ords.length}건` +
-                (ords.length ? ` / 주문일 ${orderDates(ords)} / 납기 ${dueDates(ords)}` : '') + (SK ? ` / 재고 ${stockTime()} 기준` : '');
+                (ords.length ? ` / 주문일 ${orderDates(ords)} / 납기 ${dueDates(ords)}` : '') + (SK ? ` / 재고 ${stockTime()} 기준` : '') +
+                (SS ? ` / 판매 ${salesRange()} 최근 7일` : '');
             next = writeGroups(ws, its, {
                 row: it => [it.code, it.name, it.spec, it.byStore[st], ...mv(it)],
                 total: (label, part, from, to) => [label, `${part.length}종`, '', SUM(4, from, to, sum(part, it => it.byStore[st])), ...mb],
@@ -1433,7 +1465,7 @@
     // 사용 방법 접힘 상태 기억 (이 브라우저에만 저장, 막혀 있으면 늘 펼친 상태)
     (() => {
         const guide = $('#guide');
-        const KEY = 'picking.guideOpen.1019b';   // 안내를 고치면 키를 바꾼다 → 전에 접어 둔 사람에게도 새 안내가 한 번 펼쳐져 보임
+        const KEY = 'picking.guideOpen.1029';   // 안내를 고치면 키를 바꾼다 → 전에 접어 둔 사람에게도 새 안내가 한 번 펼쳐져 보임
         try { if (localStorage.getItem(KEY) === '0') guide.open = false; } catch (e) { }
         guide.addEventListener('toggle', () => {
             try { localStorage.setItem(KEY, guide.open ? '1' : '0'); } catch (e) { }

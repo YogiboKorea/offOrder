@@ -3558,6 +3558,23 @@ async function pickingStock(snapshot) {
     return { date: latest.snapshotDate, at, byCode };
 }
 
+// 매장 판매량: 오프라인 매출 원본 off.orders (이카운트 판매 줄 — date 'YYYY-MM-DD'·store(= 주문서 거래처명)·itemCode·qty, 반품은 음수)
+//   물류팀 요청(10/29): 매장 주문 상품의 최근 1주일 판매량을 매장 재고와 같이 보고 출고 수량을 조절
+//   최근 7일 = 어제까지 7일(오늘은 아직 덜 팔렸으니 뺀다). 피킹리스트 매장·품목만 { from, to, byStore: { 매장: { 품목코드: 수량 } } }
+const PICK_SALES_DAYS = 7;
+const kstDay = daysAgo => new Date(Date.now() + 9 * 3600e3 - daysAgo * 86400e3).toISOString().slice(0, 10);
+async function pickingSales(snapshot) {
+    const from = kstDay(PICK_SALES_DAYS), to = kstDay(1);
+    if (!snapshot.stores.length) return { from, to, byStore: {} };
+    const rows = await db.client.db('off').collection('orders').aggregate([
+        { $match: { date: { $gte: from, $lte: to }, store: { $in: snapshot.stores }, itemCode: { $in: [...new Set(snapshot.items.map(i => i.code))] } } },
+        { $group: { _id: { store: '$store', code: '$itemCode' }, qty: { $sum: '$qty' } } },
+    ]).toArray();
+    const byStore = {};
+    for (const r of rows) (byStore[r._id.store] ||= {})[r._id.code] = r.qty;
+    return { from, to, byStore };
+}
+
 app.get('/api/picking-list', async (req, res) => {
     try {
         const col = pickingDb().collection('picking_snapshots');
@@ -3569,12 +3586,13 @@ app.get('/api/picking-list', async (req, res) => {
         }
         const snapKey = pickingSnapKey(snapshot);
         await pickingCarryChecks(snapshot, prev);
-        // 재고를 못 읽어도 피킹리스트는 보여 준다 (재고 칸만 '-')
-        const [checks, stock] = await Promise.all([
+        // 재고·판매량을 못 읽어도 피킹리스트는 보여 준다 (그 열만 빠짐)
+        const [checks, stock, sales] = await Promise.all([
             pickingChecks(snapKey),
             pickingStock(snapshot).catch(e => { console.error('🔥 피킹 재고 조회 오류:', e); return null; }),
+            pickingSales(snapshot).catch(e => { console.error('🔥 피킹 판매량 조회 오류:', e); return null; }),
         ]);
-        res.json({ success: true, snapshot, snapKey, checks, stock, worker, activeRequest, cooldownMs });
+        res.json({ success: true, snapshot, snapKey, checks, stock, sales, worker, activeRequest, cooldownMs });
     } catch (e) {
         console.error('🔥 피킹리스트 조회 오류:', e);
         res.status(500).json({ success: false, message: '서버 오류', error: e.message });
