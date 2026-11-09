@@ -662,10 +662,11 @@
     }
 
     // ---- 재고 (서버가 피킹 품목·관련 창고만 골라 보냄) ----
-    // 물류센터: 상품 = '보유재고(물류센터)', 데모 = '데모(물류센터)' / 매장: 그 매장 주문서의 받는창고('매장-(…)' 또는 '데모-(…)')
+    // 물류센터: 상품 = '보유재고(물류센터)', 데모 = '데모(물류센터)' / 매장: 그 매장의 상품 창고 '매장-(…)'·데모 창고 '데모-(…)'
+    //   (서버가 stock.storeWh로 알려 줌. 주문서 받는창고가 아니다 — 11/09 안산 데모 주문은 받는창고가 '데모(물류센터)'였다)
     const isDemoKind = k => k.includes('(데모');
     const centerWh = it => (isDemoKind(kindOf(it)) ? '데모(물류센터)' : '보유재고(물류센터)');
-    const storeWh = (st, kind) => (snap.orders.find(o => o.store === st && kindOf(o) === kind) || {}).warehouse || '';
+    const storeWh = (st, kind) => ((stock && stock.storeWh && stock.storeWh[st]) || {})[isDemoKind(kind) ? '데모' : '상품'] || '';
     const stockOf = (code, wh) => (stock && wh ? Number(stock.byCode[code]?.[wh] ?? 0) : null);   // 재고표에 없는 품목·창고 = 0개
     const centerQty = it => stockOf(it.code, centerWh(it));
     const storeQty = (it, st = storeSel) => stockOf(it.code, storeWh(st, kindOf(it)));

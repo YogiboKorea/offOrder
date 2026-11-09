@@ -3538,15 +3538,31 @@ async function pickingCarryChecks(snapshot, prev) {
 }
 
 // 재고: 이카운트 창고별재고현황 일일 스냅샷 (warehouse.stocks — Desktop/자동/Ecount가 매일 밤 적재, 인덱스 snapshotDate+itemCode)
-//   물류센터 = 상품은 '보유재고(물류센터)', 데모는 '데모(물류센터)' / 매장 = 그 매장 주문서의 받는창고('매장-(…)' 또는 '데모-(…)')
-//   피킹리스트 품목·창고만 골라 { date, at, byCode: { 품목코드: { 창고명: 수량 } } }로 보낸다. 없는 창고 = 0개
+//   물류센터 = 상품은 '보유재고(물류센터)', 데모는 '데모(물류센터)' / 매장 = 그 매장의 상품 창고 '매장-(…)'·데모 창고 '데모-(…)' (pickingStoreWarehouses)
+//   피킹리스트 품목·창고만 골라 { date, at, byCode: { 품목코드: { 창고명: 수량 } }, storeWh: { 매장: { 상품, 데모 } } }로 보낸다. 없는 창고 = 0개
 const PICK_CENTER_WAREHOUSES = ['보유재고(물류센터)', '데모(물류센터)'];
+
+// 매장 재고를 읽을 창고. 주문서 받는창고를 그대로 쓰면 안 된다 — 11/09 물류팀: 안산 데모 주문은 받는창고가
+//   '데모(물류센터)'라 매장 재고가 물류센터 재고와 같게 보였다 (미아 데모 주문은 '매장-(미아)…'이라 상품 재고가 보였다).
+//   수집기가 준 snapshot.storeWarehouses(주문서현황 9/1~에서 그 매장이 가장 많이 쓴 창고)가 먼저,
+//   없으면(11/09 전 스냅샷) 그 매장 주문서의 매장-/데모- 창고 이름에서 짝을 만든다: '매장-(안산)롯데백화점' ↔ '데모-(안산)롯데백화점'
+function pickingStoreWarehouses(snapshot) {
+    const out = {};
+    for (const st of snapshot.stores) {
+        const given = (snapshot.storeWarehouses || {})[st] || {};
+        const m = snapshot.orders.filter(o => o.store === st).map(o => /^(?:매장|데모)-(.+)$/.exec(o.warehouse || '')).find(Boolean);
+        out[st] = { 상품: given.상품 || (m ? `매장-${m[1]}` : ''), 데모: given.데모 || (m ? `데모-${m[1]}` : '') };
+    }
+    return out;
+}
+
 async function pickingStock(snapshot) {
     const col = pickingDb().collection('stocks');
     const [latest] = await col.find({}).sort({ snapshotDate: -1 }).limit(1).project({ snapshotDate: 1 }).toArray();
     if (!latest) return null;
     const codes = [...new Set(snapshot.items.map(i => i.code))];
-    const warehouses = new Set([...PICK_CENTER_WAREHOUSES, ...snapshot.orders.map(o => o.warehouse).filter(Boolean)]);
+    const storeWh = pickingStoreWarehouses(snapshot);
+    const warehouses = new Set([...PICK_CENTER_WAREHOUSES, ...Object.values(storeWh).flatMap(w => [w.상품, w.데모]).filter(Boolean)]);
     const docs = await col.find({ snapshotDate: latest.snapshotDate, itemCode: { $in: codes } })
         .project({ _id: 0, itemCode: 1, locations: 1, uploadedAt: 1 }).toArray();
     const byCode = {};
@@ -3555,7 +3571,7 @@ async function pickingStock(snapshot) {
         byCode[d.itemCode] = Object.fromEntries(Object.entries(d.locations || {}).filter(([w]) => warehouses.has(w)));
         if (d.uploadedAt && (!at || d.uploadedAt > at)) at = d.uploadedAt;
     }
-    return { date: latest.snapshotDate, at, byCode };
+    return { date: latest.snapshotDate, at, byCode, storeWh };
 }
 
 // 매장 판매량: 오프라인 매출 원본 off.orders (이카운트 판매 줄 — date 'YYYY-MM-DD'·store(= 주문서 거래처명)·itemCode·qty, 반품은 음수)
