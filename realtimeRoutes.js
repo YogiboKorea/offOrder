@@ -1967,6 +1967,12 @@ function matchStoreWarehouse(storeName, warehouseName) {
     return false;
 }
 
+// 🆕 물류센터 데모 창고 — 이카운트 이름이 "데모(물류센터)"(하이픈 없음)이고 매장에 딸린 창고가 아니라 위 매칭에 안 걸린다.
+//    store 자리에 이 이름이 오면 그 창고를 데모 열로 돌려준다 (물류팀 요청 2026-11-18, dash 매장 창고재고)
+const CENTER_DEMO_STORE = '데모(물류센터)';
+const isCenterDemoStore = name => String(name || '').replace(/\s+/g, '') === CENTER_DEMO_STORE;
+const isCenterDemoWarehouse = w => /^데모-?\(물류센터\)$/.test(String(w || '').replace(/\s+/g, ''));
+
 router.get('/api/warehouse-stock', async (req, res) => {
     try {
         const storeName = String(req.query.store || '').trim();
@@ -1991,7 +1997,9 @@ router.get('/api/warehouse-stock', async (req, res) => {
 
         const storeWarehouses = [];  // 매장-(판매) 창고
         const demoWarehouses = [];   // 데모-(전시) 창고
+        const isCenterDemo = isCenterDemoStore(storeName);
         allWarehouses.forEach(w => {
+            if (isCenterDemo) { if (isCenterDemoWarehouse(w)) demoWarehouses.push(w); return; }
             if (!matchStoreWarehouse(storeName, w)) return;
             if (w.startsWith('매장-')) storeWarehouses.push(w);
             else if (w.startsWith('데모-')) demoWarehouses.push(w);
