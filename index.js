@@ -6,6 +6,7 @@ const path = require("path");
 const { MongoClient, ObjectId } = require("mongodb");
 require("dotenv").config();
 const realtimeRoutes = require("./realtimeRoutes");
+const prizeRoutes = require("./prizeRoutes");
 
 // ==========================================
 // [1] 서버 기본 설정
@@ -39,6 +40,8 @@ app.use(express.urlencoded({ extended: true }));
 
 // 📦 realtime 서버에서 옮겨 온 좌수·매니저·게시판·매출·재고 API (realtimeRoutes.js)
 app.use(realtimeRoutes.router);
+// 🎁 경품 재고 관리 — 주간보고 [경품 재고 관리] 버튼 (prizeRoutes.js, off DB)
+app.use(prizeRoutes.router);
 
 // ==========================================
 // [2] 환경변수 및 DB 컬렉션 설정
@@ -121,6 +124,7 @@ async function startServer() {
         console.log(`✅ MongoDB Connected to [${DB_NAME}]`);
         db = client.db(DB_NAME);
         realtimeRoutes.init(client);
+        prizeRoutes.init(client);
 
         try {
             await loadSharedToken();

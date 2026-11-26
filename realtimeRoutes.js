@@ -696,6 +696,33 @@ router.get('/api/jwasu/admin/managers', async (req, res) => {
         res.json({ success: true, managers });
     } catch (error) { res.status(500).json({ success: false }); }
 });
+
+// [추가 2026-11] 매장 안 직원 순서 저장 — 통합관리시스템 [등록된 직원 목록] ▲▼ 버튼
+//   body: { storeName, ids: [직원 _id, ...] }  → 보낸 순서대로 sortOrder 0,1,2…
+//   주간보고 [매장 직원] 표가 이 순서로 나온다. sortOrder 없는 직원은 그 뒤(이름순).
+router.put('/api/jwasu/admin/managers/order', async (req, res) => {
+    try {
+        const { storeName, ids } = req.body || {};
+        if (!storeName || !Array.isArray(ids) || !ids.length) {
+            return res.status(400).json({ success: false, message: '매장과 직원 순서가 필요합니다.' });
+        }
+        if (ids.length > 200 || !ids.every(id => typeof id === 'string' && ObjectId.isValid(id))) {
+            return res.status(400).json({ success: false, message: '직원 목록이 올바르지 않습니다.' });
+        }
+        const now = new Date();
+        const ops = ids.map((id, i) => ({
+            updateOne: {
+                filter: { _id: new ObjectId(id), storeName },   // 다른 매장 직원은 건드리지 않는다
+                update: { $set: { sortOrder: i, updatedAt: now } },
+            },
+        }));
+        const r = await db.collection(staffCollectionName).bulkWrite(ops, { ordered: false });
+        res.json({ success: true, matched: r.matchedCount });
+    } catch (error) {
+        console.error('직원 순서 저장 오류:', error);
+        res.status(500).json({ success: false, message: '순서를 저장하지 못했습니다.' });
+    }
+});
 // [추가] 매장만 단독 등록 (플레이스홀더 생성)
 router.post('/api/jwasu/admin/store', async (req, res) => {
     try {
@@ -739,7 +766,14 @@ router.post('/api/jwasu/admin/manager', async (req, res) => {
         
         if (exists) return res.status(400).json({ success: false, message: '이미 등록된 매니저입니다 (동일 매장/이름/직급).' });
 
+        // 순서를 정해 둔 매장이면 새 직원은 맨 뒤로 (순서를 안 정한 매장은 그대로 이름순)
+        const lastOrdered = await db.collection(staffCollectionName)
+            .find({ storeName, sortOrder: { $type: 'number' } })
+            .sort({ sortOrder: -1 }).limit(1).toArray();
+        const orderField = lastOrdered.length ? { sortOrder: lastOrdered[0].sortOrder + 1 } : {};
+
         await db.collection(staffCollectionName).insertOne({
+            ...orderField,
             storeName, 
             managerName, 
             role: role || '매니저', 
