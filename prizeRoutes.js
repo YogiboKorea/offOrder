@@ -1,30 +1,36 @@
 // ==========================================
-// 🎁 경품 재고 관리 (2026-11 영업팀 요청)
+// 🎁 경품 재고 관리 (2026-11 영업팀 요청, 11-27 피드백 반영)
 // ------------------------------------------
-// 주간보고.html [일일 마감] 옆 [경품 재고 관리] 버튼에서 쓴다.
-//   본사(통합 PIN): 이벤트 + 경품 상품명 등록, 매장별 할당 수량 설정, 매장별·전체 사용/잔여 현황
-//   매장(?key= 매장 링크): 우리 매장 할당·사용·잔여 확인, 날짜별 사용 수량 입력
+// 본사: 주간보고.html [일일 마감] 옆 [경품 재고 관리] 팝업
+//   이벤트 + 경품 상품명 등록, 매장별 할당 수량, 매장별·전체 현황, 엑셀, 매장별 경품 전용 링크 발급
+// 매장: 경품 전용 링크(prize.html?key=경품토큰)로만 들어온다 — 주간보고 매장 링크와 별개
+//   우리 매장 할당·사용·잔여 확인, 날짜별 "그날 나간 수량" 한 칸 입력(고치면 덮어쓰기)
 // 매장 노출: 이벤트마다 '매장 노출 시작일'(visible_from) 이후부터 매장 화면에 보인다 (기본 2026-12-04).
 //
-// DB: off (주간보고·매장 토큰 store_tokens 와 같은 DB)
+// DB: off
 //   prize_events      { name, start_date, end_date, visible_from, status:'active'|'closed', items:[{id,name}] }
-//   prize_allocations { event_id, item_id, store, qty }            — (event_id, item_id, store) 하나
-//   prize_usage       { event_id, item_id, store, date, qty, writer, note, created_at }
-//   잔여 = 할당 − 사용 기록 합계
+//   prize_allocations { event_id, item_id, store, qty }                 — (event_id, item_id, store) 하나
+//   prize_usage       { event_id, item_id, item_name, store, date, qty } — (event_id, item_id, store, date) 하나 = 그날 나간 수량
+//   prize_links       { store, token, created_at }                        — 매장별 경품 전용 링크
+//   잔여 = 할당 − 사용 합계
+// 운영 매장 = 직원 명단(yogibo.jwasu_managers)에 ON 직원이 1명 이상인 매장 (통합관리시스템과 같은 기준)
 // ==========================================
 const express = require('express');
+const crypto = require('crypto');
 const { ObjectId } = require('mongodb');
 
 const router = express.Router();
 let mongoClient; // index.js와 같은 연결
 
 const DB_NAME = process.env.PRIZE_DB || 'off'; // 시험 때만 다른 DB 이름을 준다
+const STAFF_DB_NAME = process.env.REALTIME_DB_NAME || 'yogibo';
 const DEFAULT_VISIBLE_FROM = '2026-12-04';
 const MAX_QTY = 100000;
 
 const C_EVENTS = 'prize_events';
 const C_ALLOC = 'prize_allocations';
 const C_USAGE = 'prize_usage';
+const C_LINKS = 'prize_links';
 
 function init(client) {
     mongoClient = client;
@@ -34,6 +40,9 @@ function init(client) {
 async function ensureIndexes() {
     await col(C_ALLOC).createIndex({ event_id: 1, item_id: 1, store: 1 }, { unique: true });
     await col(C_USAGE).createIndex({ event_id: 1, store: 1, date: -1 });
+    await col(C_USAGE).createIndex({ event_id: 1, item_id: 1, store: 1, date: 1 }, { unique: true, name: 'daily_unique' });
+    await col(C_LINKS).createIndex({ store: 1 }, { unique: true });
+    await col(C_LINKS).createIndex({ token: 1 }, { unique: true });
 }
 
 const col = name => mongoClient.db(DB_NAME).collection(name);
@@ -43,15 +52,17 @@ function todayKST() {
     return new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
 }
 const isDate = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
-const toObjectId = s => (typeof s === 'string' && ObjectId.isValid(s) && /^[0-9a-f]{24}$/i.test(s)) ? new ObjectId(s) : null;
+const toObjectId = s => (typeof s === 'string' && /^[0-9a-f]{24}$/i.test(s)) ? new ObjectId(s) : null;
 function toInt(v) {
     if (v === '' || v === null || v === undefined) return null;
     const n = Number(v);
     return Number.isInteger(n) ? n : null;
 }
 const cleanText = (s, max) => String(s ?? '').replace(/\s+/g, ' ').trim().slice(0, max);
-const newItemId = () => `it_${Math.random().toString(36).slice(2, 10)}`;
+const newItemId = () => `it_${crypto.randomBytes(5).toString('hex')}`;
+const newLinkToken = () => `pz_${crypto.randomBytes(12).toString('base64url')}`;
 const fail = (res, status, message) => res.status(status).json({ success: false, message });
+const koSort = (a, b) => a.localeCompare(b, 'ko');
 
 function isVisibleToStore(ev, today = todayKST()) {
     return ev.status === 'active' && (ev.visible_from || DEFAULT_VISIBLE_FROM) <= today;
@@ -125,9 +136,16 @@ async function loadTotals(eventId, store) {
     return map;
 }
 
+// 운영 매장 — 통합관리시스템과 같은 기준 (ON 직원 1명 이상, 팝업·매니저영업 제외)
+async function operatingStores() {
+    const names = await mongoClient.db(STAFF_DB_NAME).collection('jwasu_managers')
+        .distinct('storeName', { isActive: { $ne: false }, isHidden: { $ne: true } });
+    return names.filter(s => s && !String(s).includes('팝업') && s !== '매니저영업').sort(koSort);
+}
+
 async function storeFromToken(token) {
-    if (!token || typeof token !== 'string') return null;
-    const doc = await col('store_tokens').findOne({ token });
+    if (!token || typeof token !== 'string' || token.length > 80) return null;
+    const doc = await col(C_LINKS).findOne({ token });
     return doc?.store || null;
 }
 
@@ -164,8 +182,7 @@ router.get('/api/prize/admin/events', async (req, res) => {
             const used = usedBy[id] || 0;
             return { ...publicEvent(ev), totals: { allocated, used, remaining: allocated - used } };
         });
-        // 진행중 먼저
-        list.sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1));
+        list.sort((a, b) => (a.status === b.status ? 0 : a.status === 'active' ? -1 : 1)); // 진행중 먼저
         res.json({ success: true, today: todayKST(), events: list });
     } catch (e) {
         console.error('[prize] 이벤트 목록 실패:', e);
@@ -207,6 +224,13 @@ router.put('/api/prize/admin/events/:id', async (req, res) => {
             }
             await col(C_ALLOC).deleteMany({ event_id: eventId, item_id: { $in: removed.map(it => it.id) } });
         }
+        // 경품 이름을 바꾸면 기록에 남겨 둔 이름도 맞춘다
+        for (const it of parsed.value.items) {
+            const before = (ev.items || []).find(x => x.id === it.id);
+            if (before && before.name !== it.name) {
+                await col(C_USAGE).updateMany({ event_id: eventId, item_id: it.id }, { $set: { item_name: it.name } });
+            }
+        }
 
         await col(C_EVENTS).updateOne({ _id: ev._id }, { $set: { ...parsed.value, updated_at: new Date() } });
         const updated = await col(C_EVENTS).findOne({ _id: ev._id });
@@ -235,17 +259,20 @@ router.delete('/api/prize/admin/events/:id', async (req, res) => {
 });
 
 // 매장별·전체 현황 (할당 설정 표도 이걸로 그린다)
+//   stores = 운영 매장 + (운영은 안 하지만 이미 할당·사용 기록이 있는 매장)
 router.get('/api/prize/admin/events/:id/summary', async (req, res) => {
     try {
         const ev = await findEvent(req.params.id);
         if (!ev) return fail(res, 404, '이벤트를 찾을 수 없습니다.');
         const eventId = String(ev._id);
-        const [map, tokenStores] = await Promise.all([
+        const [map, operating, links] = await Promise.all([
             loadTotals(eventId),
-            col('store_tokens').distinct('store'),
+            operatingStores(),
+            col(C_LINKS).distinct('store'),
         ]);
-        const stores = [...new Set([...tokenStores.filter(Boolean), ...Object.keys(map)])]
-            .sort((a, b) => a.localeCompare(b, 'ko'));
+        const opSet = new Set(operating);
+        const linkSet = new Set(links);
+        const stores = [...new Set([...operating, ...Object.keys(map)])].sort(koSort);
         const items = ev.items || [];
 
         const itemTotals = {};
@@ -265,7 +292,7 @@ router.get('/api/prize/admin/events/:id/summary', async (req, res) => {
                 itemTotals[it.id].remaining += remaining;
             });
             grand.allocated += total.allocated; grand.used += total.used; grand.remaining += total.remaining;
-            return { store, has_link: tokenStores.includes(store), cells, total };
+            return { store, operating: opSet.has(store), has_link: linkSet.has(store), cells, total };
         });
 
         res.json({ success: true, today: todayKST(), event: publicEvent(ev), stores, rows, itemTotals, grand });
@@ -319,14 +346,14 @@ router.put('/api/prize/admin/events/:id/allocations', async (req, res) => {
     }
 });
 
-// 사용 기록 (전체 또는 매장 하나)
+// 사용 기록 (전체 또는 매장 하나) — 한 줄 = 한 매장·한 경품·하루
 router.get('/api/prize/admin/events/:id/usage', async (req, res) => {
     try {
         const ev = await findEvent(req.params.id);
         if (!ev) return fail(res, 404, '이벤트를 찾을 수 없습니다.');
         const q = { event_id: String(ev._id) };
         if (req.query.store) q.store = String(req.query.store);
-        const logs = await col(C_USAGE).find(q).sort({ date: -1, created_at: -1 }).limit(2000).toArray();
+        const logs = await col(C_USAGE).find(q).sort({ date: -1, store: 1 }).limit(5000).toArray();
         res.json({ success: true, logs: logs.map(l => ({ ...l, _id: String(l._id) })) });
     } catch (e) {
         console.error('[prize] 사용 기록 조회 실패:', e);
@@ -348,16 +375,57 @@ router.delete('/api/prize/admin/usage/:id', async (req, res) => {
     }
 });
 
+// 매장별 경품 전용 링크 목록 + 운영 매장
+router.get('/api/prize/admin/links', async (req, res) => {
+    try {
+        const [links, operating] = await Promise.all([
+            col(C_LINKS).find({}).sort({ store: 1 }).toArray(),
+            operatingStores(),
+        ]);
+        res.json({
+            success: true,
+            operating,
+            links: links.map(l => ({ store: l.store, token: l.token, created_at: l.created_at })),
+        });
+    } catch (e) {
+        console.error('[prize] 링크 목록 실패:', e);
+        fail(res, 500, '매장 링크를 불러오지 못했습니다.');
+    }
+});
+
+// 링크 만들기 / 다시 만들기 — body { store, regenerate } (다시 만들면 예전 링크는 바로 끊긴다)
+router.post('/api/prize/admin/links', async (req, res) => {
+    try {
+        const store = cleanText(req.body?.store, 60);
+        if (!store) return fail(res, 400, '매장을 선택해 주세요.');
+        const regenerate = req.body?.regenerate === true;
+        const operating = await operatingStores();
+        const hasData = await col(C_ALLOC).countDocuments({ store }, { limit: 1 });
+        if (!operating.includes(store) && !hasData) return fail(res, 400, '운영 중인 매장이 아닙니다. 통합관리시스템에서 매장·직원 상태를 확인해 주세요.');
+
+        const existing = await col(C_LINKS).findOne({ store });
+        if (existing && !regenerate) return res.json({ success: true, link: { store, token: existing.token, created_at: existing.created_at } });
+
+        const token = newLinkToken();
+        const now = new Date();
+        await col(C_LINKS).updateOne({ store }, { $set: { token, created_at: now } }, { upsert: true });
+        res.json({ success: true, link: { store, token, created_at: now }, regenerated: !!existing });
+    } catch (e) {
+        console.error('[prize] 링크 만들기 실패:', e);
+        fail(res, 500, '매장 링크를 만들지 못했습니다.');
+    }
+});
+
 // ==========================================
-// 매장 API — 주간보고 매장 링크의 key(store_tokens.token)로 매장을 확인한다.
+// 매장 API — 경품 전용 링크의 key(prize_links.token)로 매장을 확인한다.
 // 매장명은 토큰에서만 읽어서 다른 매장 데이터를 건드릴 수 없다.
 // ==========================================
 
-// 우리 매장에 보이는 이벤트·경품 (빈 목록이면 버튼을 숨긴다)
+// 우리 매장에 보이는 이벤트·경품
 router.get('/api/prize/store/:token', async (req, res) => {
     try {
         const store = await storeFromToken(req.params.token);
-        if (!store) return fail(res, 404, '매장 링크가 올바르지 않습니다.');
+        if (!store) return fail(res, 404, '링크가 올바르지 않습니다. 본사에 새 링크를 요청해 주세요.');
         const today = todayKST();
         const events = (await col(C_EVENTS).find({ status: 'active' }).sort({ created_at: -1 }).toArray())
             .filter(ev => isVisibleToStore(ev, today));
@@ -383,83 +451,92 @@ router.get('/api/prize/store/:token', async (req, res) => {
     }
 });
 
-// 우리 매장 사용 기록
+// 우리 매장 날짜별 기록
 router.get('/api/prize/store/:token/usage', async (req, res) => {
     try {
         const store = await storeFromToken(req.params.token);
-        if (!store) return fail(res, 404, '매장 링크가 올바르지 않습니다.');
+        if (!store) return fail(res, 404, '링크가 올바르지 않습니다. 본사에 새 링크를 요청해 주세요.');
         const q = { store };
         if (req.query.event_id) q.event_id = String(req.query.event_id);
-        const logs = await col(C_USAGE).find(q).sort({ date: -1, created_at: -1 }).limit(500).toArray();
-        res.json({ success: true, logs: logs.map(l => ({ ...l, _id: String(l._id) })) });
+        const logs = await col(C_USAGE).find(q).sort({ date: -1 }).limit(2000).toArray();
+        res.json({ success: true, logs: logs.map(l => ({ _id: String(l._id), event_id: l.event_id, item_id: l.item_id, item_name: l.item_name, date: l.date, qty: l.qty })) });
     } catch (e) {
         console.error('[prize] 매장 사용 기록 조회 실패:', e);
         fail(res, 500, '사용 기록을 불러오지 못했습니다.');
     }
 });
 
-// 사용 수량 입력
-router.post('/api/prize/store/:token/usage', async (req, res) => {
+// 그날 나간 수량 저장 — body { event_id, date, counts: { item_id: qty } }
+//   경품마다 그날 한 칸. 같은 날 다시 저장하면 덮어쓴다(0 이면 그날 기록 지움).
+router.put('/api/prize/store/:token/daily', async (req, res) => {
     try {
         const store = await storeFromToken(req.params.token);
-        if (!store) return fail(res, 404, '매장 링크가 올바르지 않습니다.');
+        if (!store) return fail(res, 404, '링크가 올바르지 않습니다. 본사에 새 링크를 요청해 주세요.');
         const today = todayKST();
 
         const ev = await findEvent(req.body?.event_id);
-        if (!ev || !isVisibleToStore(ev, today)) return fail(res, 400, '지금 입력할 수 있는 이벤트가 아닙니다.');
+        if (!ev || !isVisibleToStore(ev, today)) return fail(res, 400, '지금 입력할 수 있는 이벤트가 아닙니다. 새로고침해 주세요.');
         const eventId = String(ev._id);
-        const item = (ev.items || []).find(it => it.id === req.body?.item_id);
-        if (!item) return fail(res, 400, '경품을 선택해 주세요.');
+        const visibleFrom = ev.visible_from || DEFAULT_VISIBLE_FROM;
 
         const date = String(req.body?.date || today);
         if (!isDate(date)) return fail(res, 400, '날짜를 확인해 주세요.');
         if (date > today) return fail(res, 400, '오늘 이후 날짜는 입력할 수 없습니다.');
-        if (date < (ev.visible_from || DEFAULT_VISIBLE_FROM)) return fail(res, 400, `${ev.visible_from || DEFAULT_VISIBLE_FROM} 이전 날짜는 입력할 수 없습니다.`);
+        if (date < visibleFrom) return fail(res, 400, `${visibleFrom} 이전 날짜는 입력할 수 없습니다.`);
 
-        const qty = toInt(req.body?.qty);
-        if (qty === null || qty < 1 || qty > MAX_QTY) return fail(res, 400, '사용 수량은 1 이상 정수로 입력해 주세요.');
-
-        const writer = cleanText(req.body?.writer, 20);
-        const note = cleanText(req.body?.note, 100);
+        const counts = req.body?.counts && typeof req.body.counts === 'object' ? req.body.counts : {};
+        const itemsById = Object.fromEntries((ev.items || []).map(it => [it.id, it]));
+        const entries = [];
+        for (const [itemId, raw] of Object.entries(counts)) {
+            const item = itemsById[itemId];
+            if (!item) return fail(res, 400, '이벤트에 없는 경품이 들어왔습니다. 새로고침해 주세요.');
+            const qty = toInt(raw);
+            if (qty === null || qty < 0 || qty > MAX_QTY) return fail(res, 400, `${item.name}: 수량은 0 이상 정수로 넣어 주세요.`);
+            entries.push({ item, qty });
+        }
+        if (!entries.length) return fail(res, 400, '저장할 수량이 없습니다.');
 
         const map = await loadTotals(eventId, store);
-        const c = map[store]?.[item.id] || { allocated: 0, used: 0 };
-        if (c.allocated <= 0) return fail(res, 400, '우리 매장에 할당되지 않은 경품입니다.');
-        if (c.used + qty > c.allocated) return fail(res, 400, `잔여 수량(${c.allocated - c.used}개)보다 많이 입력할 수 없습니다.`);
+        const dayDocs = await col(C_USAGE).find({ event_id: eventId, store, date, item_id: { $in: entries.map(e => e.item.id) } }).toArray();
+        const dayQty = {};
+        dayDocs.forEach(d => { dayQty[d.item_id] = (dayQty[d.item_id] || 0) + (d.qty || 0); });
 
-        const doc = { event_id: eventId, item_id: item.id, item_name: item.name, store, date, qty, writer, note, created_at: new Date() };
-        const r = await col(C_USAGE).insertOne(doc);
-
-        // 두 사람이 동시에 넣어 할당을 넘었으면 방금 넣은 것을 되돌린다
-        const after = await loadTotals(eventId, store);
-        const usedNow = after[store]?.[item.id]?.used || 0;
-        if (usedNow > c.allocated) {
-            await col(C_USAGE).deleteOne({ _id: r.insertedId });
-            return fail(res, 409, '방금 다른 입력이 들어와 잔여 수량이 바뀌었습니다. 새로고침 후 다시 입력해 주세요.');
+        for (const { item, qty } of entries) {
+            const c = map[store]?.[item.id] || { allocated: 0, used: 0 };
+            const otherDays = c.used - (dayQty[item.id] || 0);
+            if (qty > 0 && c.allocated <= 0) return fail(res, 400, `${item.name}: 우리 매장에 할당되지 않은 경품입니다.`);
+            if (otherDays + qty > c.allocated) return fail(res, 400, `${item.name}: 남은 수량(${c.allocated - otherDays}개)보다 많이 넣을 수 없습니다.`);
         }
-        res.json({ success: true, log: { ...doc, _id: String(r.insertedId) } });
-    } catch (e) {
-        console.error('[prize] 사용 입력 실패:', e);
-        fail(res, 500, '사용 수량을 저장하지 못했습니다.');
-    }
-});
 
-// 우리 매장 사용 기록 삭제 (잘못 넣은 것 정정)
-router.delete('/api/prize/store/:token/usage/:id', async (req, res) => {
-    try {
-        const store = await storeFromToken(req.params.token);
-        if (!store) return fail(res, 404, '매장 링크가 올바르지 않습니다.');
-        const _id = toObjectId(req.params.id);
-        if (!_id) return fail(res, 400, '잘못된 기록입니다.');
-        const log = await col(C_USAGE).findOne({ _id });
-        if (!log || log.store !== store) return fail(res, 404, '기록을 찾을 수 없습니다.');
-        const ev = await findEvent(log.event_id);
-        if (!ev || ev.status !== 'active') return fail(res, 400, '종료된 이벤트의 기록은 본사에 정정을 요청해 주세요.');
-        await col(C_USAGE).deleteOne({ _id });
-        res.json({ success: true });
+        const now = new Date();
+        for (const { item, qty } of entries) {
+            const filter = { event_id: eventId, item_id: item.id, store, date };
+            if (qty === 0) {
+                await col(C_USAGE).deleteMany(filter);
+            } else {
+                await col(C_USAGE).updateOne(filter,
+                    { $set: { qty, item_name: item.name, updated_at: now }, $setOnInsert: { created_at: now } },
+                    { upsert: true });
+            }
+        }
+
+        // 다른 기기에서 동시에 저장해 할당을 넘었으면 이번 저장을 되돌린다
+        const after = await loadTotals(eventId, store);
+        const over = entries.filter(({ item }) => (after[store]?.[item.id]?.used || 0) > (after[store]?.[item.id]?.allocated || 0));
+        if (over.length) {
+            for (const { item } of over) {
+                const filter = { event_id: eventId, item_id: item.id, store, date };
+                await col(C_USAGE).deleteMany(filter);
+                const prev = dayDocs.filter(d => d.item_id === item.id);
+                if (prev.length) await col(C_USAGE).insertMany(prev);
+            }
+            return fail(res, 409, '방금 다른 곳에서 입력이 들어와 남은 수량이 바뀌었습니다. 새로고침 후 다시 저장해 주세요.');
+        }
+        res.json({ success: true, date, saved: entries.length });
     } catch (e) {
-        console.error('[prize] 매장 사용 기록 삭제 실패:', e);
-        fail(res, 500, '사용 기록을 지우지 못했습니다.');
+        if (e && e.code === 11000) return fail(res, 409, '다른 곳에서 같은 날을 동시에 저장했습니다. 새로고침 후 다시 저장해 주세요.');
+        console.error('[prize] 하루 수량 저장 실패:', e);
+        fail(res, 500, '수량을 저장하지 못했습니다.');
     }
 });
 
