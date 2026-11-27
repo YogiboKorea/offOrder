@@ -417,6 +417,37 @@ router.post('/api/prize/admin/links', async (req, res) => {
 });
 
 // ==========================================
+// 매장 스태프 관리 페이지(매장매니저관리프로그램 = /off/staff/index.html?key=주간보고 매장 키)용
+//   [이벤트 > 경품 재고 관리] 메뉴를 띄울지와 열 경품 링크를 돌려준다.
+//   우리 매장에 보이는(노출 시작일 지난 진행중) 이벤트에 할당이 있을 때만 링크를 준다 — 없으면 만들어서.
+// ==========================================
+router.get('/api/prize/hub/:storeToken', async (req, res) => {
+    try {
+        const t = String(req.params.storeToken || '');
+        if (!t || t.length > 80) return fail(res, 404, '매장 링크가 올바르지 않습니다.');
+        const st = await col('store_tokens').findOne({ token: t });
+        if (!st?.store) return fail(res, 404, '매장 링크가 올바르지 않습니다.');
+        const store = st.store;
+        const today = todayKST();
+        const events = (await col(C_EVENTS).find({ status: 'active' }).toArray()).filter(ev => isVisibleToStore(ev, today));
+        let count = 0;
+        for (const ev of events) {
+            if (await col(C_ALLOC).countDocuments({ event_id: String(ev._id), store, qty: { $gt: 0 } }, { limit: 1 })) count++;
+        }
+        if (!count) return res.json({ success: true, store, events: 0, token: null });
+        let link = await col(C_LINKS).findOne({ store });
+        if (!link) {
+            await col(C_LINKS).updateOne({ store }, { $setOnInsert: { token: newLinkToken(), created_at: new Date() } }, { upsert: true });
+            link = await col(C_LINKS).findOne({ store });
+        }
+        res.json({ success: true, store, events: count, token: link.token });
+    } catch (e) {
+        console.error('[prize] 스태프 페이지 링크 실패:', e);
+        fail(res, 500, '경품 정보를 불러오지 못했습니다.');
+    }
+});
+
+// ==========================================
 // 매장 API — 경품 전용 링크의 key(prize_links.token)로 매장을 확인한다.
 // 매장명은 토큰에서만 읽어서 다른 매장 데이터를 건드릴 수 없다.
 // ==========================================
