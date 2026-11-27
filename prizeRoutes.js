@@ -125,23 +125,35 @@ async function loadTotals(eventId, store) {
             { $group: { _id: { store: '$store', item_id: '$item_id' }, used: { $sum: '$qty' } } },
         ]).toArray(),
     ]);
-    const map = {}; // map[store][item_id] = { allocated, used }
+    const map = {}; // map[store][item_id] = { allocated, used, usable(null=할당과 같음) }
     const cell = (s, i) => {
         if (!map[s]) map[s] = {};
-        if (!map[s][i]) map[s][i] = { allocated: 0, used: 0 };
+        if (!map[s][i]) map[s][i] = { allocated: 0, used: 0, usable: null };
         return map[s][i];
     };
-    allocs.forEach(a => { cell(a.store, a.item_id).allocated = a.qty || 0; });
+    allocs.forEach(a => {
+        const c = cell(a.store, a.item_id);
+        c.allocated = a.qty || 0;
+        c.usable = typeof a.usable === 'number' ? a.usable : null;
+    });
     usedAgg.forEach(u => { cell(u._id.store, u._id.item_id).used = u.used || 0; });
     return map;
 }
 
 // 운영 매장 — 통합관리시스템과 같은 기준 (ON 직원 1명 이상, 팝업·매니저영업 제외)
+const storeNameOk = s => s && !String(s).includes('팝업') && !String(s).includes('매니저영업');
 async function operatingStores() {
     const names = await mongoClient.db(STAFF_DB_NAME).collection('jwasu_managers')
         .distinct('storeName', { isActive: { $ne: false }, isHidden: { $ne: true } });
-    return names.filter(s => s && !String(s).includes('팝업') && s !== '매니저영업').sort(koSort);
+    return names.filter(storeNameOk).sort(koSort);
 }
+// 통합관리시스템에 등록된 모든 매장 (오픈 전·직원 OFF 매장 포함) — 본사 [매장 추가] 목록
+async function registeredStores() {
+    const names = await mongoClient.db(STAFF_DB_NAME).collection('jwasu_managers').distinct('storeName');
+    return names.filter(storeNameOk).sort(koSort);
+}
+// 활용 가능 수량 — 따로 안 정했으면 할당 수량과 같다
+const effUsable = c => (typeof c.usable === 'number' ? c.usable : c.allocated);
 
 async function storeFromToken(token) {
     if (!token || typeof token !== 'string' || token.length > 80) return null;
@@ -265,37 +277,41 @@ router.get('/api/prize/admin/events/:id/summary', async (req, res) => {
         const ev = await findEvent(req.params.id);
         if (!ev) return fail(res, 404, '이벤트를 찾을 수 없습니다.');
         const eventId = String(ev._id);
-        const [map, operating, links] = await Promise.all([
+        const [map, operating, links, registered] = await Promise.all([
             loadTotals(eventId),
             operatingStores(),
             col(C_LINKS).distinct('store'),
+            registeredStores(),
         ]);
         const opSet = new Set(operating);
         const linkSet = new Set(links);
         const stores = [...new Set([...operating, ...Object.keys(map)])].sort(koSort);
         const items = ev.items || [];
+        // remaining = 할당 − 사용 / usable = 실제 활용 가능 수량(안 정했으면 할당과 같음) / usable_remaining = 활용 가능 − 사용
+        const zero = () => ({ allocated: 0, used: 0, remaining: 0, usable: 0, usable_remaining: 0 });
+        const add = (t, c) => { for (const k of Object.keys(t)) t[k] += c[k]; };
 
         const itemTotals = {};
-        items.forEach(it => { itemTotals[it.id] = { allocated: 0, used: 0, remaining: 0 }; });
-        const grand = { allocated: 0, used: 0, remaining: 0 };
+        items.forEach(it => { itemTotals[it.id] = zero(); });
+        const grand = zero();
 
         const rows = stores.map(store => {
             const cells = {};
-            const total = { allocated: 0, used: 0, remaining: 0 };
+            const total = zero();
             items.forEach(it => {
-                const c = map[store]?.[it.id] || { allocated: 0, used: 0 };
-                const remaining = c.allocated - c.used;
-                cells[it.id] = { allocated: c.allocated, used: c.used, remaining };
-                total.allocated += c.allocated; total.used += c.used; total.remaining += remaining;
-                itemTotals[it.id].allocated += c.allocated;
-                itemTotals[it.id].used += c.used;
-                itemTotals[it.id].remaining += remaining;
+                const c = map[store]?.[it.id] || { allocated: 0, used: 0, usable: null };
+                const usable = effUsable(c);
+                const cell = { allocated: c.allocated, used: c.used, remaining: c.allocated - c.used, usable, usable_remaining: usable - c.used };
+                cells[it.id] = { ...cell, usable_set: typeof c.usable === 'number' };
+                add(total, cell);
+                add(itemTotals[it.id], cell);
             });
-            grand.allocated += total.allocated; grand.used += total.used; grand.remaining += total.remaining;
+            add(grand, total);
             return { store, operating: opSet.has(store), has_link: linkSet.has(store), cells, total };
         });
+        const addable = registered.filter(s => !stores.includes(s));
 
-        res.json({ success: true, today: todayKST(), event: publicEvent(ev), stores, rows, itemTotals, grand });
+        res.json({ success: true, today: todayKST(), event: publicEvent(ev), stores, rows, itemTotals, grand, addable });
     } catch (e) {
         console.error('[prize] 현황 조회 실패:', e);
         fail(res, 500, '현황을 불러오지 못했습니다.');
@@ -313,29 +329,51 @@ router.put('/api/prize/admin/events/:id/allocations', async (req, res) => {
         if (!list.length) return fail(res, 400, '저장할 할당 수량이 없습니다.');
         if (list.length > 5000) return fail(res, 400, '한 번에 저장할 수 있는 양을 넘었습니다.');
 
+        // 한 줄 = { store, item_id, qty?, usable? } — qty(할당)·usable(실제 활용 가능, null=할당과 같음) 중 보낸 것만 바꾼다
         const clean = [];
         for (const a of list) {
             const store = cleanText(a?.store, 60);
-            const qty = toInt(a?.qty);
             if (!store) return fail(res, 400, '매장명이 비어 있는 줄이 있습니다.');
             if (!itemName[a?.item_id]) return fail(res, 400, '이벤트에 없는 경품이 들어왔습니다. 새로고침 후 다시 시도해 주세요.');
-            if (qty === null || qty < 0 || qty > MAX_QTY) return fail(res, 400, `${store} · ${itemName[a.item_id]}: 수량은 0~${MAX_QTY} 사이 정수로 입력해 주세요.`);
-            clean.push({ store, item_id: a.item_id, qty });
+            const label = `${store} · ${itemName[a.item_id]}`;
+            const hasQty = a.qty !== undefined, hasUsable = a.usable !== undefined;
+            if (!hasQty && !hasUsable) return fail(res, 400, `${label}: 바꿀 수량이 없습니다.`);
+            const entry = { store, item_id: a.item_id };
+            if (hasQty) {
+                const qty = toInt(a.qty);
+                if (qty === null || qty < 0 || qty > MAX_QTY) return fail(res, 400, `${label}: 할당 수량은 0~${MAX_QTY} 사이 정수로 입력해 주세요.`);
+                entry.qty = qty;
+            }
+            if (hasUsable) {
+                if (a.usable === null || a.usable === '') entry.usable = null;
+                else {
+                    const u = toInt(a.usable);
+                    if (u === null || u < 0 || u > MAX_QTY) return fail(res, 400, `${label}: 활용 가능 수량은 0 이상 정수로 입력해 주세요.`);
+                    entry.usable = u;
+                }
+            }
+            clean.push(entry);
         }
 
-        // 이미 쓴 수량보다 적게 할당할 수는 없다
         const map = await loadTotals(eventId);
-        const errors = clean
-            .filter(a => (map[a.store]?.[a.item_id]?.used || 0) > a.qty)
-            .map(a => `${a.store} · ${itemName[a.item_id]} (이미 ${map[a.store][a.item_id].used}개 사용)`);
-        if (errors.length) return fail(res, 400, `이미 사용한 수량보다 적게 할당할 수 없습니다:\n${errors.slice(0, 10).join('\n')}`);
+        const errors = [];
+        const merged = clean.map(a => {
+            const cur = map[a.store]?.[a.item_id] || { allocated: 0, used: 0, usable: null };
+            const qty = a.qty !== undefined ? a.qty : cur.allocated;
+            const usable = a.usable !== undefined ? a.usable : cur.usable;
+            const label = `${a.store} · ${itemName[a.item_id]}`;
+            if (cur.used > qty) errors.push(`${label}: 이미 ${cur.used}개 사용해서 할당을 ${qty}개로 줄일 수 없습니다`);
+            if (qty > 0 && usable !== null && usable > qty) errors.push(`${label}: 활용 가능 수량(${usable})이 할당 수량(${qty})보다 많습니다`);
+            return { store: a.store, item_id: a.item_id, qty, usable };
+        });
+        if (errors.length) return fail(res, 400, `저장하지 못했습니다:\n${errors.slice(0, 10).join('\n')}`);
 
         const now = new Date();
-        const ops = clean.map(a => {
+        const ops = merged.map(a => {
             const filter = { event_id: eventId, item_id: a.item_id, store: a.store };
             return a.qty === 0
                 ? { deleteOne: { filter } }
-                : { updateOne: { filter, update: { $set: { qty: a.qty, updated_at: now }, $setOnInsert: { created_at: now } }, upsert: true } };
+                : { updateOne: { filter, update: { $set: { qty: a.qty, usable: a.usable, updated_at: now }, $setOnInsert: { created_at: now } }, upsert: true } };
         });
         await col(C_ALLOC).bulkWrite(ops, { ordered: false });
         await col(C_EVENTS).updateOne({ _id: ev._id }, { $set: { updated_at: now } });
@@ -466,8 +504,12 @@ router.get('/api/prize/store/:token', async (req, res) => {
             const map = await loadTotals(String(ev._id), store);
             const items = (ev.items || [])
                 .map(it => {
-                    const c = map[store]?.[it.id] || { allocated: 0, used: 0 };
-                    return { id: it.id, name: it.name, allocated: c.allocated, used: c.used, remaining: c.allocated - c.used };
+                    const c = map[store]?.[it.id] || { allocated: 0, used: 0, usable: null };
+                    const usable = effUsable(c);
+                    return {
+                        id: it.id, name: it.name, allocated: c.allocated, used: c.used, remaining: c.allocated - c.used,
+                        usable, usable_set: typeof c.usable === 'number', usable_remaining: usable - c.used,
+                    };
                 })
                 .filter(it => it.allocated > 0 || it.used > 0);
             if (items.length) {
